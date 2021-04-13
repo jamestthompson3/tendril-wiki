@@ -1,0 +1,8 @@
+[workspace]
+members = [
+  "libs/*",
+  "bin"
+]
+
+[profile.release]
+lto = true

@@ -1,0 +1,23 @@
+---
+created: 20201123105644661
+creator: taylor@teukka.tech
+modified: 20201123202524363
+modifier: taylor@teukka.tech
+revision: 0
+tags: [Reality Building,Article]
+title: Reality shaping thoughts
+type: text/vnd.tiddlywiki
+---
+> we think by the laws of nature, and thus do our reflections converge on understanding these laws when we consider how we think. [[Eidomorphism The Philosophy of Ontological Mathematics]] pg 16
+
+Very much related to [[Logical reality]], the idea that our ability to reason about and comprehend concepts, ideas, phenomena is limited to the reality in which we inhabit.
+
+[[Knezevic]] Goes on to say in page 25:
+
+> ...our minds had principles that shaped our perceptions, and that these principles then shaped our minds in such a way so as to ensure that certain metaphysical, mathematical, and scientific laws followed by necessity from these principles.
+
+In a way to suggest that mathematics, metaphysics, and science are merely a form of mental gymnastics we use to explain what we observe. Our perceptions (molded by our reality) are leavened and re-enforced by "fundamental" principles which we construct to codify our shared reality.
+
+> This brings us back to a paradoxical possibility, namely that consciousness may have been promoted by the strange disparity between man's inner environment, with its unexpected images and exciting, if disordered, events, and the outer scene to which he awakened. [[The Myth of The Machine]] pg 51
+
+Lewis Mumford opines that consciousness itself arose from the mental gymnastics used to \[mesh\]? the differences between the world that existed inside his imagination and dreams and the world in which he observed with his eyes.

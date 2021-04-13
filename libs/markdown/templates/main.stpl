@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en-US" prefix="og:http://ogp.me/ns#">
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+      />
+      <link rel="stylesheet" href="static/style.css" />
+    <meta name="description" content="An HTML File" />
+    <meta property="og:title" content="<%= title %>" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="" />
+    <meta property="og:image" content="" />
+    <meta name="robots" content="index, follow">
+    <title><%= title %></title>
+  </head>
+  <body>
+  <div class="content-container">
+  <h1 class="title"><%= title %></h1>
+  <div>
+    <ul class="tags">
+      <% for tag in tags.iter() {  %>
+      <li><a href="tags/<%- tag.replace(' ', "_") %>.html"><%- tag %></a></li>
+      <% } %>
+    </ul>
+  </div>
+  <main class="content">
+    <%- body %>
+  </main>
+  </div>
+  <% include!("footer.stpl"); %>
+  </body>
+</html>

@@ -1,0 +1,63 @@
+:root {
+  --color: rgba(33, 133, 208, 0.1);
+  --color-darker: rgba(33, 133, 208, 1);
+  --accent: rgb(64, 32, 207);
+  --bg: #eeeeee;
+  --shadow: 0 2px 4px 0 rgba(34, 36, 38, 0.12),
+    0 2px 10px 0 rgba(34, 36, 38, 0.15);
+  --rad: 6px;
+}
+.content {
+  width: 100%;
+}
+
+a:link {
+  color: var(--color-darker);
+}
+a:visted {
+  color: var(--accent);
+}
+
+.content-container {
+  width: 60%;
+  margin: auto;
+  padding: 2rem;
+  border-radius: var(--rad) var(--rad) 0px 0px;
+  box-shadow: var(--shadow);
+}
+.content p {
+  font-size: 1.2rem;
+  line-height: 2rem;
+}
+
+.tags {
+  list-style: none;
+}
+
+.tags li::before {
+  content: "#";
+}
+
+.title {
+  background-color: var(--color);
+  text-align: center;
+  padding: 1rem;
+}
+
+.footer {
+  background-color: var(--color-darker);
+  color: var(--bg);
+  width: 60%;
+  margin: auto;
+  padding: 0.5rem 2rem;
+  border-radius: 0px 0px var(--rad) var(--rad);
+  box-shadow: var(--shadow);
+}
+
+.footer a {
+  color: var(--bg);
+}
+
+body {
+  background-color: var(--bg);
+}
