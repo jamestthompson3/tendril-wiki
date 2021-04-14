@@ -24,16 +24,28 @@ struct TagPage {
     tags: Vec<String>,
 }
 
+#[derive(TemplateOnce)]
+#[template(path = "backlinks.stpl")]
+struct LinkPage {
+    links: HashMap<String, Vec<String>>,
+}
+
 pub struct TemplattedPage<'a> {
     pub title: String,
     pub body: String,
     pub tags: Vec<&'a str>,
 }
 
-pub type TagMapping = Arc<Mutex<HashMap<String, Vec<String>>>>;
+pub struct ParsedTemplate<'a> {
+    pub outlinks: Vec<String>,
+    pub page: TemplattedPage<'a>,
+}
 
-pub fn template(note: &NoteMeta) -> TemplattedPage {
-    let body = to_html(&note.content);
+pub type TagMapping = Arc<Mutex<HashMap<String, Vec<String>>>>;
+pub type GlobalBacklinks = Arc<Mutex<HashMap<String, Vec<String>>>>;
+
+pub fn template(note: &NoteMeta) -> ParsedTemplate {
+    let html = to_html(&note.content);
     let default_title = "Untitled".to_string();
     let title = note
         .metadata
@@ -44,7 +56,15 @@ pub fn template(note: &NoteMeta) -> TemplattedPage {
         None => Vec::with_capacity(0),
         Some(raw_tags) => parse_tags(raw_tags),
     };
-    TemplattedPage { title, tags, body }
+    let page = TemplattedPage {
+        title,
+        tags,
+        body: html.body,
+    };
+    ParsedTemplate {
+        outlinks: html.outlinks,
+        page,
+    }
 }
 
 pub fn render_template(page: &TemplattedPage) -> String {
@@ -54,6 +74,23 @@ pub fn render_template(page: &TemplattedPage) -> String {
         body: &page.body,
     };
     ctx.render_once().unwrap()
+}
+
+pub fn update_backlinks(title: &str, outlinks: &Vec<String>, backlinks: GlobalBacklinks) {
+    let mut global_backlinks = backlinks.lock().unwrap();
+    for link in outlinks.iter() {
+        match global_backlinks.get(&link.to_string()) {
+            Some(links) => {
+                // TODO: Let's not allocate so much
+                let mut updated_links = links.clone();
+                updated_links.push(title.to_owned());
+                global_backlinks.insert(link.to_string(), updated_links);
+            }
+            None => {
+                global_backlinks.insert(link.to_string(), vec![title.to_owned()]);
+            }
+        }
+    }
 }
 
 pub fn update_tag_map(title: &str, tags: &Vec<&str>, tag_map: TagMapping) {
@@ -94,6 +131,18 @@ pub fn template_tag_pages(map: TagMapping) {
         )
         .unwrap();
     }
+}
+
+pub fn template_backlinks(map: GlobalBacklinks) {
+    let link_map = map.lock().unwrap();
+    let ctx = LinkPage {
+        links: link_map.clone(),
+    };
+    fs::write(
+        format!("public/links/index.html"),
+        ctx.render_once().unwrap(),
+    )
+    .unwrap();
 }
 
 // TODO:

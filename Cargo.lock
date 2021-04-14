@@ -668,6 +668,7 @@ dependencies = [
  "directories",
  "logging",
  "markdown",
+ "num_cpus",
  "serde",
  "serde_derive",
  "shellexpand",
