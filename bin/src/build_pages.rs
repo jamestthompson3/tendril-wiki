@@ -1,6 +1,7 @@
 use markdown::parsers::{
-    as_data_structure, render_template, template, template_backlinks, template_tag_pages,
-    update_backlinks, update_tag_map, GlobalBacklinks, TagMapping,
+    as_data_structure, template, template_backlinks, template_entries, template_tag_pages,
+    update_backlinks, update_tag_map, update_templatted_pages, GlobalBacklinks, ParsedPages,
+    TagMapping,
 };
 use threadpool::ThreadPool;
 
@@ -21,43 +22,61 @@ pub fn build(wiki_location: &String) {
     let now = Instant::now();
     let tag_map = Arc::new(Mutex::new(HashMap::new()));
     let backlinks = Arc::new(Mutex::new(HashMap::new()));
+    let rendered_pages: ParsedPages = Arc::new(Mutex::new(Vec::new()));
     let map = Arc::clone(&tag_map);
     let links = Arc::clone(&backlinks);
-    parse_entries(entrypoint, tag_map, backlinks);
+    let pages = Arc::clone(&rendered_pages);
+    parse_entries(entrypoint, tag_map, backlinks, rendered_pages);
+    template_entries(&pages, &links);
     template_tag_pages(map);
     template_backlinks(links);
     println!("compiling all pages took: {}ms", now.elapsed().as_millis());
 }
 
-fn process_file(path: PathBuf, tag_map: TagMapping, backlinks: GlobalBacklinks) {
+/// FIXME: The only reason we have to keep passing down these mutexes through these functions
+/// is so that `parse_entries` can be recursive. Maybe make a flat directory structure?
+
+fn process_file(
+    path: PathBuf,
+    tag_map: TagMapping,
+    backlinks: GlobalBacklinks,
+    rendered_pages: ParsedPages,
+) {
     let note = as_data_structure(&path);
     let templatted = template(&note);
     update_tag_map(&templatted.page.title, &templatted.page.tags, tag_map);
     update_backlinks(&templatted.page.title, &templatted.outlinks, backlinks);
-    let output = render_template(&templatted.page);
-    let filename = path.file_stem().unwrap();
-    fs::write(
-        format!(
-            "public/{}.html",
-            &filename.to_str().unwrap().replace(' ', "_")
-        ),
-        output,
-    )
-    .unwrap();
+    update_templatted_pages(templatted.page, rendered_pages);
 }
+// let filename = path.file_stem().unwrap();
+// let output = render_template(&templatted.page);
+// fs::write(
+//     format!(
+//         "public/{}.html",
+//         &filename.to_str().unwrap().replace(' ', "_")
+//         ),
+//         output,
+//         )
+// .unwrap();
 
-fn parse_entries(entrypoint: PathBuf, tag_map: TagMapping, backlinks: GlobalBacklinks) {
+fn parse_entries(
+    entrypoint: PathBuf,
+    tag_map: TagMapping,
+    backlinks: GlobalBacklinks,
+    rendered_pages: ParsedPages,
+) {
     let pool = ThreadPool::new(num_cpus::get());
     for entry in read_dir(entrypoint).unwrap() {
         let tags = Arc::clone(&tag_map);
         let links = Arc::clone(&backlinks);
+        let pages = Arc::clone(&rendered_pages);
         let entry = entry.unwrap();
         if entry.file_type().unwrap().is_file() {
             pool.execute(move || {
-                process_file(entry.path(), tags, links);
+                process_file(entry.path(), tags, links, pages);
             });
         } else if entry.file_type().unwrap().is_dir() {
-            parse_entries(entry.path(), tags, links);
+            parse_entries(entry.path(), tags, links, pages);
         }
     }
     pool.join();

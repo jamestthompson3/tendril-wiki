@@ -10,3 +10,4 @@ edition = "2018"
 pulldown-cmark = { version = "0.8.0", default-features = false, features = ["simd"] }
 logging = { path = "../logging" }
 sailfish = "0.3.3"
+urlencoding = "1.1.1"

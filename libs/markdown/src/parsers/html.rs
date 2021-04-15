@@ -1,4 +1,5 @@
 use pulldown_cmark::{html, Event, Options, Parser};
+use urlencoding::encode;
 
 #[derive(Copy, Clone, PartialEq, Debug)]
 enum ParserState {
@@ -126,7 +127,7 @@ pub fn format_links(link: &str) -> String {
     if link.starts_with("http") {
         return link.to_string();
     }
-    format!("{}.html", link.replace(' ', "_"))
+    format!("{}.html", encode(&link)) // HACK: deal with warp decoding this later
 }
 
 #[cfg(test)]
@@ -141,6 +142,9 @@ mod tests {
             format_links(&http_link)
         );
         let wiki_page = "My Cool Page";
-        assert_eq!(String::from("My_Cool_Page.html"), format_links(&wiki_page));
+        assert_eq!(
+            String::from("My%20Cool%20Page.html"),
+            format_links(&wiki_page)
+        );
     }
 }

@@ -57,7 +57,7 @@ pub fn as_data_structure(path: &PathBuf) -> NoteMeta {
                     let vals: String;
                     assert_eq!(values.len() > 1, true, "{:?}", path);
                     if values.len() > 2 {
-                        vals = values[1..].join("");
+                        vals = values[1..].join(": ");
                     } else {
                         vals = values[1].to_string()
                     }

@@ -7,8 +7,9 @@
     0 2px 10px 0 rgba(34, 36, 38, 0.15);
   --rad: 6px;
 }
-.content {
-  width: 100%;
+
+body {
+  background-color: var(--bg);
 }
 
 a:link {
@@ -16,6 +17,17 @@ a:link {
 }
 a:visted {
   color: var(--accent);
+}
+
+ul {
+  list-style: none;
+}
+/**
+ * Main content
+ */
+
+.content {
+  width: 100%;
 }
 
 .content-container {
@@ -28,10 +40,6 @@ a:visted {
 .content p {
   font-size: 1.2rem;
   line-height: 2rem;
-}
-
-.tags {
-  list-style: none;
 }
 
 .tags li::before {
@@ -58,6 +66,9 @@ a:visted {
   color: var(--bg);
 }
 
-body {
-  background-color: var(--bg);
+.backlinks {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: column;
+  height: 4rem;
 }
