@@ -73,6 +73,81 @@ pub fn as_data_structure(path: &PathBuf) -> NoteMeta {
     notemeta
 }
 
+/// Zombie utils that are useful when migrating from other formats
+/// Could be part of the config file if it is useful
+///
+#[allow(dead_code)]
+pub fn fix_tiddlywiki_tag_structures(path: &PathBuf) {
+    let fd = File::open(&path).unwrap();
+    let reader = BufReader::new(fd);
+    let mut parser = MetaParserMachine::new();
+    let mut fixed = String::new();
+    for line in reader.lines() {
+        let line_result = line.unwrap();
+        let refline = line_result.as_str();
+        match refline {
+            "---" => match parser.current_state() {
+                MetaParserState::Ready => {
+                    parser.send(MetaParserState::Parsing);
+                    fixed.push_str(&refline);
+                }
+                MetaParserState::Parsing => {
+                    parser.send(MetaParserState::End);
+                    fixed.push_str(&format!("\n{}", refline));
+                }
+                _ => {}
+            },
+            _ => match parser.current_state() {
+                MetaParserState::Parsing => {
+                    let values: Vec<&str> = refline.split(": ").collect();
+                    if values[0] == "tags" {
+                        let tags_first_pass: String = values[1]
+                            .split("]]")
+                            .map(|s| {
+                                if s.starts_with("[[") {
+                                    s.strip_prefix("[[").unwrap();
+                                }
+                                if s.ends_with("]]") {
+                                    s.strip_suffix("]]").unwrap();
+                                }
+                                s
+                            })
+                            .collect::<Vec<&str>>()
+                            .join("");
+                        let tags = tags_first_pass
+                            .split("[[")
+                            .filter(|s| !s.is_empty() && s != &" ")
+                            .map(|s| {
+                                println!("{}", s);
+                                s.trim()
+                            })
+                            .collect::<Vec<&str>>();
+                        let mut fixed_string = String::from("[");
+                        tags.iter().enumerate().for_each(|(idx, tag)| {
+                            if idx != tags.len() - 1 {
+                                fixed_string.push_str(&format!("{},", tag));
+                            } else {
+                                fixed_string.push_str(&format!("{}", tag));
+                            }
+                        });
+                        fixed_string.push_str("]");
+                        fixed.push_str(&format!("\ntags: {}", fixed_string));
+                    } else {
+                        fixed.push_str(&format!("\n{}", refline));
+                    }
+                }
+                MetaParserState::End => {
+                    fixed.push_str(&format!("\n{}", refline));
+                }
+                _ => {
+                    fixed.push_str(&format!("\n{}", refline));
+                }
+            },
+        }
+    }
+    write(&path, fixed).unwrap();
+}
+
 #[allow(dead_code)]
 pub fn fix_tags(path: &PathBuf) {
     let fd = File::open(&path).unwrap();
