@@ -26,8 +26,34 @@ ul {
  * Main content
  */
 
-.content {
-  width: 100%;
+#edit:checked ~ .content {
+  display: none;
+}
+
+#edit:checked ~ .editor {
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+}
+
+.editor {
+  display: none;
+}
+
+.editor label {
+  width: 80%;
+  margin: auto;
+}
+
+.editor textarea {
+  width: 80%;
+  margin: auto;
+  height: 500px;
+  padding: 0.5rem;
+}
+.editor input[type="text"] {
+  width: 80%;
+  margin: auto;
 }
 
 .content-container {
@@ -37,7 +63,12 @@ ul {
   border-radius: var(--rad) var(--rad) 0px 0px;
   box-shadow: var(--shadow);
 }
-.content p {
+
+.content-body {
+  width: 100%;
+}
+
+.content-body p {
   font-size: 1.2rem;
   line-height: 2rem;
 }
