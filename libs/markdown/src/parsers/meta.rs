@@ -43,31 +43,35 @@ pub fn as_data_structure(path: &PathBuf) -> NoteMeta {
     let mut parser = MetaParserMachine::new();
     let mut notemeta = NoteMeta::default();
     for line in reader.lines() {
-        let line_result = line.unwrap();
-        let refline = line_result.as_str();
-        match refline {
-            "---" => match parser.current_state() {
-                MetaParserState::Ready => parser.send(MetaParserState::Parsing),
-                MetaParserState::Parsing => parser.send(MetaParserState::End),
-                _ => {}
-            },
-            _ => match parser.current_state() {
-                MetaParserState::Parsing => {
-                    let values: Vec<&str> = refline.split(": ").collect();
-                    let vals: String;
-                    assert_eq!(values.len() > 1, true, "{:?}", path);
-                    if values.len() > 2 {
-                        vals = values[1..].join(": ");
-                    } else {
-                        vals = values[1].to_string()
-                    }
-                    notemeta.metadata.insert(values[0].to_string(), vals);
+        match line {
+            Err(_) => panic!("{:?}", path),
+            Ok(line_result) => {
+                let refline = line_result.as_str();
+                match refline {
+                    "---" => match parser.current_state() {
+                        MetaParserState::Ready => parser.send(MetaParserState::Parsing),
+                        MetaParserState::Parsing => parser.send(MetaParserState::End),
+                        _ => {}
+                    },
+                    _ => match parser.current_state() {
+                        MetaParserState::Parsing => {
+                            let values: Vec<&str> = refline.split(": ").collect();
+                            let vals: String;
+                            assert_eq!(values.len() > 1, true, "{:?}", path);
+                            if values.len() > 2 {
+                                vals = values[1..].join(": ");
+                            } else {
+                                vals = values[1].to_string()
+                            }
+                            notemeta.metadata.insert(values[0].to_string(), vals);
+                        }
+                        MetaParserState::End => {
+                            notemeta.content.push_str(&format!("\n{}", refline));
+                        }
+                        _ => {}
+                    },
                 }
-                MetaParserState::End => {
-                    notemeta.content.push_str(&format!("\n{}", refline));
-                }
-                _ => {}
-            },
+            }
         }
     }
     notemeta

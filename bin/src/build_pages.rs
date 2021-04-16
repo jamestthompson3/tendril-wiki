@@ -14,7 +14,12 @@ use std::{
 };
 
 pub fn build(wiki_location: &String) {
-    let entrypoint = PathBuf::from(shellexpand::tilde(wiki_location).to_string());
+    let entrypoint: PathBuf;
+    if wiki_location.contains('~') {
+        entrypoint = PathBuf::from(wiki_location.replace('~', &std::env::var("HOME").unwrap()));
+    } else {
+        entrypoint = PathBuf::from(wiki_location);
+    }
     if !Path::new("./public").exists() {
         fs::create_dir_all("./public/tags").unwrap();
         fs::create_dir_all("./public/links").unwrap();
@@ -48,16 +53,6 @@ fn process_file(
     update_backlinks(&templatted.page.title, &templatted.outlinks, backlinks);
     update_templatted_pages(templatted.page, rendered_pages);
 }
-// let filename = path.file_stem().unwrap();
-// let output = render_template(&templatted.page);
-// fs::write(
-//     format!(
-//         "public/{}.html",
-//         &filename.to_str().unwrap().replace(' ', "_")
-//         ),
-//         output,
-//         )
-// .unwrap();
 
 fn parse_entries(
     entrypoint: PathBuf,
@@ -76,7 +71,9 @@ fn parse_entries(
                 process_file(entry.path(), tags, links, pages);
             });
         } else if entry.file_type().unwrap().is_dir() {
-            parse_entries(entry.path(), tags, links, pages);
+            if !entry.path().to_str().unwrap().contains(".git") {
+                parse_entries(entry.path(), tags, links, pages);
+            }
         }
     }
     pool.join();
