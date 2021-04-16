@@ -38,27 +38,25 @@ pub fn to_html(md: &str) -> HTML {
     // TODO maybe don't allocate...
     let mut wiki_link_location = String::new();
 
-    let mut parser = ParserMachine::new();
+    let mut parser_machine = ParserMachine::new();
     let mut outlinks = Vec::new();
     let parser = Parser::new_ext(&md, options).map(|event| match event {
         Event::Text(text) => match &*text {
-            "[" => match parser.current_state() {
+            "[" => match parser_machine.current_state() {
                 ParserState::Accept => {
-                    parser.send(ParserState::LinkStart);
+                    parser_machine.send(ParserState::LinkStart);
                     Event::Text("".into())
                 }
                 ParserState::LinkStart => {
-                    parser.send(ParserState::LocationParsing);
+                    parser_machine.send(ParserState::LocationParsing);
                     Event::Text("".into())
                 }
                 _ => {
-                    panic!(format!(
-                        "Impossible state, {:?} reached for `[`",
-                        parser.current_state()
-                    ));
+                    println!("{}\n\n{:?}", md, parser_machine.current_state());
+                    panic!("Impossible state reached for `[`");
                 }
             },
-            "]" => match parser.current_state() {
+            "]" => match parser_machine.current_state() {
                 ParserState::LinkEnd => {
                     let link_text = wiki_link_location.clone();
                     let location: &str;
@@ -81,32 +79,30 @@ pub fn to_html(md: &str) -> HTML {
                     let link_location = format_links(location);
                     outlinks.push(location.to_string());
                     wiki_link_location.clear();
-                    parser.send(ParserState::Accept);
+                    parser_machine.send(ParserState::Accept);
                     Event::Html(format!(r#"<a href="{}">{}</a>"#, link_location, text).into())
                 }
                 ParserState::LocationParsing => {
-                    parser.send(ParserState::LinkEnd);
+                    parser_machine.send(ParserState::LinkEnd);
                     Event::Text("".into())
                 }
                 ParserState::Accept => Event::Text(text.into()),
                 _ => {
-                    panic!(format!(
-                        "Impossible state, {:?} reached for `]`",
-                        parser.current_state()
-                    ));
+                    println!("{:?}", parser_machine.current_state());
+                    panic!("Impossible statereached for `]`");
                 }
             },
-            _ => match parser.current_state() {
+            _ => match parser_machine.current_state() {
                 ParserState::LocationParsing => {
                     wiki_link_location.push_str(&text);
                     Event::Text("".into())
                 }
                 ParserState::LinkEnd => {
-                    parser.send(ParserState::LocationParsing);
+                    parser_machine.send(ParserState::LocationParsing);
                     Event::Text(format!("]{}", text).into())
                 }
                 ParserState::LinkStart => {
-                    parser.send(ParserState::Accept);
+                    parser_machine.send(ParserState::Accept);
                     Event::Text(format!("[{}", text).into())
                 }
                 _ => Event::Text(text.into()),

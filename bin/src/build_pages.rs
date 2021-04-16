@@ -66,7 +66,9 @@ fn parse_entries(
         let links = Arc::clone(&backlinks);
         let pages = Arc::clone(&rendered_pages);
         let entry = entry.unwrap();
-        if entry.file_type().unwrap().is_file() {
+        if entry.file_type().unwrap().is_file()
+            && entry.file_name().to_str().unwrap().ends_with(".md")
+        {
             pool.execute(move || {
                 process_file(entry.path(), tags, links, pages);
             });
