@@ -24,8 +24,10 @@
         <% for key in links.keys() {  %>
           <h2><%- key %></h2>
           <ul>
-            <% for link in links.get(key).unwrap() {  %>
-              <li><a href="/<%- format_links(link) %>"><%- link %></a></li>
+           <% let mut links = links.get(key).unwrap().to_owned(); %>
+           <% links.dedup(); %>
+            <% for link in links {  %>
+              <li><a href="/<%- format_links(&link) %>"><%- link %></a></li>
             <% } %>
           </ul>
         <% } %>

@@ -1,21 +1,72 @@
 :root {
-  --color: rgba(33, 133, 208, 0.1);
-  --color-darker: rgba(33, 133, 208, 1);
+  --primary: rgba(33, 133, 208, 0.1);
+  --primary-variant: rgba(33, 133, 208, 1);
   --accent: rgb(64, 32, 207);
   --bg: #eeeeee;
+  --bg-darker: #e6e6e6;
   --shadow: 0 2px 4px 0 rgba(34, 36, 38, 0.12),
     0 2px 10px 0 rgba(34, 36, 38, 0.15);
   --rad: 6px;
-}
-.content {
-  width: 100%;
+  --text-color: #000;
 }
 
-a:link {
-  color: var(--color-darker);
+@media (prefers-color-scheme: dark) {
+  :root {
+    --primary-variant: rgb(110, 193, 255);
+    --primary: rgba(33, 133, 208, 1);
+    --accent: rgb(198, 185, 255);
+    --bg: #333333;
+    --bg-darker: #171717;
+    --shadow: 0 2px 4px 0 rgba(120, 130, 140, 0.12),
+      0 2px 10px 0 rgba(120, 130, 140, 0.15);
+    --text-color: #fff;
+  }
 }
-a:visted {
-  color: var(--accent);
+
+body {
+  background-color: var(--bg-darker);
+  color: var(--text-color);
+}
+
+a {
+  color: var(--primary-variant);
+}
+
+ul {
+  list-style: none;
+}
+/**
+ * Main content
+ */
+
+#edit:checked ~ .content {
+  display: none;
+}
+
+#edit:checked ~ .editor {
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+}
+
+.editor {
+  display: none;
+}
+
+.editor label {
+  width: 80%;
+  margin: auto;
+}
+
+.editor textarea {
+  width: 80%;
+  margin: auto;
+  height: 500px;
+  padding: 0.5rem;
+}
+.editor input[type="text"] {
+  width: 80%;
+  margin: auto;
 }
 
 .content-container {
@@ -24,14 +75,16 @@ a:visted {
   padding: 2rem;
   border-radius: var(--rad) var(--rad) 0px 0px;
   box-shadow: var(--shadow);
-}
-.content p {
-  font-size: 1.2rem;
-  line-height: 2rem;
+  background-color: var(--bg);
 }
 
-.tags {
-  list-style: none;
+.content-body {
+  width: 100%;
+}
+
+.content-body p {
+  font-size: 1.2rem;
+  line-height: 2rem;
 }
 
 .tags li::before {
@@ -39,13 +92,13 @@ a:visted {
 }
 
 .title {
-  background-color: var(--color);
+  background-color: var(--primary);
   text-align: center;
   padding: 1rem;
 }
 
 .footer {
-  background-color: var(--color-darker);
+  background-color: var(--primary-variant);
   color: var(--bg);
   width: 60%;
   margin: auto;
@@ -58,6 +111,9 @@ a:visted {
   color: var(--bg);
 }
 
-body {
-  background-color: var(--bg);
+.backlinks {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: column;
+  height: 4rem;
 }

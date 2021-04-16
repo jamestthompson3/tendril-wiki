@@ -3,10 +3,10 @@
   <head>
     <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
     <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, shrink-to-fit=no"
-      />
-      <link rel="stylesheet" href="static/style.css" />
+    name="viewport"
+    content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    <link rel="stylesheet" href="static/style.css" />
     <meta name="description" content="An HTML File" />
     <meta property="og:title" content="<%= title %>" />
     <meta property="og:type" content="website" />
@@ -16,19 +16,42 @@
     <title><%= title %></title>
   </head>
   <body>
-  <div class="content-container">
-  <h1 class="title"><%= title %></h1>
-  <div>
-    <ul class="tags">
-      <% for tag in tags.iter() {  %>
-      <li><a href="tags/<%- tag.replace(' ', "_") %>.html"><%- tag %></a></li>
-      <% } %>
-    </ul>
-  </div>
-  <main class="content">
-    <%- body %>
-  </main>
-  </div>
-  <% include!("footer.stpl"); %>
+    <div class="content-container">
+      <label for="edit">Edit:</label>
+      <input type="checkbox" id="edit">Edit</input>
+      <form class="editor">
+        <label for="title-edit">Title</label>
+        <input id="title-edit" type="text" value="<%- title %>" />
+        <label for="tag-edit">Tags</label>
+        <input id="tag-edit" type="text" value="<%- tags.join(",") %>" />
+        <label for="body">Body</label>
+        <textarea id="body"><%- body %></textarea>
+      </form>
+      <div class="content">
+        <h1 class="title"><%= title %></h1>
+        <div>
+          <ul class="tags">
+            <% for tag in tags.iter() {  %>
+            <li><a href="tags/<%- tag %>.html"><%- tag %></a></li>
+            <% } %>
+          </ul>
+        </div>
+        <main class="content-body">
+          <%- body %>
+        </main>
+        <% if !backlinks.is_empty() { %>
+        <section class="backlinks-container">
+          <hr />
+          <h3>Mentioned in:</h3>
+          <div class="backlinks">
+            <% for link in backlinks.iter() {  %>
+            <a href="<%- link %>.html"><%- link %></a>
+            <% } %>
+          </div>
+        </section>
+        <% } %>
+      </div>
+    </div>
+    <% include!("footer.stpl"); %>
   </body>
 </html>

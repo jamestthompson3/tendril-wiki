@@ -19,9 +19,9 @@
   <div class="content-container">
     <h1 class="title">Pages Tagged: <%= title %></h1>
     <div>
-      <ul class="tags">
+      <ul class="tagged-pages">
         <% for tag in tags.iter() {  %>
-          <li><a href="/<%- tag %>"><%- tag.strip_suffix(".html").unwrap() %></a></li>
+          <li><a href="/<%- tag %>.html"><%- tag %></a></li>
         <% } %>
       </ul>
     </div>
