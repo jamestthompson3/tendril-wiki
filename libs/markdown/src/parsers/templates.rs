@@ -31,6 +31,7 @@ struct LinkPage {
     links: HashMap<String, Vec<String>>,
 }
 
+#[derive(Debug)]
 pub struct TemplattedPage {
     pub title: String,
     pub body: String,
