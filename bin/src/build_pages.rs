@@ -1,7 +1,9 @@
 use markdown::parsers::{
-    as_data_structure, template, template_backlinks, template_entries, template_tag_pages,
-    update_backlinks, update_tag_map, update_templatted_pages, GlobalBacklinks, ParsedPages,
-    TagMapping,
+    as_data_structure, write_backlinks, write_entries, write_tag_pages, GlobalBacklinks,
+    ParsedPages, TagMapping,
+};
+use markdown::processors::{
+    to_template, update_backlinks, update_tag_map, update_templatted_pages,
 };
 use threadpool::ThreadPool;
 
@@ -35,9 +37,9 @@ impl Builder {
         let links = Arc::clone(&self.backlinks);
         let pages = Arc::clone(&self.pages);
         let now = Instant::now();
-        template_entries(&pages, &self.backlinks);
-        template_tag_pages(map);
-        template_backlinks(links);
+        write_entries(&pages, &self.backlinks);
+        write_tag_pages(map);
+        write_backlinks(links);
         println!("compiling all pages took: {}ms", now.elapsed().as_millis());
     }
     pub fn sweep(&self, wiki_location: &String) {
@@ -60,7 +62,7 @@ impl Builder {
 
 fn process_file(path: PathBuf, tags: TagMapping, backlinks: GlobalBacklinks, pages: ParsedPages) {
     let note = as_data_structure(&path);
-    let templatted = template(&note);
+    let templatted = to_template(&note);
     update_tag_map(&templatted.page.title, &templatted.page.tags, tags);
     update_backlinks(&templatted.page.title, &templatted.outlinks, backlinks);
     update_templatted_pages(templatted.page, pages);
