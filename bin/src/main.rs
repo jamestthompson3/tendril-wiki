@@ -1,7 +1,9 @@
-mod build_pages;
 mod config;
+mod build;
 
-use build_pages::Builder;
+use std::path::PathBuf;
+
+use build::pages::Builder;
 use config::read_config;
 use www::server;
 
@@ -27,9 +29,8 @@ async fn main() {
     builder.sweep(&config.wiki_location);
     if build_all {
         builder.compile_all();
-    } else {
-        server(config.port).await;
-    }
+    } 
+        server(config.port, config.wiki_location).await;
 }
 
 

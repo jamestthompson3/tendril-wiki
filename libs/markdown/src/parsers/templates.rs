@@ -12,6 +12,7 @@ pub struct BasicPage<'a> {
     title: &'a String,
     body: &'a String,
     tags: &'a Vec<String>,
+    raw_md: &'a str,
     backlinks: Vec<String>,
 }
 
@@ -33,6 +34,7 @@ pub struct TemplattedPage {
     pub title: String,
     pub body: String,
     pub tags: Vec<String>,
+    pub raw_md: String,
 }
 
 pub struct ParsedTemplate {
@@ -54,6 +56,7 @@ pub fn render_template(page: &TemplattedPage, links: Option<&Vec<String>>) -> St
         title: &page.title,
         tags: &page.tags,
         body: &page.body,
+        raw_md: &page.raw_md,
         backlinks,
     };
     ctx.render_once().unwrap()

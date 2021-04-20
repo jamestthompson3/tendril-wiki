@@ -18,6 +18,7 @@ pub fn to_template(note: &NoteMeta) -> ParsedTemplate {
         title,
         tags,
         body: html.body,
+        raw_md: note.content.clone(),
     };
     ParsedTemplate {
         outlinks: html.outlinks,

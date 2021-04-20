@@ -1,9 +1,12 @@
 use std::{
     collections::HashMap,
+    fmt::Write,
     fs::{write, File},
     io::{BufRead, BufReader},
     path::PathBuf,
 };
+
+use super::path_to_reader;
 
 #[derive(Copy, Clone, PartialEq, Debug)]
 enum MetaParserState {
@@ -37,41 +40,60 @@ impl MetaParserMachine {
     }
 }
 
-pub fn as_data_structure(path: &PathBuf) -> NoteMeta {
-    let fd = File::open(&path).unwrap();
-    let reader = BufReader::new(fd);
+impl From<String> for NoteMeta {
+    fn from(stringified: String) -> Self {
+        parse_meta(stringified.lines().map(|s| s.to_string()), "raw_string")
+    }
+}
+
+impl Into<String> for NoteMeta {
+    fn into(self) -> String {
+        let mut metadata = String::new();
+        for key in self.metadata.keys() {
+            metadata.push_str(key);
+            metadata.push_str(": ");
+            metadata.push_str(self.metadata.get(key).unwrap());
+            metadata.push_str("\n");
+        }
+        let mut formatted_string = String::new();
+        writeln!(&mut formatted_string, "---").unwrap();
+        writeln!(&mut formatted_string, "{}---", metadata).unwrap();
+        writeln!(&mut formatted_string, "{}", self.content).unwrap();
+        formatted_string
+    }
+}
+
+pub fn path_to_data_structure(path: &PathBuf) -> NoteMeta {
+    parse_meta(path_to_reader(path), path.to_str().unwrap())
+}
+
+pub fn parse_meta(lines: impl Iterator<Item = String>, debug_marker: &str) -> NoteMeta {
     let mut parser = MetaParserMachine::new();
     let mut notemeta = NoteMeta::default();
-    for line in reader.lines() {
-        match line {
-            Err(_) => panic!("{:?}", path),
-            Ok(line_result) => {
-                let refline = line_result.as_str();
-                match refline {
-                    "---" => match parser.current_state() {
-                        MetaParserState::Ready => parser.send(MetaParserState::Parsing),
-                        MetaParserState::Parsing => parser.send(MetaParserState::End),
-                        _ => {}
-                    },
-                    _ => match parser.current_state() {
-                        MetaParserState::Parsing => {
-                            let values: Vec<&str> = refline.split(": ").collect();
-                            let vals: String;
-                            assert_eq!(values.len() > 1, true, "{:?}", path);
-                            if values.len() > 2 {
-                                vals = values[1..].join(": ");
-                            } else {
-                                vals = values[1].to_string()
-                            }
-                            notemeta.metadata.insert(values[0].to_string(), vals);
-                        }
-                        MetaParserState::End => {
-                            notemeta.content.push_str(&format!("\n{}", refline));
-                        }
-                        _ => {}
-                    },
+    for line in lines {
+        match line.as_str() {
+            "---" => match parser.current_state() {
+                MetaParserState::Ready => parser.send(MetaParserState::Parsing),
+                MetaParserState::Parsing => parser.send(MetaParserState::End),
+                _ => {}
+            },
+            _ => match parser.current_state() {
+                MetaParserState::Parsing => {
+                    let values: Vec<&str> = line.split(": ").collect();
+                    let vals: String;
+                    assert_eq!(values.len() > 1, true, "{}", debug_marker);
+                    if values.len() > 2 {
+                        vals = values[1..].join(": ");
+                    } else {
+                        vals = values[1].to_string()
+                    }
+                    notemeta.metadata.insert(values[0].to_string(), vals);
                 }
-            }
+                MetaParserState::End => {
+                    notemeta.content.push_str(&format!("\n{}", line));
+                }
+                _ => {}
+            },
         }
     }
     notemeta
