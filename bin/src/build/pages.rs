@@ -1,6 +1,6 @@
 use markdown::parsers::{
-    as_data_structure, write_backlinks, write_entries, write_tag_pages, GlobalBacklinks,
-    ParsedPages, TagMapping,
+    parse_wiki_entry, path_to_data_structure, write_backlinks, write_entries, write_tag_pages,
+    GlobalBacklinks, ParsedPages, TagMapping,
 };
 use markdown::processors::{
     to_template, update_backlinks, update_tag_map, update_templatted_pages,
@@ -12,17 +12,19 @@ use std::{
     fs::{self, read_dir},
     path::{Path, PathBuf},
     sync::{Arc, Mutex},
-    time::Instant,
 };
 
-#[derive(Debug)]
+/// ## TODO:
+/// figure out how to encapsulate parse_entries and process_file better
+/// ## NOTE:
+/// Some gotchas to think about -> We're essentially keeping the whole wiki text in memory
+/// which means that for very large wikis it can be a memory hog.
+/// For the current size I test with ( a little over 600 pages ), it currently consumes 12MB of memory.
 pub struct Builder {
     pub backlinks: GlobalBacklinks,
     pub pages: ParsedPages,
     pub tag_map: TagMapping,
 }
-
-/// TODO: figure out how to encapsulate parse_entries and process_file better
 
 impl Builder {
     pub fn new() -> Self {
@@ -36,19 +38,12 @@ impl Builder {
         let map = Arc::clone(&self.tag_map);
         let links = Arc::clone(&self.backlinks);
         let pages = Arc::clone(&self.pages);
-        let now = Instant::now();
         write_entries(&pages, &self.backlinks);
         write_tag_pages(map);
         write_backlinks(links);
-        println!("compiling all pages took: {}ms", now.elapsed().as_millis());
     }
     pub fn sweep(&self, wiki_location: &String) {
-        let entrypoint: PathBuf;
-        if wiki_location.contains('~') {
-            entrypoint = PathBuf::from(wiki_location.replace('~', &std::env::var("HOME").unwrap()));
-        } else {
-            entrypoint = PathBuf::from(wiki_location);
-        }
+        let entrypoint = parse_wiki_entry(wiki_location);
         if !Path::new("./public").exists() {
             fs::create_dir_all("./public/tags").unwrap();
             fs::create_dir_all("./public/links").unwrap();
@@ -61,7 +56,7 @@ impl Builder {
 }
 
 fn process_file(path: PathBuf, tags: TagMapping, backlinks: GlobalBacklinks, pages: ParsedPages) {
-    let note = as_data_structure(&path);
+    let note = path_to_data_structure(&path);
     let templatted = to_template(&note);
     update_tag_map(&templatted.page.title, &templatted.page.tags, tags);
     update_backlinks(&templatted.page.title, &templatted.outlinks, backlinks);
