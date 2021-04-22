@@ -63,8 +63,9 @@ impl Into<String> for NoteMeta {
     }
 }
 
-pub fn path_to_data_structure(path: &PathBuf) -> NoteMeta {
-    parse_meta(path_to_reader(path), path.to_str().unwrap())
+pub fn path_to_data_structure(path: &PathBuf) -> Result<NoteMeta, Box<dyn std::error::Error>> {
+    let reader = path_to_reader(path)?;
+    Ok(parse_meta(reader, path.to_str().unwrap()))
 }
 
 pub fn parse_meta(lines: impl Iterator<Item = String>, debug_marker: &str) -> NoteMeta {

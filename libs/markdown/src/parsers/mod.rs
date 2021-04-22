@@ -13,10 +13,14 @@ pub use self::meta::*;
 pub use self::templates::*;
 
 // TODO: move these things somewhere else... Maybe another crate?
-pub fn path_to_reader(path: &PathBuf) -> impl Iterator<Item = String> {
-    let fd = File::open(&path).unwrap();
-    let reader = BufReader::new(fd);
-    reader.lines().map(|line| line.unwrap())
+pub fn path_to_reader(path: &PathBuf) -> Result<impl Iterator<Item = String>, std::io::Error> {
+    match File::open(&path) {
+        Ok(fd) => {
+            let reader = BufReader::new(fd);
+            Ok(reader.lines().map(|line| line.unwrap()))
+        }
+        Err(e) => Err(e),
+    }
 }
 
 pub fn parse_wiki_entry(wiki_location: &String) -> PathBuf {

@@ -61,6 +61,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "build"
+version = "0.1.0"
+dependencies = [
+ "directories",
+ "markdown",
+ "num_cpus",
+ "serde",
+ "serde_derive",
+ "threadpool",
+ "toml",
+]
+
+[[package]]
 name = "byteorder"
 version = "1.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -646,15 +659,9 @@ checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 name = "platform-bin"
 version = "0.1.0"
 dependencies = [
- "directories",
+ "build",
  "logging",
- "markdown",
- "num_cpus",
- "serde",
- "serde_derive",
- "threadpool",
  "tokio",
- "toml",
  "urlencoding",
  "www",
 ]
@@ -1338,8 +1345,10 @@ checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
 name = "www"
 version = "0.1.0"
 dependencies = [
+ "build",
  "markdown",
  "tokio",
+ "urlencoding",
  "warp",
 ]
 
