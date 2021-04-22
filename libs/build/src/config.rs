@@ -3,7 +3,7 @@ use std::{fs, path::PathBuf};
 use directories::ProjectDirs;
 use serde_derive::Deserialize;
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct Config {
     pub wiki_location: String,
     pub port: u16,

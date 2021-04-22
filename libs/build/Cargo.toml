@@ -1,5 +1,5 @@
 [package]
-name = "platform-bin"
+name = "build"
 version = "0.1.0"
 authors = ["taylor <taylor@teukka.tech>"]
 edition = "2018"
@@ -7,8 +7,10 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-logging = { path = "../libs/logging" }
-build = { path = "../libs/build" }
-www = { path = "../libs/www" }
-urlencoding = "1.1.1"
-tokio = { version = "1", features = ["full"] }
+threadpool = "1.8.1"
+markdown = { path = "../markdown" }
+num_cpus = "1.13.0"
+toml = "0.5.8"
+directories = "3.0.1"
+serde_derive = "1.0.125"
+serde = "1.0.125"

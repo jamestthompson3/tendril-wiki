@@ -1,10 +1,5 @@
-mod config;
-mod build;
 
-use std::path::PathBuf;
-
-use build::pages::Builder;
-use config::read_config;
+use build::{RefBuilder, pages::Builder, config::read_config};
 use www::server;
 
 #[tokio::main]
@@ -12,7 +7,7 @@ async fn main() {
     let args = std::env::args().skip(1).collect::<Vec<String>>();
     let mut args = args.iter();
     let mut build_all = false;
- while let Some(arg) = args.next() {
+    while let Some(arg) = args.next() {
         match arg.as_ref() {
             "-v" | "-version" | "--version" => return print_version(),
             "-h" | "-help" | "--help" => return print_help(),
@@ -25,12 +20,15 @@ async fn main() {
         }
     };
     let config = read_config();
-    let builder = Builder::new();
-    builder.sweep(&config.wiki_location);
     if build_all {
+        let builder = Builder::new();
+        builder.sweep(&config.wiki_location);
         builder.compile_all();
+    } else {
+        let ref_builder = RefBuilder::new();
+        ref_builder.build(&config.wiki_location);
+        server(config.clone(), ref_builder).await;
     } 
-        server(config.port, config.wiki_location).await;
 }
 
 
@@ -40,10 +38,10 @@ fn print_version() {
 fn print_help() {
     print!(
         "Usage: tendril [options]
-Options:
-    -b, --build    Build all pages as HTML and output to ./public
-    -v, --version  Print version.
-    -h, --help     Show this message.
-",
-    );
+        Options:
+        -b, --build    Build all pages as HTML and output to ./public
+        -v, --version  Print version.
+        -h, --help     Show this message.
+        ",
+        );
 }

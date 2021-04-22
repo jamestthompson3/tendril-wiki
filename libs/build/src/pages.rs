@@ -56,7 +56,7 @@ impl Builder {
 }
 
 fn process_file(path: PathBuf, tags: TagMapping, backlinks: GlobalBacklinks, pages: ParsedPages) {
-    let note = path_to_data_structure(&path);
+    let note = path_to_data_structure(&path).unwrap();
     let templatted = to_template(&note);
     update_tag_map(&templatted.page.title, &templatted.page.tags, tags);
     update_backlinks(&templatted.page.title, &templatted.outlinks, backlinks);
