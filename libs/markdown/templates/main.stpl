@@ -6,7 +6,7 @@
     name="viewport"
     content="width=device-width, initial-scale=1, shrink-to-fit=no"
     />
-    <link rel="stylesheet" href="static/style.css" />
+    <link rel="stylesheet" href="/static/style.css" />
     <meta name="description" content="An HTML File" />
     <meta property="og:title" content="<%= title %>" />
     <meta property="og:type" content="website" />
@@ -33,7 +33,7 @@
         <div>
           <ul class="tags">
             <% for tag in tags.iter() {  %>
-            <li><a href="tags/<%- tag %>.html"><%- tag %></a></li>
+            <li><a href="tags/<%- tag %>"><%- tag %></a></li>
             <% } %>
           </ul>
         </div>
@@ -45,8 +45,10 @@
           <hr />
           <h3>Mentioned in:</h3>
           <div class="backlinks">
+            <% use super::html::format_links;  %>
             <% for link in backlinks.iter() {  %>
-            <a href="<%- link %>.html"><%- link %></a>
+            <% println!("{}", link);  %>
+            <a href="<%- format_links(&link) %>"><%- link %></a>
             <% } %>
           </div>
         </section>

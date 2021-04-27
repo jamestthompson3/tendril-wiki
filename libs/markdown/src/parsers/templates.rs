@@ -17,6 +17,12 @@ pub struct BasicPage<'a> {
 }
 
 #[derive(TemplateOnce)]
+#[template(path = "index.stpl")]
+pub struct IndexPage {
+    user: String
+}
+
+#[derive(TemplateOnce)]
 #[template(path = "tags.stpl")]
 struct TagPage {
     title: String,
@@ -62,6 +68,17 @@ pub fn render_template(page: &TemplattedPage, links: Option<&Vec<String>>) -> St
     ctx.render_once().unwrap()
 }
 
+pub fn write_index_page(user: String) {
+    let ctx = IndexPage {
+        user
+    };
+        fs::write(
+            "public/index.html",
+            ctx.render_once().unwrap(),
+        ).unwrap();
+
+}
+
 pub fn write_entries(pages: &ParsedPages, backlinks: &GlobalBacklinks) {
     let page_vals = pages.lock().unwrap();
     let link_vals = backlinks.lock().unwrap();
@@ -69,8 +86,9 @@ pub fn write_entries(pages: &ParsedPages, backlinks: &GlobalBacklinks) {
         let links = link_vals.get(&page.title);
         let output = render_template(&page, links);
         // TODO use path here instead of title? Since `/` in title can cause issues in fs::write
+        fs::create_dir(format!("public/{}", page.title.replace('/', "-"))).unwrap();
         fs::write(
-            format!("public/{}.html", page.title.replace('/', "-")),
+            format!("public/{}/index.html", page.title.replace('/', "-")),
             output,
         )
         .unwrap();
@@ -86,8 +104,9 @@ pub fn write_tag_pages(map: TagMapping) {
             title: title.clone(),
             tags,
         };
+        fs::create_dir(format!("public/{}", title)).unwrap();
         fs::write(
-            format!("public/tags/{}.html", title),
+            format!("public/tags/{}/index.html", title),
             ctx.render_once().unwrap(),
         )
         .unwrap();

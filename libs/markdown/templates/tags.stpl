@@ -21,7 +21,7 @@
     <div>
       <ul class="tagged-pages">
         <% for tag in tags.iter() {  %>
-          <li><a href="/<%- tag %>.html"><%- tag %></a></li>
+          <li><a href="/<%- tag %>"><%- tag %></a></li>
         <% } %>
       </ul>
     </div>

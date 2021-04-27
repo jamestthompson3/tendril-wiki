@@ -123,7 +123,7 @@ pub fn format_links(link: &str) -> String {
     if link.starts_with("http") {
         return link.to_string();
     }
-    format!("{}.html", encode(&link)) // HACK: deal with warp decoding this later
+    format!("/{}", encode(&link)) // HACK: deal with warp decoding this later
 }
 
 #[cfg(test)]
@@ -139,7 +139,7 @@ mod tests {
         );
         let wiki_page = "My Cool Page";
         assert_eq!(
-            String::from("My%20Cool%20Page.html"),
+            String::from("My%20Cool%20Page"),
             format_links(&wiki_page)
         );
     }

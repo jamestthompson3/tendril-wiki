@@ -1,6 +1,6 @@
 use markdown::parsers::{
-    parse_wiki_entry, path_to_data_structure, write_backlinks, write_entries, write_tag_pages,
-    GlobalBacklinks, ParsedPages, TagMapping,
+    parse_wiki_entry, path_to_data_structure, write_backlinks, write_entries, write_index_page,
+    write_tag_pages, GlobalBacklinks, ParsedPages, TagMapping,
 };
 use markdown::processors::{
     to_template, update_backlinks, update_tag_map, update_templatted_pages,
@@ -14,12 +14,16 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+use crate::read_config;
+
 /// ## TODO:
 /// figure out how to encapsulate parse_entries and process_file better
 /// ## NOTE:
 /// Some gotchas to think about -> We're essentially keeping the whole wiki text in memory
 /// which means that for very large wikis it can be a memory hog.
 /// For the current size I test with ( a little over 600 pages ), it currently consumes 12MB of memory.
+/// Not a huge issue, since we don't keep this in memory for serving pages, but would be nice to
+/// get this down.
 pub struct Builder {
     pub backlinks: GlobalBacklinks,
     pub pages: ParsedPages,
@@ -41,6 +45,9 @@ impl Builder {
         write_entries(&pages, &self.backlinks);
         write_tag_pages(map);
         write_backlinks(links);
+        write_index_page(read_config().user);
+        fs::create_dir("public/static").unwrap();
+        fs::copy("./static/style.css", "./public/static/style.css").unwrap();
     }
     pub fn sweep(&self, wiki_location: &String) {
         let entrypoint = parse_wiki_entry(wiki_location);

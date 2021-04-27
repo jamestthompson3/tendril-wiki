@@ -1,4 +1,4 @@
-use std::{fs, path::PathBuf};
+use std::{fs, path::PathBuf, env::var};
 
 use directories::ProjectDirs;
 use serde_derive::Deserialize;
@@ -7,6 +7,7 @@ use serde_derive::Deserialize;
 pub struct Config {
     pub wiki_location: String,
     pub port: u16,
+    pub user: String
 }
 
 pub fn read_config() -> Config {
@@ -17,9 +18,22 @@ pub fn read_config() -> Config {
     if !config_path.exists() {
         fs::create_dir_all(config_dir).unwrap();
         // FIXME: Later use includestr!
-        let default_conf = format!("wiki_location = \"~/wiki\"\nport = 6683");
+        let default_conf = format!("wiki_location = \"~/wiki\"\nport = 6683\nuser = \"{}\"", get_user());
         fs::write(&config_path, default_conf).unwrap();
     }
     let config: Config = toml::from_str(&fs::read_to_string(config_path).unwrap()).unwrap();
     config
+}
+
+fn get_user() -> String {
+        match var("NAME") {
+            Ok(user) => return user,
+            Err(_) => match var("USER") {
+                Ok(user) => return user,
+                Err(_) => match var("USERNAME") {
+                    Ok(user) => return user,
+                    Err(_) => return String::from("user"),
+                },
+            },
+        }
 }
