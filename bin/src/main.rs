@@ -21,6 +21,7 @@ async fn main() {
     };
     let config = read_config();
     if build_all {
+        std::fs::remove_dir_all("./public").unwrap();
         let builder = Builder::new();
         builder.sweep(&config.wiki_location);
         builder.compile_all();
@@ -28,7 +29,7 @@ async fn main() {
         let ref_builder = RefBuilder::new();
         ref_builder.build(&config.wiki_location);
         server(config.clone(), ref_builder).await;
-    } 
+    }
 }
 
 
