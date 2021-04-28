@@ -1,7 +1,4 @@
-use markdown::parsers::{
-    parse_wiki_entry, path_to_data_structure, write_backlinks, write_entries, write_index_page,
-    write_tag_pages, GlobalBacklinks, ParsedPages, TagMapping,
-};
+use markdown::parsers::{GlobalBacklinks, ParsedPages, TagMapping, parse_wiki_entry, path_to_data_structure, write_backlinks, write_entries, write_index_page, write_tag_index, write_tag_pages};
 use markdown::processors::{
     to_template, update_backlinks, update_tag_map, update_templatted_pages,
 };
@@ -44,6 +41,7 @@ impl Builder {
         let pages = Arc::clone(&self.pages);
         write_entries(&pages, &self.backlinks);
         write_tag_pages(map);
+        write_tag_index(Arc::clone(&self.tag_map));
         write_backlinks(links);
         write_index_page(read_config().user);
         fs::create_dir("public/static").unwrap();

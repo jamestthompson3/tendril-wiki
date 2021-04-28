@@ -110,13 +110,21 @@ pub fn write_tag_pages(map: TagMapping) {
             title: title.clone(),
             tags,
         };
-        fs::create_dir(format!("public/{}", title)).unwrap();
+        fs::create_dir(format!("public/tags/{}", title)).unwrap();
         fs::write(
             format!("public/tags/{}/index.html", title),
             ctx.render_once().unwrap(),
         )
         .unwrap();
     }
+}
+
+pub fn write_tag_index(map: TagMapping) {
+    let tag_map = map.lock().unwrap();
+    let ctx = TagIndex {
+        tags: tag_map.clone()
+    };
+    fs::write("public/tags/index.html", ctx.render_once().unwrap()).unwrap();
 }
 
 pub fn write_backlinks(map: GlobalBacklinks) {

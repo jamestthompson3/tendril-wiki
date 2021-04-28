@@ -1347,6 +1347,7 @@ version = "0.1.0"
 dependencies = [
  "build",
  "markdown",
+ "sailfish",
  "tokio",
  "urlencoding",
  "warp",
