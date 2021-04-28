@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en-US" prefix="og:http://ogp.me/ns#">
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+      />
+      <link rel="stylesheet" href="/static/style.css" />
+    <meta name="description" content="Tagged Topics" />
+    <meta property="og:title" content="Tagged Topics" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="" />
+    <meta property="og:image" content="" />
+    <meta name="robots" content="index, follow">
+    <title>Tagged Topics</title>
+  </head>
+  <body>
+  <div class="content-container">
+    <h1 class="title">Tagged Topics</h1>
+    <div>
+        <% use super::html::format_links;  %>
+        <% for key in tags.keys() {  %>
+          <h2><%- key %></h2>
+          <ul>
+           <% let mut tags = tags.get(key).unwrap().to_owned(); %>
+           <% tags.dedup(); %>
+            <% for tag in tags {  %>
+              <li><a href="<%- format_links(&tag) %>"><%- tag %></a></li>
+            <% } %>
+          </ul>
+        <% } %>
+    </div>
+    </div>
+    <% include!("footer.stpl"); %>
+  </body>
+</html>

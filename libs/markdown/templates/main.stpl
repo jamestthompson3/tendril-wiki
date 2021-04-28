@@ -47,7 +47,6 @@
           <div class="backlinks">
             <% use super::html::format_links;  %>
             <% for link in backlinks.iter() {  %>
-            <% println!("{}", link);  %>
             <a href="<%- format_links(&link) %>"><%- link %></a>
             <% } %>
           </div>

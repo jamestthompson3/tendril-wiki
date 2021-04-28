@@ -17,22 +17,28 @@ pub struct BasicPage<'a> {
 }
 
 #[derive(TemplateOnce)]
+#[template(path = "tag_idx.stpl")]
+pub struct TagIndex {
+    pub tags: HashMap<String, Vec<String>>
+}
+
+#[derive(TemplateOnce)]
 #[template(path = "index.stpl")]
 pub struct IndexPage {
-    user: String
+    pub user: String
 }
 
 #[derive(TemplateOnce)]
 #[template(path = "tags.stpl")]
-struct TagPage {
-    title: String,
-    tags: Vec<String>,
+pub struct TagPage {
+    pub title: String,
+    pub tags: Vec<String>,
 }
 
 #[derive(TemplateOnce)]
 #[template(path = "backlinks.stpl")]
-struct LinkPage {
-    links: HashMap<String, Vec<String>>,
+pub struct LinkPage {
+    pub links: HashMap<String, Vec<String>>,
 }
 
 #[derive(Debug)]

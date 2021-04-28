@@ -20,8 +20,8 @@
       <div class="content">
         <h1 class="title"><%= user %>'s notebook</h1>
         <div>
-        <h2><a href="/tags/index.html">Browse tagged topics</a></h2>
-        <h2><a href="/links/index.html">View conent index</a></h2>
+        <h2><a href="/tags">Browse tagged topics</a></h2>
+        <h2><a href="/links">View conent index</a></h2>
         </div>
       </div>
     </div>
