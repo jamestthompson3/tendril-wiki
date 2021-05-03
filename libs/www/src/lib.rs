@@ -1,5 +1,4 @@
-use markdown::parsers::{IndexPage, LinkPage, TagIndex, TagPage};
-use urlencoding::decode;
+use markdown::parsers::{IndexPage};
 use warp::Filter;
 use std::{
     collections::HashMap,
@@ -9,81 +8,13 @@ use std::{
 use sailfish::TemplateOnce;
 
 use::markdown::ingestors::WebFormData;
-use::markdown::ingestors::fs::{write, read};
+use::markdown::ingestors::fs::write;
 use::build::{RefBuilder, config::Config};
 // let wiki = warp::fs::dir("public");
+pub mod handlers;
 
-fn with_location(wiki_location: Arc<String>) -> impl Filter<Extract = (Arc<String>,), Error = std::convert::Infallible> + Clone {
-    warp::any().map(move || wiki_location.clone())
-}
+use crate::handlers::*;
 
-async fn with_file(path: String, refs: RefBuilder, wiki_location: Arc<String>) -> Result<impl warp::Reply, warp::Rejection> {
-    match path.as_str() {
-        "links" => {
-            let ref_links = refs.links();
-            let links = ref_links.lock().unwrap();
-            let ctx = LinkPage {
-                links: links.clone() 
-            };
-            Ok(warp::reply::html(ctx.render_once().unwrap()))
-        },
-        "tags" => {
-            let ref_tags = refs.tags();
-            let tags = ref_tags.lock().unwrap();
-            let ctx = TagIndex {
-                tags: tags.clone()
-            };
-            Ok(warp::reply::html(ctx.render_once().unwrap()))
-        },
-        _ => {
-            let links = refs.links();
-            let tags = refs.tags();
-            let page = read(&wiki_location.to_string(), path, tags, links).map_err(|_| warp::reject())?;
-            Ok(warp::reply::html(page))
-        }
-    }
-}
-
-// TODO: Not repeat this the same as file
-async fn with_nested_file(mut main_path: String, sub_path: String, refs: RefBuilder, wiki_location: Arc<String>)-> Result<impl warp::Reply, warp::Rejection> {
-    match main_path.as_str() {
-        "tags" => {
-            let ref_tags = refs.tags();
-            let tags = ref_tags.lock().unwrap();
-            // I don't know why warp doesn't decode the sub path here...
-            let sub_path_decoded = decode(&sub_path).unwrap();
-            match tags.get(&sub_path_decoded) {
-                Some(tags) => {
-                    let ctx = TagPage {
-                        title: sub_path_decoded,
-                        tags: tags.to_owned()
-                    };
-                    Ok(warp::reply::html(ctx.render_once().unwrap()))
-                }
-                None => {
-                    Err(warp::reject())
-                }
-            }
-        },
-        _ => {
-            // I don't know why warp doesn't decode the sub path here...
-            let sub_path_decoded = decode(&sub_path).unwrap();
-            let links = refs.links();
-            let tags = refs.tags();
-            main_path.push_str(&sub_path_decoded.as_str());
-            let page = read(&wiki_location.to_string(), main_path, tags, links).map_err(|_| warp::reject())?;
-            Ok(warp::reply::html(page))
-        }
-    }
-}
-
-fn with_user(user: Arc<String>) -> impl Filter<Extract = (Arc<String>,), Error = std::convert::Infallible> + Clone {
-    warp::any().map(move || user.clone())
-}
-
-fn with_refs(refs: RefBuilder)-> impl Filter<Extract = (RefBuilder,), Error = std::convert::Infallible> + Clone {
-    warp::any().map(move || refs.clone())
-}
 pub async fn server(config: Config, ref_builder: RefBuilder) {
     let wiki_location = config.wiki_location.clone();
     let indx = warp::get().and(with_user(Arc::new(config.user))).map(|user: Arc<String>| {
