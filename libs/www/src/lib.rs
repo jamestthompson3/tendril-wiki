@@ -48,7 +48,6 @@ async fn with_file(path: String, refs: RefBuilder, wiki_location: Arc<String>) -
 async fn with_nested_file(mut main_path: String, sub_path: String, refs: RefBuilder, wiki_location: Arc<String>)-> Result<impl warp::Reply, warp::Rejection> {
     match main_path.as_str() {
         "tags" => {
-            println!("Sub: {}", sub_path);
             let ref_tags = refs.tags();
             let tags = ref_tags.lock().unwrap();
             // I don't know why warp doesn't decode the sub path here...

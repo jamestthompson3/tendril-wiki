@@ -42,7 +42,7 @@ impl MetaParserMachine {
 
 impl From<String> for NoteMeta {
     fn from(stringified: String) -> Self {
-        parse_meta(stringified.lines().map(|s| s.to_string()), "raw_string")
+        parse_meta(stringified.lines().map(|s| s.to_string()), "raw_string") // mark that we've parsed from a passed string instead of a file
     }
 }
 
@@ -86,9 +86,9 @@ pub fn parse_meta(lines: impl Iterator<Item = String>, debug_marker: &str) -> No
                     if values.len() > 2 {
                         vals = values[1..].join(": ");
                     } else {
-                        vals = values[1].to_string()
+                        vals = values[1].into()
                     }
-                    notemeta.metadata.insert(values[0].to_string(), vals);
+                    notemeta.metadata.insert(values[0].into(), vals);
                 }
                 MetaParserState::End => {
                     notemeta.content.push_str(&format!("\n{}", line));
