@@ -1,5 +1,6 @@
-use markdown::parsers::{IndexPage};
-use warp::Filter;
+use markdown::parsers::IndexPage;
+use urlencoding::encode;
+use warp::{http::Uri, Filter};
 use std::{
     collections::HashMap,
     sync::Arc
@@ -35,8 +36,9 @@ pub async fn server(config: Config, ref_builder: RefBuilder) {
                   .and(with_location(Arc::new(config.wiki_location)))
                   .map(|form_body: HashMap<String, String>, wiki_location: Arc<String>| {
                       let parsed_data = WebFormData::from(form_body);
+                      let redir_uri = format!("/{}", encode(&parsed_data.title));
                       write(&wiki_location.to_string(), parsed_data).unwrap();
-                      warp::reply::with_status("Ok", warp::http::StatusCode::OK)
+                      warp::redirect(redir_uri.parse::<Uri>().unwrap())
                   })));
     let routes = static_files.or(nested).or(edit).or(wiki).or(indx);
     let port: u16 = config.port;
