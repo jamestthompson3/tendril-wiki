@@ -138,9 +138,6 @@ mod tests {
             format_links(&http_link)
         );
         let wiki_page = "My Cool Page";
-        assert_eq!(
-            String::from("My%20Cool%20Page"),
-            format_links(&wiki_page)
-        );
+        assert_eq!(String::from("/My%20Cool%20Page"), format_links(&wiki_page));
     }
 }
