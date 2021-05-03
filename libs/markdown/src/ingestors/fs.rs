@@ -1,6 +1,6 @@
 use std::{fs, path::PathBuf};
 
-use crate::processors::process_tags;
+use crate::processors::tags::TagsArray;
 use crate::{
     parsers::{
         parse_meta, parse_wiki_entry, path_to_data_structure, path_to_reader, render_template,
@@ -39,23 +39,19 @@ pub fn write(wiki_location: &String, data: WebFormData) -> Result<(), WriteWikiE
     }
     // Some reason the browser adds \r\n
     note_meta.content = data.body.replace("\r\n", "\n");
-    let updated_tags = data
-        .tags
-        .iter()
-        .filter(|t| !t.is_empty())
-        .map(|t| t.to_string())
-        .collect::<String>();
+    let updated_tags: TagsArray = data.tags.into();
 
     if let Some(existing_tags) = note_meta.metadata.get("tags") {
-        if updated_tags.len() != process_tags(&existing_tags).len() {
+        let existing_tag_array = TagsArray::from(existing_tags.to_string());
+        if updated_tags.len() != existing_tag_array.len() {
             note_meta
                 .metadata
-                .insert("tags".to_string(), format!("{:?}", updated_tags));
+                .insert("tags".into(), updated_tags.write());
         }
     } else if updated_tags.len() > 0 {
         note_meta
             .metadata
-            .insert("tags".to_string(), format!("{:?}", updated_tags));
+            .insert("tags".to_string(), updated_tags.write());
     }
 
     let final_note: String = note_meta.into();

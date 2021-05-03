@@ -2,6 +2,10 @@ use crate::parsers::{
     to_html, GlobalBacklinks, NoteMeta, ParsedPages, ParsedTemplate, TagMapping, TemplattedPage,
 };
 
+pub mod tags;
+
+use self::tags::*;
+
 pub fn to_template(note: &NoteMeta) -> ParsedTemplate {
     let html = to_html(&note.content);
     let default_title = "Untitled".to_string();
@@ -12,7 +16,7 @@ pub fn to_template(note: &NoteMeta) -> ParsedTemplate {
         .to_owned();
     let tags = match note.metadata.get("tags") {
         None => Vec::with_capacity(0),
-        Some(raw_tags) => process_tags(raw_tags),
+        Some(raw_tags) => TagsArray::new(raw_tags).values,
     };
     let page = TemplattedPage {
         title,
@@ -62,51 +66,5 @@ pub fn update_tag_map(title: &str, tags: &Vec<String>, tag_map: TagMapping) {
                 global_tag_map.insert(tag.to_string(), vec![title.to_owned()]);
             }
         }
-    }
-}
-
-// TODO:
-// Eventually it would be nice to properly serialize note meta props so we don't have to parse.
-pub fn process_tags(tag_str: &str) -> Vec<String> {
-    if tag_str.find('[') != None {
-        let split_tags = tag_str
-            .strip_prefix('[')
-            .unwrap()
-            .strip_suffix(']')
-            .unwrap()
-            .split(',')
-            .filter(|s| !s.is_empty() && s != &" ") // maybe use filter_map here?
-            .map(|s| s.trim())
-            .map(|s| s.to_owned())
-            .collect();
-        return split_tags;
-    }
-    tag_str
-        .split(' ')
-        .filter(|s| !s.is_empty())
-        .map(|s| s.to_owned())
-        .collect()
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn parse_tags_with_wikilink() {
-        let tag_string = "[reality building, Article]";
-        assert_eq!(
-            process_tags(tag_string),
-            vec!["reality building", "Article"]
-        );
-    }
-
-    #[test]
-    fn parse_tags_without_wikilinks() {
-        let tag_string = "Tools Article project-management";
-        assert_eq!(
-            process_tags(tag_string),
-            vec!["Tools", "Article", "project-management"]
-        );
     }
 }
