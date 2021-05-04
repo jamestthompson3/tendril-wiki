@@ -17,6 +17,7 @@
     <title>Backlinks</title>
   </head>
   <body>
+  <% include!("nav.stpl"); %>
   <div class="content-container">
     <h1 class="title">Backlinks</h1>
     <div>

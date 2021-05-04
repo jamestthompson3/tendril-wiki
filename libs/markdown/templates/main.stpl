@@ -16,6 +16,7 @@
     <title><%= title %></title>
   </head>
   <body>
+    <% include!("nav.stpl"); %>
     <div class="content-container">
       <label for="edit">Edit:</label>
       <input type="checkbox" id="edit" />

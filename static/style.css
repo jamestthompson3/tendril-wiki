@@ -148,3 +148,20 @@ blockquote {
 .backlinks a {
   margin: 0.25rem;
 }
+
+/** Navigation **/
+.navigation {
+  width: 60%;
+  margin: auto;
+}
+
+.navigation ul {
+  display: flex;
+  padding: 0rem;
+  margin: 0rem;
+  justify-content: flex-end;
+}
+
+.navigation ul > li {
+  margin: 0rem 0.25rem;
+}

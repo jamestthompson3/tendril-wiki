@@ -16,6 +16,7 @@
     <title>Tagged Topics</title>
   </head>
   <body>
+  <% include!("nav.stpl"); %>
   <div class="content-container">
     <h1 class="title">Tagged Topics</h1>
     <div>
