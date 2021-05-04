@@ -26,6 +26,7 @@
 body {
   background-color: var(--bg-darker);
   color: var(--text-color);
+  font-family: sans-serif;
 }
 
 a {
@@ -34,6 +35,13 @@ a {
 
 ul {
   list-style: none;
+}
+
+blockquote {
+  font-family: monospace;
+  background-color: var(--bg-darker);
+  border-left: 4px solid var(--accent);
+  padding: 0rem 0.5rem;
 }
 /**
  * Main content
@@ -58,15 +66,35 @@ ul {
   margin: auto;
 }
 
+.editor button {
+  width: 20;
+  height: auto;
+  text-align: center;
+  align-self: flex-end;
+  background-color: var(--primary-variant);
+  border: none;
+  border-radius: calc(var(--rad) / 2);
+  padding: 0.5rem;
+}
+
 .editor textarea {
   width: 80%;
   margin: auto;
   height: 500px;
   padding: 0.5rem;
+  color: var(--text-color);
+  background-color: var(--bg);
+  border: 1px solid var(--primary-variant);
 }
 .editor input[type="text"] {
   width: 80%;
-  margin: auto;
+  margin: 0.5rem auto;
+  color: var(--text-color);
+  background-color: var(--bg);
+  border-radius: var(--rad);
+  padding: 0.5rem;
+  border: 1px solid var(--primary-variant);
+  font-width: bold;
 }
 
 .content-container {
@@ -115,5 +143,8 @@ ul {
   display: flex;
   flex-wrap: wrap;
   flex-direction: column;
-  height: 4rem;
+}
+
+.backlinks a {
+  margin: 0.25rem;
 }
