@@ -6,6 +6,8 @@ use std::{
     path::PathBuf,
 };
 
+use crate::{ingestors::WebFormData, processors::tags::TagsArray};
+
 use super::path_to_reader;
 
 #[derive(Copy, Clone, PartialEq, Debug)]
@@ -43,6 +45,19 @@ impl MetaParserMachine {
 impl From<String> for NoteMeta {
     fn from(stringified: String) -> Self {
         parse_meta(stringified.lines().map(|s| s.to_string()), "raw_string") // mark that we've parsed from a passed string instead of a file
+    }
+}
+
+impl From<WebFormData> for NoteMeta {
+    fn from(data: WebFormData) -> Self {
+        let mut metadata: HashMap<String, String> = HashMap::new();
+        metadata.insert("title".into(), data.title);
+        let tags = TagsArray::from(data.tags);
+        metadata.insert("tags".into(), tags.write());
+        NoteMeta {
+            metadata,
+            content: data.body,
+        }
     }
 }
 

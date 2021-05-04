@@ -1,6 +1,6 @@
 use std::{fs, path::PathBuf};
 
-use crate::processors::tags::TagsArray;
+use crate::{parsers::NoteMeta, processors::tags::TagsArray};
 use crate::{
     parsers::{
         parse_meta, parse_wiki_entry, path_to_data_structure, path_to_reader, render_template,
@@ -29,6 +29,15 @@ pub fn write(wiki_location: &String, data: WebFormData) -> Result<(), WriteWikiE
     let mut title_location = data.title.clone();
     title_location.push_str(".md");
     file_location.push(&title_location);
+    // In the case that we're creating a new file
+    if !file_location.exists() {
+        let note_meta = NoteMeta::from(data);
+        let note: String = note_meta.into();
+        return match fs::write(file_location, note) {
+            Ok(()) => Ok(()),
+            Err(e) => Err(WriteWikiError::WriteError(e)),
+        };
+    }
     let mut note_meta = parse_meta(
         path_to_reader(&file_location).unwrap(),
         file_location.to_str().unwrap(),

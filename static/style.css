@@ -61,6 +61,12 @@ blockquote {
   display: none;
 }
 
+.editor.visible {
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+}
+
 .editor label {
   width: 80%;
   margin: auto;
@@ -125,6 +131,7 @@ blockquote {
   padding: 1rem;
 }
 
+/** Footer **/
 .footer {
   background-color: var(--primary-variant);
   color: var(--bg);
@@ -139,6 +146,7 @@ blockquote {
   color: var(--bg);
 }
 
+/** Backlinks **/
 .backlinks {
   display: flex;
   flex-wrap: wrap;

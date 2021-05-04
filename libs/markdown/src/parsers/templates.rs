@@ -17,15 +17,19 @@ pub struct BasicPage<'a> {
 }
 
 #[derive(TemplateOnce)]
+#[template(path = "new_page.stpl")]
+pub struct NewPage {}
+
+#[derive(TemplateOnce)]
 #[template(path = "tag_idx.stpl")]
 pub struct TagIndex {
-    pub tags: HashMap<String, Vec<String>>
+    pub tags: HashMap<String, Vec<String>>,
 }
 
 #[derive(TemplateOnce)]
 #[template(path = "index.stpl")]
 pub struct IndexPage {
-    pub user: String
+    pub user: String,
 }
 
 #[derive(TemplateOnce)]
@@ -75,14 +79,8 @@ pub fn render_template(page: &TemplattedPage, links: Option<&Vec<String>>) -> St
 }
 
 pub fn write_index_page(user: String) {
-    let ctx = IndexPage {
-        user
-    };
-        fs::write(
-            "public/index.html",
-            ctx.render_once().unwrap(),
-        ).unwrap();
-
+    let ctx = IndexPage { user };
+    fs::write("public/index.html", ctx.render_once().unwrap()).unwrap();
 }
 
 pub fn write_entries(pages: &ParsedPages, backlinks: &GlobalBacklinks) {
@@ -122,7 +120,7 @@ pub fn write_tag_pages(map: TagMapping) {
 pub fn write_tag_index(map: TagMapping) {
     let tag_map = map.lock().unwrap();
     let ctx = TagIndex {
-        tags: tag_map.clone()
+        tags: tag_map.clone(),
     };
     fs::write("public/tags/index.html", ctx.render_once().unwrap()).unwrap();
 }
