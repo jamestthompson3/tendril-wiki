@@ -35,31 +35,26 @@ pub async fn server(config: Config, ref_builder: RefBuilder) {
         let ctx = NewPage {};
         warp::reply::html(ctx.render_once().unwrap())
     }));
-    // let add_page = warp::post()
-    //     .and(warp::path("new").or(warp::path("edit")))
-    //     .and(warp::body::content_length_limit(1024 * 32))
-    //     .and(warp::body::form())
-    //     .and(with_location(Arc::new(config.wiki_location.clone())))
-    //     .map(
-    //         |form_body: HashMap<String, String>, wiki_location: Arc<String>| {
-    //             let parsed_data = WebFormData::from(form_body);
-    //             let redir_uri = format!("/{}", encode(&parsed_data.title));
-    //             write(&wiki_location.to_string(), parsed_data).unwrap();
-    //             warp::redirect(redir_uri.parse::<Uri>().unwrap())
-    //         },
-    //     );
     let static_files = warp::path("static").and(warp::fs::dir("static"));
     let edit = warp::post().and(
         warp::path("edit").and(
             warp::body::content_length_limit(1024 * 32)
                 .and(warp::body::form())
                 .and(with_location(Arc::new(config.wiki_location)))
+                .and(with_refs(ref_builder.clone()))
                 .map(
-                    |form_body: HashMap<String, String>, wiki_location: Arc<String>| {
+                    |form_body: HashMap<String, String>, wiki_location: Arc<String>, mut builder: RefBuilder| {
                         let parsed_data = WebFormData::from(form_body);
                         let redir_uri = format!("/{}", encode(&parsed_data.title));
-                        write(&wiki_location.to_string(), parsed_data).unwrap();
-                        warp::redirect(redir_uri.parse::<Uri>().unwrap())
+                        match write(&wiki_location.to_string(), parsed_data) {
+                            Ok(()) => {
+                                builder.build(&wiki_location);
+                                warp::redirect(redir_uri.parse::<Uri>().unwrap())
+                            }
+                            Err(_) =>  {
+                                warp::redirect(Uri::from_static("/error"))
+                            }
+                        }
                     },
                 ),
         ),

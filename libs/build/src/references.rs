@@ -24,8 +24,10 @@ impl RefBuilder {
             backlinks: Arc::new(Mutex::new(HashMap::new())),
         }
     }
-    pub fn build(&self, path: &String) {
+    pub fn build(&mut self, path: &String) {
         let entrypoint = parse_wiki_entry(path);
+        self.tag_map.lock().unwrap().clear();
+        self.backlinks.lock().unwrap().clear();
         let map = Arc::clone(&self.tag_map);
         let links = Arc::clone(&self.backlinks);
         parse_entries(entrypoint, map, links);

@@ -26,7 +26,7 @@ async fn main() {
         builder.sweep(&config.wiki_location);
         builder.compile_all();
     } else {
-        let ref_builder = RefBuilder::new();
+        let mut ref_builder = RefBuilder::new();
         ref_builder.build(&config.wiki_location);
         server(config.clone(), ref_builder).await;
     }
