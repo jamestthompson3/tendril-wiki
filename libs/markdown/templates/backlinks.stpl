@@ -9,11 +9,12 @@
       />
       <link rel="stylesheet" href="/static/style.css" />
     <meta name="description" content="An HTML File" />
+    <link rel="stylesheet" href="/static/style.css" />
+    <link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon">
     <meta property="og:title" content="Backlinks" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="" />
     <meta property="og:image" content="" />
-    <meta name="robots" content="index, follow">
     <title>Backlinks</title>
   </head>
   <body>
