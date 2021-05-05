@@ -50,18 +50,9 @@ pub fn write(wiki_location: &String, data: WebFormData) -> Result<(), WriteWikiE
     note_meta.content = data.body.replace("\r\n", "\n");
     let updated_tags: TagsArray = data.tags.into();
 
-    if let Some(existing_tags) = note_meta.metadata.get("tags") {
-        let existing_tag_array = TagsArray::from(existing_tags.to_string());
-        if updated_tags.len() != existing_tag_array.len() {
-            note_meta
-                .metadata
-                .insert("tags".into(), updated_tags.write());
-        }
-    } else if updated_tags.len() > 0 {
-        note_meta
-            .metadata
-            .insert("tags".to_string(), updated_tags.write());
-    }
+    note_meta
+        .metadata
+        .insert("tags".into(), updated_tags.write());
 
     let final_note: String = note_meta.into();
     match fs::write(file_location, final_note) {
