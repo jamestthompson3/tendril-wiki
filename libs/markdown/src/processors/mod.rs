@@ -35,13 +35,12 @@ pub fn update_templatted_pages(page: TemplattedPage, pages: ParsedPages) {
     tempatted_pages.push(page);
 }
 
-pub fn update_backlinks(title: &str, outlinks: &Vec<String>, backlinks: GlobalBacklinks) {
+pub fn update_backlinks(title: &str, outlinks: &[String], backlinks: GlobalBacklinks) {
     let mut global_backlinks = backlinks.lock().unwrap();
     for link in outlinks.iter() {
         match global_backlinks.get(&link.to_string()) {
             Some(links) => {
-                // TODO: Let's not allocate so much
-                let mut updated_links = links.clone();
+                let mut updated_links = links.to_owned();
                 updated_links.push(title.to_owned());
                 global_backlinks.insert(link.to_string(), updated_links);
             }
@@ -52,13 +51,12 @@ pub fn update_backlinks(title: &str, outlinks: &Vec<String>, backlinks: GlobalBa
     }
 }
 
-pub fn update_tag_map(title: &str, tags: &Vec<String>, tag_map: TagMapping) {
+pub fn update_tag_map(title: &str, tags: &[String], tag_map: TagMapping) {
     let mut global_tag_map = tag_map.lock().unwrap();
     for tag in tags.iter() {
         match global_tag_map.get(&tag.to_string()) {
             Some(tags) => {
-                // TODO: Let's not allocate so much
-                let mut updated_tags = tags.clone();
+                let mut updated_tags = tags.to_owned();
                 updated_tags.push(title.to_owned());
                 global_tag_map.insert(tag.to_string(), updated_tags);
             }

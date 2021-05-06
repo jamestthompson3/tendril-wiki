@@ -5,7 +5,7 @@ pub mod templates;
 use std::{
     fs::File,
     io::{BufRead, BufReader},
-    path::PathBuf,
+    path::{Path, PathBuf},
 };
 
 pub use self::html::*;
@@ -13,7 +13,7 @@ pub use self::meta::*;
 pub use self::templates::*;
 
 // TODO: move these things somewhere else... Maybe another crate?
-pub fn path_to_reader(path: &PathBuf) -> Result<impl Iterator<Item = String>, std::io::Error> {
+pub fn path_to_reader(path: &Path) -> Result<impl Iterator<Item = String>, std::io::Error> {
     match File::open(&path) {
         Ok(fd) => {
             let reader = BufReader::new(fd);

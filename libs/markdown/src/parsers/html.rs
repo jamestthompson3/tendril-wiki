@@ -86,7 +86,7 @@ pub fn to_html(md: &str) -> Html {
                     parser_machine.send(ParserState::LinkEnd);
                     Event::Text("".into())
                 }
-                ParserState::Accept => Event::Text(text.into()),
+                ParserState::Accept => Event::Text(text),
                 _ => {
                     println!("{:?}", parser_machine.current_state());
                     panic!("Impossible statereached for `]`");
@@ -105,7 +105,7 @@ pub fn to_html(md: &str) -> Html {
                     parser_machine.send(ParserState::Accept);
                     Event::Text(format!("[{}", text).into())
                 }
-                _ => Event::Text(text.into()),
+                _ => Event::Text(text),
             },
         },
         _ => event,

@@ -131,7 +131,7 @@ pub fn write_backlinks(map: GlobalBacklinks) {
         links: link_map.clone(),
     };
     fs::write(
-        format!("public/links/index.html"),
+        "public/links/index.html".to_string(),
         ctx.render_once().unwrap(),
     )
     .unwrap();
