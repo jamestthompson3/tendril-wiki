@@ -22,24 +22,39 @@ function moveCaretToStart(el) {
 
 function edit() {
   const editElement = document.getElementById("edit");
-  editElement.checked = true;
+  if (editElement) { // sometimes the page might not be editable
+    editElement.checked = true;
+  }
+}
+
+function jumpToNew() {
+  if (window.location.pathname !== "/new") window.location.href = "/new"
 }
 
 const textarea = document.getElementById("body");
-textarea.onkeydown = function (e) {
-  switch (e.key) {
-    case "Home":
-      moveCaretToStart(textarea);
+if (textarea) {
+  textarea.onkeydown = function (e) {
+    switch (e.key) {
+      case "Home":
+        moveCaretToStart(textarea);
+        break;
+      case "End":
+        moveCaretToEnd(textarea);
+        break;
+      default:
+        break;
+    }
+  };
+}
+document.onkeydown = function (e) {
+  switch(e.key) {
+    case "e":
+      edit();
       break;
-    case "End":
-      moveCaretToEnd(textarea);
+    case "n":
+      jumpToNew();
       break;
     default:
       break;
-  }
-};
-document.onkeydown = function (e) {
-  if (e.key === "e") {
-    edit();
   }
 };

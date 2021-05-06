@@ -57,6 +57,5 @@
       </div>
     </div>
     <% include!("footer.stpl"); %>
-    <script async defer src="/static/script.js"></script>
   </body>
 </html>

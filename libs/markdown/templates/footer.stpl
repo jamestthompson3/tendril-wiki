@@ -1,3 +1,4 @@
 <footer class="footer">
   <a href="/">Home</a>
+  <script async defer src="/static/script.js"></script>
 </footer>
