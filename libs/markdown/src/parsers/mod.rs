@@ -23,7 +23,7 @@ pub fn path_to_reader(path: &PathBuf) -> Result<impl Iterator<Item = String>, st
     }
 }
 
-pub fn parse_wiki_entry(wiki_location: &String) -> PathBuf {
+pub fn parse_wiki_entry(wiki_location: &str) -> PathBuf {
     let entrypoint: PathBuf;
     if wiki_location.contains('~') {
         entrypoint = PathBuf::from(wiki_location.replace('~', &std::env::var("HOME").unwrap()));

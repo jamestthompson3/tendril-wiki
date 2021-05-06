@@ -9,7 +9,7 @@ enum ParserState {
     Accept,
 }
 
-pub struct HTML {
+pub struct Html {
     pub outlinks: Vec<String>,
     pub body: String,
 }
@@ -33,7 +33,7 @@ impl ParserMachine {
     }
 }
 
-pub fn to_html(md: &str) -> HTML {
+pub fn to_html(md: &str) -> Html {
     let options = Options::all();
     // TODO maybe don't allocate...
     let mut wiki_link_location = String::new();
@@ -112,7 +112,7 @@ pub fn to_html(md: &str) -> HTML {
     });
     let mut output = String::new();
     html::push_html(&mut output, parser);
-    HTML {
+    Html {
         body: output,
         outlinks,
     }

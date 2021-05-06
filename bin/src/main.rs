@@ -5,9 +5,8 @@ use www::server;
 #[tokio::main]
 async fn main() {
     let args = std::env::args().skip(1).collect::<Vec<String>>();
-    let mut args = args.iter();
     let mut build_all = false;
-    while let Some(arg) = args.next() {
+    for arg in args.iter() {
         match arg.as_ref() {
             "-v" | "-version" | "--version" => return print_version(),
             "-h" | "-help" | "--help" => return print_help(),
