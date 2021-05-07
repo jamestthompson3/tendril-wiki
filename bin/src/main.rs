@@ -2,7 +2,7 @@
 use build::{RefBuilder, config::read_config, pages::Builder, print_config_location};
 use tasks::sync;
 use www::server;
-use std::process::exit;
+use std::{path::{PathBuf}, process::exit, time::Instant};
 
 #[tokio::main]
 async fn main() {
@@ -24,10 +24,14 @@ async fn main() {
     };
     let config = read_config();
     if build_all {
-        std::fs::remove_dir_all("./public").unwrap();
+        let now = Instant::now();
+        if PathBuf::from("./public").exists() {
+            std::fs::remove_dir_all("./public").unwrap();
+        }
         let builder = Builder::new();
         builder.sweep(&config.general.wiki_location);
         builder.compile_all();
+        println!("Built static site in: {}ms", now.elapsed().as_millis());
     } else {
         if config.sync.use_git {
             sync(&config.general.wiki_location, config.sync.sync_interval, config.sync.branch);

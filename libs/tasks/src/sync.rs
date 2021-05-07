@@ -79,16 +79,18 @@ impl Git {
     }
     // Note: this will fall apart if there are merge conflicts!
     fn sync(&self, sync_interval: u8, branch: String) {
-        self.pull(&branch);
-        let changed_file_count = self.status();
-        if changed_file_count > 0 {
-            println!("│");
-            println!("└─> Syncing");
-            self.add();
-            self.commit();
-            self.push(&branch);
+        loop {
+            self.pull(&branch);
+            let changed_file_count = self.status();
+            if changed_file_count > 0 {
+                println!("│");
+                println!("└─> Syncing");
+                self.add();
+                self.commit();
+                self.push(&branch);
+            }
+            thread::sleep(Duration::from_secs(sync_interval.into()));
         }
-        thread::sleep(Duration::from_secs(sync_interval.into()));
     }
 }
 
