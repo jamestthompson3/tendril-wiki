@@ -28,6 +28,14 @@ function edit() {
   }
 }
 
+function search() {
+  window.location.pathname = "/search";
+}
+
+function jumpNew() {
+  window.location.pathname = "/new";
+}
+
 const textarea = document.getElementById("body");
 if (textarea) {
   textarea.onkeydown = function (e) {
@@ -44,10 +52,16 @@ if (textarea) {
   };
 }
 document.onkeydown = function (e) {
-  console.log(e.ctrlKey);
+  if (e.target !== document.body) return;
   switch (e.key) {
     case "e":
       edit();
+      break;
+    case "/":
+      search();
+      break;
+    case "n":
+      jumpNew();
       break;
     default:
       break;
