@@ -1,6 +1,6 @@
 
 use build::{RefBuilder, config::read_config, pages::Builder, print_config_location};
-use tasks::{search, sync};
+use tasks::sync;
 use www::server;
 use std::process::exit;
 

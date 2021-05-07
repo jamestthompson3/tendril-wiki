@@ -1,10 +1,10 @@
 use ::build::{config::General, RefBuilder};
 use ::markdown::ingestors::fs::write;
 use ::markdown::ingestors::WebFormData;
-use markdown::parsers::{IndexPage, NewPage, SearchPage, SearchResultsPage};
+use markdown::parsers::{IndexPage, NewPage, SearchPage, SearchResultsContextPage, SearchResultsPage};
 use sailfish::TemplateOnce;
 use std::{collections::HashMap, sync::Arc};
-use tasks::search;
+use tasks::{context_search, search};
 use urlencoding::encode;
 use warp::{http::Uri, Filter};
 
@@ -48,9 +48,20 @@ pub async fn server(config: General, ref_builder: RefBuilder) {
                 .map(
                     |form_body: HashMap<String, String>, wiki_location: Arc<String>| {
                         let term = form_body.get("term").unwrap();
-                        let found_pages = search(term, &wiki_location);
-                        let ctx = SearchResultsPage { pages: found_pages };
-                        warp::reply::html(ctx.render_once().unwrap())
+                        let include_context = form_body.get("context");
+                        match include_context {
+                            Some(_) => {
+                                let found_pages = context_search(term, &wiki_location);
+                                // Todo: Maybe not a separate page here?
+                                let ctx = SearchResultsContextPage { pages: found_pages };
+                                warp::reply::html(ctx.render_once().unwrap())
+                            }
+                            None => {
+                                let found_pages = search(term, &wiki_location);
+                                let ctx = SearchResultsPage { pages: found_pages };
+                                warp::reply::html(ctx.render_once().unwrap())
+                            }
+                        }
                     },
                 ),
         ),

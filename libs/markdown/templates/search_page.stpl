@@ -21,10 +21,13 @@
         <label for="term">Search</label>
         <div class="search">
           <input name="term" id="term" type="text" value="" />
+          <label for="context">context search</label>
+          <input type="checkbox" id="context" name="context" />
           <button type="submit">Search</button>
         </div>
       </form>
     </div>
     <% include!("footer.stpl"); %>
+    <script defer="true" src="/static/searchPage.js"></script>
   </body>
 </html>

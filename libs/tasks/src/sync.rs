@@ -2,7 +2,7 @@ use std::{
     fs::File,
     process::{exit, Command, Output},
     thread,
-    time::{Duration, SystemTime},
+    time::Duration,
 };
 
 use crate::normalize_wiki_location;

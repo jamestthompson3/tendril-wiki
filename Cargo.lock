@@ -648,6 +648,7 @@ dependencies = [
  "logging",
  "pulldown-cmark",
  "sailfish",
+ "tasks",
  "thiserror",
  "urlencoding",
 ]
