@@ -9,6 +9,7 @@ edition = "2018"
 [dependencies]
 pulldown-cmark = { version = "0.8.0", default-features = false, features = ["simd"] }
 logging = { path = "../logging" }
+tasks = { path = "../tasks" }
 sailfish = "0.3.3"
 urlencoding = "1.1.1"
 thiserror = "1.0.24"

@@ -22,13 +22,18 @@ function moveCaretToStart(el) {
 
 function edit() {
   const editElement = document.getElementById("edit");
-  if (editElement) { // sometimes the page might not be editable
+  if (editElement) {
+    // sometimes the page might not be editable
     editElement.checked = true;
   }
 }
 
-function jumpToNew() {
-  if (window.location.pathname !== "/new") window.location.href = "/new"
+function search() {
+  window.location.pathname = "/search";
+}
+
+function jumpNew() {
+  window.location.pathname = "/new";
 }
 
 const textarea = document.getElementById("body");
@@ -47,12 +52,16 @@ if (textarea) {
   };
 }
 document.onkeydown = function (e) {
-  switch(e.key) {
+  if (e.target !== document.body) return;
+  switch (e.key) {
     case "e":
       edit();
       break;
+    case "/":
+      search();
+      break;
     case "n":
-      jumpToNew();
+      jumpNew();
       break;
     default:
       break;

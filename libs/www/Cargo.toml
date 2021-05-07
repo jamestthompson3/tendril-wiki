@@ -11,3 +11,4 @@ markdown = { path = "../markdown" }
 build = { path = "../build" }
 urlencoding = "1.1.1"
 sailfish = "0.3.3"
+tasks = { path = "../tasks" }

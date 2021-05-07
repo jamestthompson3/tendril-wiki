@@ -4,6 +4,8 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+use tasks::search::SearchResult;
+
 use sailfish::TemplateOnce;
 
 #[derive(TemplateOnce)]
@@ -19,6 +21,22 @@ pub struct BasicPage<'a> {
 #[derive(TemplateOnce)]
 #[template(path = "new_page.stpl")]
 pub struct NewPage {}
+
+#[derive(TemplateOnce)]
+#[template(path = "search_page.stpl")]
+pub struct SearchPage {}
+
+#[derive(TemplateOnce)]
+#[template(path = "search_results.stpl")]
+pub struct SearchResultsPage {
+    pub pages: Vec<String>,
+}
+
+#[derive(TemplateOnce)]
+#[template(path = "search_results_context.stpl")]
+pub struct SearchResultsContextPage {
+    pub pages: Vec<SearchResult>,
+}
 
 #[derive(TemplateOnce)]
 #[template(path = "tag_idx.stpl")]

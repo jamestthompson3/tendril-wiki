@@ -2,8 +2,10 @@ use std::{
     fs::File,
     process::{exit, Command, Output},
     thread,
-    time::{Duration, SystemTime},
+    time::Duration,
 };
+
+use crate::normalize_wiki_location;
 
 struct Git {
     repo_location: String,
@@ -91,12 +93,7 @@ impl Git {
 }
 
 pub fn sync(wiki_location: &str, sync_interval: u8, branch: String) {
-    let location: String;
-    if wiki_location.contains('~') {
-        location = wiki_location.replace('~', &std::env::var("HOME").unwrap());
-    } else {
-        location = wiki_location.to_owned();
-    }
+    let location = normalize_wiki_location(&wiki_location);
     let git = Git::new(location);
     thread::spawn(move || git.sync(sync_interval, branch));
 }
