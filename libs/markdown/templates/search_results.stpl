@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en-US" prefix="og:http://ogp.me/ns#">
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+      />
+      <link rel="stylesheet" href="/static/style.css" />
+    <link rel="stylesheet" href="/static/style.css" />
+    <link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon">
+    <meta name="description" content="Tagged Topics" />
+    <meta property="og:title" content="Tagged Topics" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="" />
+    <meta property="og:image" content="" />
+    <meta name="robots" content="index, follow">
+    <title>Search Results</title>
+  </head>
+  <body>
+  <% include!("nav.stpl"); %>
+  <div class="content-container">
+    <h1 class="title">Search Results</h1>
+    <div>
+        <% use super::html::format_links;  %>
+          <ul>
+          <% for page in pages {  %>
+              <li><a href="<%- format_links(&page) %>"><%- page %></a></li>
+          <% } %>
+          </ul>
+    </div>
+    </div>
+    <% include!("footer.stpl"); %>
+  </body>
+</html>

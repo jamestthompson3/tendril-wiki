@@ -9,6 +9,7 @@ edition = "2018"
 [dependencies]
 logging = { path = "../libs/logging" }
 build = { path = "../libs/build" }
+tasks = { path = "../libs/tasks" }
 www = { path = "../libs/www" }
 urlencoding = "1.1.1"
 tokio = { version = "1", features = ["full"] }

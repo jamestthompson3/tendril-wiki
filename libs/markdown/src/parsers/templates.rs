@@ -21,6 +21,16 @@ pub struct BasicPage<'a> {
 pub struct NewPage {}
 
 #[derive(TemplateOnce)]
+#[template(path = "search_page.stpl")]
+pub struct SearchPage {}
+
+#[derive(TemplateOnce)]
+#[template(path = "search_results.stpl")]
+pub struct SearchResultsPage {
+    pub pages: Vec<String>,
+}
+
+#[derive(TemplateOnce)]
 #[template(path = "tag_idx.stpl")]
 pub struct TagIndex {
     pub tags: HashMap<String, Vec<String>>,

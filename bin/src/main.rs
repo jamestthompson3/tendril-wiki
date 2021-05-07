@@ -1,5 +1,6 @@
 
 use build::{RefBuilder, config::read_config, pages::Builder, print_config_location};
+use tasks::{search, sync};
 use www::server;
 use std::process::exit;
 
@@ -29,7 +30,7 @@ async fn main() {
         builder.compile_all();
     } else {
         if config.sync.use_git {
-            build::sync::sync(&config.general.wiki_location, config.sync.sync_interval, config.sync.branch);
+            sync(&config.general.wiki_location, config.sync.sync_interval, config.sync.branch);
         }
         let mut ref_builder = RefBuilder::new();
         ref_builder.build(&config.general.wiki_location);

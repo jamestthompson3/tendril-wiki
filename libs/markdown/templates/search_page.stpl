@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en-US" prefix="og:http://ogp.me/ns#">
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    <link rel="stylesheet" href="/static/style.css" />
+    <link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/static/style.css" />
+    <meta name="description" content="Create a new page" />
+    <meta property="og:title" content="New Entry" />
+    <meta property="og:type" content="website" />
+    <title>Search</title>
+  </head>
+  <body>
+    <div class="content-container">
+      <h1 class="title">Search</h1>
+      <form class="search-form" method="post" action="search" target="_parent">
+        <label for="term">Search</label>
+        <div class="search">
+          <input name="term" id="term" type="text" value="" />
+          <button type="submit">Search</button>
+        </div>
+      </form>
+    </div>
+    <% include!("footer.stpl"); %>
+  </body>
+</html>

@@ -72,8 +72,8 @@ blockquote {
   margin: auto;
 }
 
-.editor button {
-  width: 20;
+.editor button,
+.search button {
   height: auto;
   text-align: center;
   align-self: flex-end;
@@ -100,7 +100,7 @@ blockquote {
   border-radius: var(--rad);
   padding: 0.5rem;
   border: 1px solid var(--primary-variant);
-  font-width: bold;
+  font-weight: bold;
 }
 
 .content-container {
@@ -173,4 +173,20 @@ blockquote {
 
 .navigation ul > li {
   margin: 0rem 0.25rem;
+}
+
+/** Search **/
+.search {
+  display: flex;
+  align-items: center;
+}
+.search > input[type="text"] {
+  width: 50%;
+  margin: 0.5rem auto;
+  color: var(--text-color);
+  background-color: var(--bg);
+  border-radius: var(--rad);
+  padding: 0.25rem;
+  border: 1px solid var(--primary-variant);
+  font-weight: bold;
 }

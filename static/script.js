@@ -22,13 +22,10 @@ function moveCaretToStart(el) {
 
 function edit() {
   const editElement = document.getElementById("edit");
-  if (editElement) { // sometimes the page might not be editable
+  if (editElement) {
+    // sometimes the page might not be editable
     editElement.checked = true;
   }
-}
-
-function jumpToNew() {
-  if (window.location.pathname !== "/new") window.location.href = "/new"
 }
 
 const textarea = document.getElementById("body");
@@ -47,12 +44,10 @@ if (textarea) {
   };
 }
 document.onkeydown = function (e) {
-  switch(e.key) {
+  console.log(e.ctrlKey);
+  switch (e.key) {
     case "e":
       edit();
-      break;
-    case "n":
-      jumpToNew();
       break;
     default:
       break;

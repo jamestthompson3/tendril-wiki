@@ -31,6 +31,6 @@ impl From<HashMap<String, String>> for WebFormData {
                 _ => {}
             }
         }
-        WebFormData { title, tags, body }
+        WebFormData { body, tags, title }
     }
 }
