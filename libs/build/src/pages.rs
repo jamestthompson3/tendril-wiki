@@ -1,4 +1,7 @@
-use markdown::parsers::{GlobalBacklinks, ParsedPages, TagMapping, parse_wiki_entry, path_to_data_structure, write_backlinks, write_entries, write_index_page, write_tag_index, write_tag_pages};
+use markdown::parsers::{
+    parse_wiki_entry, path_to_data_structure, write_backlinks, write_entries, write_index_page,
+    write_tag_index, write_tag_pages, GlobalBacklinks, ParsedPages, TagMapping,
+};
 use markdown::processors::{
     to_template, update_backlinks, update_tag_map, update_templatted_pages,
 };
@@ -47,7 +50,7 @@ impl Builder {
         fs::create_dir("public/static").unwrap();
         fs::copy("./static/style.css", "./public/static/style.css").unwrap();
     }
-    pub fn sweep(&self, wiki_location: &String) {
+    pub fn sweep(&self, wiki_location: &str) {
         let entrypoint = parse_wiki_entry(wiki_location);
         if !Path::new("./public").exists() {
             fs::create_dir_all("./public/tags").unwrap();
@@ -57,6 +60,12 @@ impl Builder {
         let links = Arc::clone(&self.backlinks);
         let pages = Arc::clone(&self.pages);
         parse_entries(entrypoint, map, links, pages);
+    }
+}
+
+impl Default for Builder {
+    fn default() -> Self {
+        Builder::new()
     }
 }
 
@@ -86,10 +95,10 @@ fn parse_entries(
             pool.execute(move || {
                 process_file(entry.path(), tags, links, pages);
             });
-        } else if entry.file_type().unwrap().is_dir() {
-            if !entry.path().to_str().unwrap().contains(".git") {
-                parse_entries(entry.path(), tags, links, pages);
-            }
+        } else if entry.file_type().unwrap().is_dir()
+            && !entry.path().to_str().unwrap().contains(".git")
+        {
+            parse_entries(entry.path(), tags, links, pages);
         }
     }
     pool.join();

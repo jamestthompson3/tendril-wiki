@@ -28,5 +28,6 @@
       </form>
     </div>
     <% include!("footer.stpl"); %>
+    <script async defer src="/static/newPage.js"></script>
   </body>
 </html>

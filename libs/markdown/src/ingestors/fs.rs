@@ -1,4 +1,4 @@
-use std::{fs, path::PathBuf};
+use std::fs;
 
 use crate::{parsers::NoteMeta, processors::tags::TagsArray};
 use crate::{
@@ -23,8 +23,8 @@ pub enum WriteWikiError {
     Unknown,
 }
 
-pub fn write(wiki_location: &String, data: WebFormData) -> Result<(), WriteWikiError> {
-    let mut file_location = PathBuf::from(parse_wiki_entry(wiki_location));
+pub fn write(wiki_location: &str, data: WebFormData) -> Result<(), WriteWikiError> {
+    let mut file_location = parse_wiki_entry(wiki_location);
     // wiki entires are stored by title + .md file ending
     let mut title_location = data.title.clone();
     title_location.push_str(".md");
@@ -62,12 +62,12 @@ pub fn write(wiki_location: &String, data: WebFormData) -> Result<(), WriteWikiE
 }
 
 pub fn read(
-    wiki_location: &String,
+    wiki_location: &str,
     mut requested_file: String,
     _tags: TagMapping,
     backlinks: GlobalBacklinks,
 ) -> Result<String, Box<dyn std::error::Error>> {
-    let mut file_location = PathBuf::from(parse_wiki_entry(wiki_location));
+    let mut file_location = parse_wiki_entry(wiki_location);
     requested_file = decode(&requested_file)?;
     requested_file.push_str(".md");
     file_location.push(requested_file);

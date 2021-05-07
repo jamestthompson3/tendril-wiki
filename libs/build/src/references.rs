@@ -24,7 +24,7 @@ impl RefBuilder {
             backlinks: Arc::new(Mutex::new(HashMap::new())),
         }
     }
-    pub fn build(&mut self, path: &String) {
+    pub fn build(&mut self, path: &str) {
         let entrypoint = parse_wiki_entry(path);
         self.tag_map.lock().unwrap().clear();
         self.backlinks.lock().unwrap().clear();
@@ -37,6 +37,12 @@ impl RefBuilder {
     }
     pub fn links(&self) -> GlobalBacklinks {
         Arc::clone(&self.backlinks)
+    }
+}
+
+impl Default for RefBuilder {
+    fn default() -> Self {
+        RefBuilder::new()
     }
 }
 
@@ -53,10 +59,10 @@ fn parse_entries(entrypoint: PathBuf, tag_map: TagMapping, backlinks: GlobalBack
             pool.execute(move || {
                 process_file(entry.path(), tags, links);
             });
-        } else if entry.file_type().unwrap().is_dir() {
-            if !entry.path().to_str().unwrap().contains(".git") {
-                parse_entries(entry.path(), tags, links);
-            }
+        } else if entry.file_type().unwrap().is_dir()
+            && !entry.path().to_str().unwrap().contains(".git")
+        {
+            parse_entries(entry.path(), tags, links);
         }
     }
     pool.join();
