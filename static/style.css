@@ -33,7 +33,7 @@ a {
   color: var(--primary-variant);
 }
 
-ul {
+.tags {
   list-style: none;
 }
 
@@ -168,6 +168,7 @@ blockquote {
   padding: 0rem;
   margin: 0rem;
   justify-content: flex-end;
+  list-style: none;
 }
 
 .navigation ul > li {

@@ -3,7 +3,7 @@ use std::{
     fmt::Write,
     fs::{write, File},
     io::{BufRead, BufReader},
-    path::PathBuf,
+    path::Path,
 };
 
 use crate::{ingestors::WebFormData, processors::tags::TagsArray};
@@ -68,7 +68,7 @@ impl Into<String> for NoteMeta {
             metadata.push_str(key);
             metadata.push_str(": ");
             metadata.push_str(self.metadata.get(key).unwrap());
-            metadata.push_str("\n");
+            metadata.push('\n');
         }
         let mut formatted_string = String::new();
         writeln!(&mut formatted_string, "---").unwrap();
@@ -78,7 +78,7 @@ impl Into<String> for NoteMeta {
     }
 }
 
-pub fn path_to_data_structure(path: &PathBuf) -> Result<NoteMeta, Box<dyn std::error::Error>> {
+pub fn path_to_data_structure(path: &Path) -> Result<NoteMeta, Box<dyn std::error::Error>> {
     let reader = path_to_reader(path)?;
     Ok(parse_meta(reader, path.to_str().unwrap()))
 }
@@ -119,7 +119,7 @@ pub fn parse_meta(lines: impl Iterator<Item = String>, debug_marker: &str) -> No
 /// Could be part of the config file if it is useful
 ///
 #[allow(dead_code)]
-pub fn fix_tiddlywiki_tag_structures(path: &PathBuf) {
+pub fn fix_tiddlywiki_tag_structures(path: &Path) {
     let fd = File::open(&path).unwrap();
     let reader = BufReader::new(fd);
     let mut parser = MetaParserMachine::new();
@@ -165,14 +165,10 @@ pub fn fix_tiddlywiki_tag_structures(path: &PathBuf) {
                             })
                             .collect::<Vec<&str>>();
                         let mut fixed_string = String::from("[");
-                        tags.iter().enumerate().for_each(|(idx, tag)| {
-                            if idx != tags.len() - 1 {
-                                fixed_string.push_str(&format!("{},", tag));
-                            } else {
-                                fixed_string.push_str(&format!("{}", tag));
-                            }
+                        tags.iter().enumerate().for_each(|(_, tag)| {
+                            fixed_string.push_str(&tag.to_string());
                         });
-                        fixed_string.push_str("]");
+                        fixed_string.push(']');
                         fixed.push_str(&format!("\ntags: {}", fixed_string));
                     } else {
                         fixed.push_str(&format!("\n{}", refline));
@@ -191,7 +187,7 @@ pub fn fix_tiddlywiki_tag_structures(path: &PathBuf) {
 }
 
 #[allow(dead_code)]
-pub fn fix_tags(path: &PathBuf) {
+pub fn fix_tags(path: &Path) {
     let fd = File::open(&path).unwrap();
     let reader = BufReader::new(fd);
     let mut parser = MetaParserMachine::new();
@@ -226,14 +222,10 @@ pub fn fix_tags(path: &PathBuf) {
                             .map(|s| s.trim())
                             .map(|s| s.strip_prefix('"').unwrap().strip_suffix('"').unwrap())
                             .collect();
-                        tags.iter().enumerate().for_each(|(idx, tag)| {
-                            if idx != tags.len() - 1 {
-                                fixed_string.push_str(&format!("{},", tag));
-                            } else {
-                                fixed_string.push_str(&format!("{}", tag));
-                            }
+                        tags.iter().enumerate().for_each(|(_, tag)| {
+                            fixed_string.push_str(&tag.to_string());
                         });
-                        fixed_string.push_str("]");
+                        fixed_string.push(']');
                         fixed.push_str(&format!("\ntags: {}", fixed_string));
                     } else {
                         fixed.push_str(&format!("\n{}", refline));

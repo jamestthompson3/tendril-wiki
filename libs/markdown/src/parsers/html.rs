@@ -9,7 +9,7 @@ enum ParserState {
     Accept,
 }
 
-pub struct HTML {
+pub struct Html {
     pub outlinks: Vec<String>,
     pub body: String,
 }
@@ -33,7 +33,7 @@ impl ParserMachine {
     }
 }
 
-pub fn to_html(md: &str) -> HTML {
+pub fn to_html(md: &str) -> Html {
     let options = Options::all();
     // TODO maybe don't allocate...
     let mut wiki_link_location = String::new();
@@ -86,7 +86,7 @@ pub fn to_html(md: &str) -> HTML {
                     parser_machine.send(ParserState::LinkEnd);
                     Event::Text("".into())
                 }
-                ParserState::Accept => Event::Text(text.into()),
+                ParserState::Accept => Event::Text(text),
                 _ => {
                     println!("{:?}", parser_machine.current_state());
                     panic!("Impossible statereached for `]`");
@@ -105,14 +105,14 @@ pub fn to_html(md: &str) -> HTML {
                     parser_machine.send(ParserState::Accept);
                     Event::Text(format!("[{}", text).into())
                 }
-                _ => Event::Text(text.into()),
+                _ => Event::Text(text),
             },
         },
         _ => event,
     });
     let mut output = String::new();
     html::push_html(&mut output, parser);
-    HTML {
+    Html {
         body: output,
         outlinks,
     }
