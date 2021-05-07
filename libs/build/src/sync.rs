@@ -1,6 +1,6 @@
 use std::{
     fs::File,
-    process::{Command, Output},
+    process::{exit, Command, Output},
     thread,
     time::{Duration, SystemTime},
 };
@@ -12,15 +12,21 @@ struct Git {
 impl Git {
     fn new(repo_location: String) -> Self {
         let expected_git_dir = format!("{}/.git", repo_location);
-        let file = File::open(expected_git_dir).unwrap();
-        if let Ok(metadata) = file.metadata() {
-            if metadata.is_dir() {
-                Git { repo_location }
+        if let Ok(file) = File::open(expected_git_dir) {
+            if let Ok(metadata) = file.metadata() {
+                if metadata.is_dir() {
+                    Git { repo_location }
+                } else {
+                    eprintln!("Git directory not found! Please either initialize a git repository in the wiki location, or disable git syncing your config file");
+                    exit(1);
+                }
             } else {
-                panic!("Git directory not found! Please either initialize a git repository in the wiki location, or disable git syncing your config file");
+                eprintln!("Could not read filesystem metadata of wiki's git repository");
+                exit(1);
             }
         } else {
-            panic!("Wiki location is not a git repository! Please either initialize a git repository in the wiki location, or disable git syncing your config file");
+            eprintln!("Wiki location is not a git repository! Please either initialize a git repository in the wiki location, or disable git syncing your config file");
+            exit(1);
         }
     }
     fn git_cmd(&self, args: &[&str]) -> Output {

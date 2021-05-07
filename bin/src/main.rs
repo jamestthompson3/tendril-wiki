@@ -1,6 +1,7 @@
 
 use build::{RefBuilder, config::read_config, pages::Builder, print_config_location};
 use www::server;
+use std::process::exit;
 
 #[tokio::main]
 async fn main() {
@@ -14,7 +15,8 @@ async fn main() {
             "-c" | "--config" => return print_config_location(),
             _ => {
                 if arg.starts_with('-') {
-                    return eprintln!("unknown option: {}", arg);
+                    eprintln!("unknown option: {}", arg);
+                    exit(1);
                 }
             }
         }

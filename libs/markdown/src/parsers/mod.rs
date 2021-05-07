@@ -6,6 +6,7 @@ use std::{
     fs::File,
     io::{BufRead, BufReader},
     path::{Path, PathBuf},
+    process::exit,
 };
 
 pub use self::html::*;
@@ -29,6 +30,10 @@ pub fn parse_wiki_entry(wiki_location: &str) -> PathBuf {
         entrypoint = PathBuf::from(wiki_location.replace('~', &std::env::var("HOME").unwrap()));
     } else {
         entrypoint = PathBuf::from(wiki_location);
+    }
+    if !entrypoint.exists() {
+        eprint!("Wiki location: {:?} does not exist!", entrypoint);
+        exit(1);
     }
     entrypoint
 }
