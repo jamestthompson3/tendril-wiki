@@ -66,6 +66,8 @@ pub async fn server(config: Config, ref_builder: RefBuilder) {
         .or(wiki)
         .or(indx);
     let port: u16 = config.port;
-    println!("Starting Server at: http://0.0.0.0:{}", port);
+      println!("┌──────────────────────────────────────────────┐");
+      println!("│Starting web backend @ http://127.0.0.1:{}  │", port);
+      println!("└──────────────────────────────────────────────┘");
     warp::serve(routes).run(([0, 0, 0, 0], port)).await;
 }
