@@ -25,9 +25,11 @@ impl ParserMachine {
             state: ParserState::Accept,
         }
     }
+    #[inline]
     pub fn current_state(self) -> ParserState {
         self.state
     }
+    #[inline]
     pub fn send(&mut self, state: ParserState) {
         self.state = state;
     }

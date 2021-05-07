@@ -96,11 +96,13 @@ pub fn render_template(page: &TemplattedPage, links: Option<&Vec<String>>) -> St
     ctx.render_once().unwrap()
 }
 
+#[inline]
 pub fn write_index_page(user: String) {
     let ctx = IndexPage { user };
     fs::write("public/index.html", ctx.render_once().unwrap()).unwrap();
 }
 
+#[inline]
 pub fn write_entries(pages: &ParsedPages, backlinks: &GlobalBacklinks) {
     let page_vals = pages.lock().unwrap();
     let link_vals = backlinks.lock().unwrap();
@@ -117,6 +119,7 @@ pub fn write_entries(pages: &ParsedPages, backlinks: &GlobalBacklinks) {
     }
 }
 
+#[inline]
 pub fn write_tag_pages(map: TagMapping) {
     let tag_map = map.lock().unwrap();
     for key in tag_map.keys() {
@@ -135,6 +138,7 @@ pub fn write_tag_pages(map: TagMapping) {
     }
 }
 
+#[inline]
 pub fn write_tag_index(map: TagMapping) {
     let tag_map = map.lock().unwrap();
     let ctx = TagIndex {
@@ -143,6 +147,7 @@ pub fn write_tag_index(map: TagMapping) {
     fs::write("public/tags/index.html", ctx.render_once().unwrap()).unwrap();
 }
 
+#[inline]
 pub fn write_backlinks(map: GlobalBacklinks) {
     let link_map = map.lock().unwrap();
     let ctx = LinkPage {
