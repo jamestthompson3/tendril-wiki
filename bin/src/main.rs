@@ -1,5 +1,5 @@
 
-use build::{RefBuilder, pages::Builder, config::read_config};
+use build::{RefBuilder, config::read_config, pages::Builder, print_config_location};
 use www::server;
 
 #[tokio::main]
@@ -8,9 +8,10 @@ async fn main() {
     let mut build_all = false;
     for arg in args.iter() {
         match arg.as_ref() {
-            "-v" | "-version" | "--version" => return print_version(),
-            "-h" | "-help" | "--help" => return print_help(),
-            "-b" | "-build" | "--build" => build_all = true,
+            "-v" | "--version" => return print_version(),
+            "-h" | "--help" => return print_help(),
+            "-b" | "--build" => build_all = true,
+            "-c" | "--config" => return print_config_location(),
             _ => {
                 if arg.starts_with('-') {
                     return eprintln!("unknown option: {}", arg);
@@ -22,13 +23,15 @@ async fn main() {
     if build_all {
         std::fs::remove_dir_all("./public").unwrap();
         let builder = Builder::new();
-        builder.sweep(&config.wiki_location);
+        builder.sweep(&config.general.wiki_location);
         builder.compile_all();
     } else {
-        build::sync::check_sync(&config.wiki_location);
+        if config.sync.use_git {
+            build::sync::sync(&config.general.wiki_location, config.sync.sync_interval, config.sync.branch);
+        }
         let mut ref_builder = RefBuilder::new();
-        ref_builder.build(&config.wiki_location);
-        server(config.clone(), ref_builder).await;
+        ref_builder.build(&config.general.wiki_location);
+        server(config.general, ref_builder).await;
     }
 }
 
@@ -43,6 +46,7 @@ fn print_help() {
         -b, --build    Build all pages as HTML and output to ./public
         -v, --version  Print version.
         -h, --help     Show this message.
+        -c, --config   Show the config file location
         ",
         );
 }
