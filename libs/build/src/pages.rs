@@ -46,7 +46,7 @@ impl Builder {
         write_tag_pages(map);
         write_tag_index(Arc::clone(&self.tag_map));
         write_backlinks(links);
-        write_index_page(read_config().user);
+        write_index_page(read_config().general.user);
         fs::create_dir("public/static").unwrap();
         fs::copy("./static/style.css", "./public/static/style.css").unwrap();
     }

@@ -1,4 +1,4 @@
-use ::build::{config::Config, RefBuilder};
+use ::build::{config::General, RefBuilder};
 use ::markdown::ingestors::fs::write;
 use ::markdown::ingestors::WebFormData;
 use markdown::parsers::{IndexPage, NewPage};
@@ -11,7 +11,7 @@ pub mod handlers;
 
 use crate::handlers::*;
 
-pub async fn server(config: Config, ref_builder: RefBuilder) {
+pub async fn server(config: General, ref_builder: RefBuilder) {
     let wiki_location = config.wiki_location.clone();
     let indx = warp::get()
         .and(with_user(Arc::new(config.user)))

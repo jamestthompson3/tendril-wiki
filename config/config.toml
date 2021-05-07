@@ -1,0 +1,12 @@
+[general]
+# Notice no trailing slash here!
+wiki_location = "~/wiki"
+port = 6683
+user = ""
+
+[sync]
+use_git = true
+# time in seconds that tendril will try and sync changes to git
+sync_interval = 60
+# branch it will try and push to
+branch = "main"
