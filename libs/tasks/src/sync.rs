@@ -60,11 +60,7 @@ impl Git {
         }
     }
     fn commit(&self) {
-        let output = self.git_cmd(&[
-            "commit",
-            "-am",
-            format!("[AutoSync] {:?}", SystemTime::now()).as_str(),
-        ]);
+        let output = self.git_cmd(&["commit", "-am", "[AutoSync] - tendrilwiki"]);
         if !output.status.success() {
             panic!("Could not add files to git!");
         }
