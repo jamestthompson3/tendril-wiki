@@ -5,16 +5,15 @@ pub mod templates;
 use std::{
     fs::File,
     io::{BufRead, BufReader},
-    path::{Path, PathBuf},
-    process::exit,
+    path::Path,
 };
 
 pub use self::html::*;
 pub use self::meta::*;
 pub use self::templates::*;
 
-// TODO: move these things somewhere else... Maybe another crate?
-pub fn path_to_reader(path: &Path) -> Result<impl Iterator<Item = String>, std::io::Error> {
+// TODO: move somewhere else... Maybe another crate?
+pub fn path_to_reader<P: AsRef<Path> + ?Sized>(path: &P) -> Result<impl Iterator<Item = String>, std::io::Error> {
     match File::open(&path) {
         Ok(fd) => {
             let reader = BufReader::new(fd);
@@ -22,18 +21,4 @@ pub fn path_to_reader(path: &Path) -> Result<impl Iterator<Item = String>, std::
         }
         Err(e) => Err(e),
     }
-}
-
-pub fn parse_wiki_entry(wiki_location: &str) -> PathBuf {
-    let entrypoint: PathBuf;
-    if wiki_location.contains('~') {
-        entrypoint = PathBuf::from(wiki_location.replace('~', &std::env::var("HOME").unwrap()));
-    } else {
-        entrypoint = PathBuf::from(wiki_location);
-    }
-    if !entrypoint.exists() {
-        eprint!("Wiki location: {:?} does not exist!", entrypoint);
-        exit(1);
-    }
-    entrypoint
 }

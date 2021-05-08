@@ -1,8 +1,8 @@
 
 use build::{RefBuilder, config::read_config, pages::Builder, print_config_location};
-use tasks::sync;
+use tasks::{normalize_wiki_location, sync};
 use www::server;
-use std::{path::{PathBuf}, process::exit, time::Instant};
+use std::{path::PathBuf, process::exit, time::Instant};
 
 #[tokio::main]
 async fn main() {
@@ -33,11 +33,12 @@ async fn main() {
         builder.compile_all();
         println!("Built static site in: {}ms", now.elapsed().as_millis());
     } else {
+        let location = normalize_wiki_location(&config.general.wiki_location);
         if config.sync.use_git {
-            sync(&config.general.wiki_location, config.sync.sync_interval, config.sync.branch);
+            sync(&location, config.sync.sync_interval, config.sync.branch);
         }
         let mut ref_builder = RefBuilder::new();
-        ref_builder.build(&config.general.wiki_location);
+        ref_builder.build(&location);
         server(config.general, ref_builder).await;
     }
 }

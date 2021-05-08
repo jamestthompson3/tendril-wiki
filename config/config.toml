@@ -1,5 +1,4 @@
 [general]
-# Notice no trailing slash here!
 wiki_location = "~/wiki"
 port = 6683
 user = ""

@@ -6,7 +6,7 @@ use std::{
     path::Path,
 };
 
-use crate::{ingestors::WebFormData, processors::tags::TagsArray};
+use crate::{ingestors::EditPageData, processors::tags::TagsArray};
 
 use super::path_to_reader;
 
@@ -50,8 +50,8 @@ impl From<String> for NoteMeta {
     }
 }
 
-impl From<WebFormData> for NoteMeta {
-    fn from(data: WebFormData) -> Self {
+impl From<EditPageData> for NoteMeta {
+    fn from(data: EditPageData) -> Self {
         let mut metadata: HashMap<String, String> = HashMap::new();
         metadata.insert("title".into(), data.title);
         let tags = TagsArray::from(data.tags);

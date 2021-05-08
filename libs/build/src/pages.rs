@@ -1,5 +1,5 @@
 use markdown::parsers::{
-    parse_wiki_entry, path_to_data_structure, write_backlinks, write_entries, write_index_page,
+    path_to_data_structure, write_backlinks, write_entries, write_index_page,
     write_tag_index, write_tag_pages, GlobalBacklinks, ParsedPages, TagMapping,
 };
 use markdown::processors::{
@@ -52,7 +52,6 @@ impl Builder {
     }
     #[inline]
     pub fn sweep(&self, wiki_location: &str) {
-        let entrypoint = parse_wiki_entry(wiki_location);
         if !Path::new("./public").exists() {
             fs::create_dir_all("./public/tags").unwrap();
             fs::create_dir_all("./public/links").unwrap();
@@ -60,7 +59,7 @@ impl Builder {
         let map = Arc::clone(&self.tag_map);
         let links = Arc::clone(&self.backlinks);
         let pages = Arc::clone(&self.pages);
-        parse_entries(entrypoint, map, links, pages);
+        parse_entries(PathBuf::from(wiki_location), map, links, pages);
     }
 }
 

@@ -6,7 +6,7 @@ use std::{
 };
 
 use markdown::{
-    parsers::{parse_wiki_entry, path_to_data_structure, GlobalBacklinks, TagMapping},
+    parsers::{path_to_data_structure, GlobalBacklinks, TagMapping},
     processors::{to_template, update_backlinks, update_tag_map},
 };
 use threadpool::ThreadPool;
@@ -25,12 +25,11 @@ impl RefBuilder {
         }
     }
     pub fn build(&mut self, path: &str) {
-        let entrypoint = parse_wiki_entry(path);
         self.tag_map.lock().unwrap().clear();
         self.backlinks.lock().unwrap().clear();
         let map = Arc::clone(&self.tag_map);
         let links = Arc::clone(&self.backlinks);
-        parse_entries(entrypoint, map, links);
+        parse_entries(PathBuf::from(path), map, links);
     }
     pub fn tags(&self) -> TagMapping {
         Arc::clone(&self.tag_map)

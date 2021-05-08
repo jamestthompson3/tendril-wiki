@@ -5,15 +5,13 @@ use std::{
     time::Duration,
 };
 
-use crate::normalize_wiki_location;
-
 struct Git {
     repo_location: String,
 }
 
 impl Git {
     fn new(repo_location: String) -> Self {
-        let expected_git_dir = format!("{}/.git", repo_location);
+        let expected_git_dir = format!("{}.git", repo_location);
         if let Ok(file) = File::open(expected_git_dir) {
             if let Ok(metadata) = file.metadata() {
                 if metadata.is_dir() {
@@ -95,7 +93,6 @@ impl Git {
 }
 
 pub fn sync(wiki_location: &str, sync_interval: u8, branch: String) {
-    let location = normalize_wiki_location(&wiki_location);
-    let git = Git::new(location);
+    let git = Git::new(wiki_location.to_owned());
     thread::spawn(move || git.sync(sync_interval, branch));
 }

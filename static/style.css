@@ -43,6 +43,10 @@ blockquote {
   border-left: 4px solid var(--accent);
   padding: 0rem 0.5rem;
 }
+
+.hidden {
+  display: none;
+}
 /**
  * Main content
  */
