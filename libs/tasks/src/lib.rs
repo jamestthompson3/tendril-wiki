@@ -1,5 +1,5 @@
 pub mod sync;
-use std::{path::PathBuf, process::exit};
+use std::{path::{PathBuf, MAIN_SEPARATOR}, process::exit};
 
 pub use self::sync::*;
 pub mod search;
@@ -13,9 +13,8 @@ fn parse_location(location: &str) -> String {
     } else {
         loc = location.to_owned();
     }
-    // Backlog: Deal with Windows later
-    if !loc.ends_with('/') {
-        loc.push('/')
+    if !loc.ends_with(MAIN_SEPARATOR) {
+        loc.push(MAIN_SEPARATOR)
     }
     loc
 }
@@ -31,10 +30,15 @@ pub fn normalize_wiki_location(wiki_location: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::env;
 
     #[test]
     fn formats_wiki_location() {
-        let loc = "./wiki";
-        assert_eq!(parse_location(loc), String::from("./wiki/"))
+        assert_eq!(parse_location("./wiki"), String::from("./wiki/"));
+        env::set_var("HOME", "test");
+        assert_eq!(parse_location("~/wiki"), String::from("test/wiki/"));
+        assert_eq!(parse_location("/user/~/wiki"), String::from("/user/test/wiki/"));
+
     }
+
 }
