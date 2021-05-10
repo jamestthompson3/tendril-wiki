@@ -23,17 +23,17 @@ async fn main() {
         }
     };
     let config = read_config();
+    let location = normalize_wiki_location(&config.general.wiki_location);
     if build_all {
         let now = Instant::now();
         if PathBuf::from("./public").exists() {
             std::fs::remove_dir_all("./public").unwrap();
         }
         let builder = Builder::new();
-        builder.sweep(&config.general.wiki_location);
+        builder.sweep(&location);
         builder.compile_all();
         println!("Built static site in: {}ms", now.elapsed().as_millis());
     } else {
-        let location = normalize_wiki_location(&config.general.wiki_location);
         if config.sync.use_git {
             sync(&location, config.sync.sync_interval, config.sync.branch);
         }
