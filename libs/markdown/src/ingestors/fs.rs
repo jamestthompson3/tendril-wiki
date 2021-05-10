@@ -3,8 +3,8 @@ use std::{fs, path::PathBuf};
 use crate::{parsers::NoteMeta, processors::tags::TagsArray};
 use crate::{
     parsers::{
-        parse_meta, path_to_data_structure, path_to_reader, render_template,
-        GlobalBacklinks, TagMapping,
+        parse_meta, path_to_data_structure, path_to_reader, render_template, GlobalBacklinks,
+        TagMapping,
     },
     processors::to_template,
 };
@@ -30,7 +30,7 @@ pub fn write(
 ) -> Result<(), WriteWikiError> {
     let mut file_location = String::from(wiki_location);
     let mut title_location: String;
-    if data.old_title != data.title {
+    if data.old_title != data.title && !data.old_title.is_empty() {
         title_location = data.old_title.clone();
     } else {
         // wiki entires are stored by title + .md file ending
@@ -44,7 +44,10 @@ pub fn write(
         let note: String = note_meta.into();
         return match fs::write(file_location, note) {
             Ok(()) => Ok(()),
-            Err(e) => Err(WriteWikiError::WriteError(e)),
+            Err(e) => {
+                eprintln!("Create new file err: {}", e);
+                Err(WriteWikiError::WriteError(e))
+            }
         };
     }
     let mut note_meta = parse_meta(path_to_reader(&file_location).unwrap(), &file_location);
@@ -56,35 +59,37 @@ pub fn write(
         .metadata
         .insert("tags".into(), updated_tags.write());
 
-    if data.old_title != data.title {
-        note_meta.metadata.insert("title".into(), data.title.clone());
+    if data.old_title != data.title && !data.old_title.is_empty() {
+        note_meta
+            .metadata
+            .insert("title".into(), data.title.clone());
     }
 
     let final_note: String = note_meta.into();
-    if data.old_title != data.title {
+    if data.old_title != data.title && !data.old_title.is_empty() {
         // Relink all pages that reference this page
         let links = backlinks.lock().unwrap();
         let linked_pages = links.get(&data.old_title);
-        match linked_pages {
-            Some(linked_pages) => {
-                for page in linked_pages {
-                    let mut wiki_loc = String::from(wiki_location);
-                    let mut page = page.clone();
-                    page.push_str(".md");
-                    wiki_loc.push_str(&page);
-                    let raw_page = fs::read_to_string(&wiki_loc).unwrap();
-                    let relinked_page = raw_page.replace(&data.old_title, &data.title);
-                    fs::write(wiki_loc, relinked_page).unwrap();
-                }
+        if let Some(linked_pages) = linked_pages {
+            for page in linked_pages {
+                let mut wiki_loc = String::from(wiki_location);
+                let mut page = page.clone();
+                page.push_str(".md");
+                wiki_loc.push_str(&page);
+                let raw_page = fs::read_to_string(&wiki_loc).unwrap();
+                let relinked_page = raw_page.replace(&data.old_title, &data.title);
+                fs::write(wiki_loc, relinked_page).unwrap();
             }
-            None => {}
         }
         let new_location = file_location.replace(&data.old_title, &data.title);
         // Rename the file to the new title
         match fs::rename(&file_location, &new_location) {
             Ok(()) => match fs::write(new_location, final_note) {
                 Ok(()) => Ok(()),
-                Err(e) => Err(WriteWikiError::WriteError(e)),
+                Err(e) => {
+                    eprintln!("write renamed file: {}", e);
+                    Err(WriteWikiError::WriteError(e))
+                }
             },
             Err(e) => Err(WriteWikiError::WriteError(e)),
         }

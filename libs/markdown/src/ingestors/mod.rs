@@ -9,7 +9,7 @@ pub struct EditPageData {
     pub body: String,
     pub tags: Vec<String>,
     pub title: String,
-    pub old_title: String
+    pub old_title: String,
 }
 
 impl From<HashMap<String, String>> for EditPageData {
@@ -21,7 +21,11 @@ impl From<HashMap<String, String>> for EditPageData {
         for key in form_body.keys() {
             match key.as_str() {
                 "title" => title = form_body.get(key).unwrap().to_owned(),
-                "old_title" => old_title = form_body.get(key).unwrap().to_owned(),
+                "old_title" => {
+                    if let Some(old_title_from_form) = form_body.get(key) {
+                        old_title = old_title_from_form.to_owned()
+                    }
+                }
                 "tags" => {
                     tags = form_body
                         .get(key)
@@ -34,6 +38,11 @@ impl From<HashMap<String, String>> for EditPageData {
                 _ => {}
             }
         }
-        EditPageData { body, tags, title, old_title }
+        EditPageData {
+            body,
+            tags,
+            title,
+            old_title,
+        }
     }
 }
