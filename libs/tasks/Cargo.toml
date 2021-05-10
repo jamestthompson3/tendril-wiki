@@ -8,3 +8,5 @@ edition = "2018"
 
 [dependencies]
 grep = "0.2.7"
+argon2 = "0.1"
+rand_core = { version = "0.6", features = ["std"] }

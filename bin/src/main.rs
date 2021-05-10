@@ -1,4 +1,6 @@
-use build::{config::read_config, get_config_location, pages::Builder, write_config, RefBuilder};
+use build::{
+    config::read_config, get_config_location, pages::Builder, write_config_interactive, RefBuilder,
+};
 use std::{path::PathBuf, process::exit, time::Instant};
 use tasks::{normalize_wiki_location, sync};
 use www::server;
@@ -12,7 +14,7 @@ async fn main() {
             "-v" | "--version" => return print_version(),
             "-h" | "--help" => return print_help(),
             "-b" | "--build" => build_all = true,
-            "-i" | "--init" => return write_config(),
+            "-i" | "--init" => return write_config_interactive(),
             _ => {
                 if arg.starts_with('-') {
                     eprintln!("unknown option: {}", arg);

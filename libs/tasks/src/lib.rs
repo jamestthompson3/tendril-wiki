@@ -1,9 +1,11 @@
 pub mod sync;
+pub mod search;
+pub mod password;
 use std::{path::{PathBuf, MAIN_SEPARATOR}, process::exit};
 
 pub use self::sync::*;
-pub mod search;
 pub use self::search::*;
+pub use self::password::*;
 
 #[inline]
 fn parse_location(location: &str) -> String {

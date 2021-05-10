@@ -9,8 +9,10 @@ edition = "2018"
 [dependencies]
 threadpool = "1.8.1"
 markdown = { path = "../markdown" }
+tasks = { path = "../tasks" }
 num_cpus = "1.13.0"
 toml = "0.5.8"
 directories = "3.0.1"
 serde_derive = "1.0.125"
 serde = "1.0.125"
+rpassword = "5.0.1"
