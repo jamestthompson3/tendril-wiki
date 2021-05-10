@@ -1,8 +1,7 @@
-
-use build::{RefBuilder, config::read_config, pages::Builder, print_config_location};
+use build::{config::read_config, get_config_location, pages::Builder, write_config, RefBuilder};
+use std::{path::PathBuf, process::exit, time::Instant};
 use tasks::{normalize_wiki_location, sync};
 use www::server;
-use std::{path::PathBuf, process::exit, time::Instant};
 
 #[tokio::main]
 async fn main() {
@@ -13,7 +12,7 @@ async fn main() {
             "-v" | "--version" => return print_version(),
             "-h" | "--help" => return print_help(),
             "-b" | "--build" => build_all = true,
-            "-c" | "--config" => return print_config_location(),
+            "-i" | "--init" => return write_config(),
             _ => {
                 if arg.starts_with('-') {
                     eprintln!("unknown option: {}", arg);
@@ -21,7 +20,7 @@ async fn main() {
                 }
             }
         }
-    };
+    }
     let config = read_config();
     let location = normalize_wiki_location(&config.general.wiki_location);
     if build_all {
@@ -43,18 +42,33 @@ async fn main() {
     }
 }
 
-
 fn print_version() {
-    println!("tendril-wiki v{}", env!("CARGO_PKG_VERSION"))
+    println!(
+        "tendril-wiki v{}\nConfig file found at {:?}",
+        env!("CARGO_PKG_VERSION"),
+        get_config_location().0
+    );
 }
 fn print_help() {
     print!(
         "Usage: tendril [options]
         Options:
-        -b, --build    Build all pages as HTML and output to ./public
-        -v, --version  Print version.
-        -h, --help     Show this message.
-        -c, --config   Show the config file location
+        -i, --init                   Initialize config file
+        -b, --build                  Build all pages as HTML and output to ./public
+        -v, --version                Print version and config information.
+        -h, --help                   Show this message.
         ",
-        );
+    );
 }
+
+// TODO: Maybe later add in multi-config, multi-folder stuff
+// -c <path>, --config <path>   Use config at <path>
+//
+// Examples:
+
+//   - Start wiki in the ~/work/wiki directory
+//         $ tendril ~/work/wiki
+//   - Start wiki at location specified in config file
+//         $ tendril
+//   - Start wiki in current folder with a custom config file
+//         $ tendril . -c ./config.toml
