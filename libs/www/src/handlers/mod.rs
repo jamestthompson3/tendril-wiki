@@ -66,7 +66,7 @@ pub async fn with_nested_file(mut main_path: String, sub_path: String, refs: Ref
             let links = refs.links();
             let tags = refs.tags();
             main_path.push_str(&sub_path_decoded.as_str());
-            let page = read(&wiki_location.to_string(), main_path, tags, links).map_err(|_| warp::reject())?;
+            let page = read(&wiki_location, main_path, tags, links).map_err(|_| warp::reject())?;
             Ok(warp::reply::html(page))
         }
     }

@@ -36,7 +36,7 @@
         <div>
           <ul class="tags">
             <% for tag in tags.iter() {  %>
-            <li><a href="/tags/<%- tag %>"><%- tag %></a></li>
+            <li><a href="/tags/<%- tag %>">#<%- tag %></a></li>
             <% } %>
           </ul>
         </div>

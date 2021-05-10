@@ -78,12 +78,15 @@ pub async fn server(config: General, ref_builder: RefBuilder) {
                      mut builder: RefBuilder| {
                         let parsed_data = EditPageData::from(form_body);
                         let redir_uri = format!("/{}", encode(&parsed_data.title));
-                        match write(&wiki_location.to_string(), parsed_data, builder.links()) {
+                        match write(&wiki_location, parsed_data, builder.links()) {
                             Ok(()) => {
                                 builder.build(&wiki_location);
                                 warp::redirect(redir_uri.parse::<Uri>().unwrap())
                             }
-                            Err(_) => warp::redirect(Uri::from_static("/error")),
+                            Err(e) => {
+                                eprintln!("{}",e);
+                                warp::redirect(Uri::from_static("/error"))
+                            },
                         }
                     },
                 ),

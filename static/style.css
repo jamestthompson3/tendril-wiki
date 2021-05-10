@@ -35,6 +35,22 @@ a {
 
 .tags {
   list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0px;
+  padding: 0px;
+}
+
+.tags li {
+  background-color: var(--accent);
+  border-radius: var(--rad);
+  margin: 0.25rem;
+  padding: 0.25rem;
+}
+
+.tags li a {
+  color: var(--bg);
+  text-decoration: none;
 }
 
 blockquote {
@@ -123,10 +139,6 @@ blockquote {
 .content-body p {
   font-size: 1.2rem;
   line-height: 2rem;
-}
-
-.tags li::before {
-  content: "#";
 }
 
 .title {
