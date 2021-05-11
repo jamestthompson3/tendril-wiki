@@ -1,6 +1,7 @@
 :root {
   --primary: rgba(33, 133, 208, 0.1);
   --primary-variant: rgba(33, 133, 208, 1);
+  --variant-muted: rgba(33, 133, 208, 0.5);
   --accent: rgb(64, 32, 207);
   --bg: #eeeeee;
   --bg-darker: #e6e6e6;
@@ -13,6 +14,7 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --primary-variant: rgb(110, 193, 255);
+    --variant-muted: rgb(110, 193, 255, 0.5);
     --primary: rgba(33, 133, 208, 1);
     --accent: rgb(198, 185, 255);
     --bg: #333333;
@@ -33,6 +35,36 @@ a {
   color: var(--primary-variant);
 }
 
+blockquote {
+  font-family: monospace;
+  background-color: var(--bg-darker);
+  border-left: 4px solid var(--accent);
+  padding: 0rem 0.5rem;
+}
+
+table {
+  border-spacing: 0px 3px;
+}
+
+table,
+th,
+td {
+  padding: 4px;
+}
+
+td {
+  border: 1px solid #666;
+}
+
+thead {
+  background-color: var(--variant-muted);
+  border-spacing: 6px;
+}
+
+tbody tr:nth-child(odd) {
+  background-color: var(--bg-darker);
+}
+
 .tags {
   list-style: none;
   display: flex;
@@ -51,13 +83,6 @@ a {
 .tags li a {
   color: var(--bg);
   text-decoration: none;
-}
-
-blockquote {
-  font-family: monospace;
-  background-color: var(--bg-darker);
-  border-left: 4px solid var(--accent);
-  padding: 0rem 0.5rem;
 }
 
 .hidden {
