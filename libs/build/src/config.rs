@@ -1,4 +1,9 @@
-use std::{env::var, fs, io::stdin, path::PathBuf};
+use std::{
+    env::var,
+    fs,
+    io::{stdin, stdout, Write},
+    path::PathBuf,
+};
 
 use directories::ProjectDirs;
 use rpassword::read_password_from_tty;
@@ -48,25 +53,30 @@ pub fn write_config() {
 pub fn write_config_interactive() {
     let mut username = String::new();
     let stdin = stdin();
-    println!("Enter username [{}]", get_user());
+    print!("Enter username ({}):  ", get_user());
+    stdout().flush().unwrap();
     stdin.read_line(&mut username).unwrap();
     let mut location = String::new();
-    println!("Enter wiki location [~/wiki/]");
+    print!("Enter wiki location (~/wiki/) >");
+    stdout().flush().unwrap();
     stdin.read_line(&mut location).unwrap();
     let mut should_sync = String::new();
     let mut enable_sync = true;
-    println!("Use git to sync wiki updates (y\\n)?");
+    print!("Use git to sync wiki updates (y\\n)? ");
+    stdout().flush().unwrap();
     stdin.read_line(&mut should_sync).unwrap();
     let mut git_branch = String::new();
     match should_sync.as_str().strip_suffix('\n').unwrap() {
         "y" | "t" | "true" | "yes" => {
-            println!("Name of branch to sync to [main]");
+            print!("Name of branch to sync to (main): ");
+            stdout().flush().unwrap();
             stdin.read_line(&mut git_branch).unwrap();
         }
         _ => enable_sync = false,
     }
     let mut use_password = String::new();
-    println!("Use password to protect wiki (y\\n)?");
+    print!("Use password to protect wiki (y\\n)? ");
+    stdout().flush().unwrap();
     stdin.read_line(&mut use_password).unwrap();
     let mut password: Option<String> = None;
     match use_password.as_str().strip_suffix('\n').unwrap() {
