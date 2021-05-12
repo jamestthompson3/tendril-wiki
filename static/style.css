@@ -61,6 +61,14 @@ thead {
   border-spacing: 6px;
 }
 
+th {
+  border-left: 2px solid #666;
+}
+
+th:nth-child(1) {
+  border-left: 0px;
+}
+
 tbody tr:nth-child(odd) {
   background-color: var(--bg-darker);
 }
