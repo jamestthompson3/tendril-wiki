@@ -3,6 +3,7 @@ use std::sync::Arc;
 use warp::Filter;
 
 pub mod handlers;
+pub mod services;
 
 use crate::handlers::*;
 

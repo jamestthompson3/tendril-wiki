@@ -19,6 +19,10 @@ use warp::{
     Filter, Rejection, Reply,
 };
 
+use crate::services::*;
+
+pub const MAX_BODY_SIZE: u64 = 32768;
+
 pub fn index(
     user: String,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
@@ -67,7 +71,7 @@ pub fn search_handler(
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::post().and(with_auth()).and(
         warp::path("search").and(
-            warp::body::content_length_limit(1024 * 32)
+            warp::body::content_length_limit(MAX_BODY_SIZE)
                 .and(warp::body::form())
                 .and(with_location(location))
                 .map(
@@ -99,7 +103,7 @@ pub fn edit_handler(
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::post().and(with_auth()).and(
         warp::path("edit").and(
-            warp::body::content_length_limit(1024 * 32)
+            warp::body::content_length_limit(MAX_BODY_SIZE)
                 .and(warp::body::form())
                 .and(with_location(location))
                 .and(with_refs(ref_builder))
