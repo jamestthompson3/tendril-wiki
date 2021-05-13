@@ -7,22 +7,28 @@ use markdown::parsers::{
     IndexPage, NewPage, SearchPage, SearchResultsContextPage, SearchResultsPage,
 };
 use sailfish::TemplateOnce;
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, convert::Infallible, sync::Arc};
 use urlencoding::encode;
 
 use markdown::ingestors::fs::write;
 use markdown::ingestors::EditPageData;
 
 use tasks::{context_search, search};
-use warp::{http::Uri, Filter};
+use warp::{
+    http::{HeaderMap, HeaderValue, StatusCode, Uri, Response},
+    Filter, Rejection, Reply,
+};
 
 pub fn index(
     user: String,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    warp::get().and(with_user(user)).map(|user: String| {
-        let idx_ctx = IndexPage { user };
-        warp::reply::html(idx_ctx.render_once().unwrap())
-    })
+    warp::get()
+        .and(with_auth())
+        .and(with_user(user))
+        .map(|user: String| {
+            let idx_ctx = IndexPage { user };
+            warp::reply::html(idx_ctx.render_once().unwrap())
+        })
 }
 
 pub fn wiki(
@@ -30,6 +36,7 @@ pub fn wiki(
     location: Arc<String>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
+        .and(with_auth())
         .and(warp::path::param())
         .and(with_refs(ref_builder))
         .and(with_location(location))
@@ -41,14 +48,15 @@ pub fn nested_file(
     location: Arc<String>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
+        .and(with_auth())
         .and(warp::path!(String / String))
-        .and(with_refs(ref_builder.clone()))
+        .and(with_refs(ref_builder))
         .and(with_location(location))
         .and_then(with_nested_file)
 }
 
 pub fn new_page() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    warp::get().and(warp::path("new").map(|| {
+    warp::get().and(with_auth()).and(warp::path("new").map(|| {
         let ctx = NewPage { title: None };
         warp::reply::html(ctx.render_once().unwrap())
     }))
@@ -57,7 +65,7 @@ pub fn new_page() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejec
 pub fn search_handler(
     location: Arc<String>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    warp::post().and(
+    warp::post().and(with_auth()).and(
         warp::path("search").and(
             warp::body::content_length_limit(1024 * 32)
                 .and(warp::body::form())
@@ -89,7 +97,7 @@ pub fn edit_handler(
     ref_builder: RefBuilder,
     location: Arc<String>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    warp::post().and(
+    warp::post().and(with_auth()).and(
         warp::path("edit").and(
             warp::body::content_length_limit(1024 * 32)
                 .and(warp::body::form())
@@ -117,9 +125,50 @@ pub fn edit_handler(
     )
 }
 
-pub fn search_page() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    warp::get().and(warp::path("search")).map(|| {
-        let ctx = SearchPage {};
-        warp::reply::html(ctx.render_once().unwrap())
-    })
+pub fn search_page() -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+    warp::get()
+        .and(with_auth())
+        .and(warp::path("search"))
+        .map(|| {
+            let ctx = SearchPage {};
+            warp::reply::html(ctx.render_once().unwrap())
+        })
+}
+
+pub async fn handle_rejection(err: Rejection) -> std::result::Result<impl Reply, Infallible> {
+    let mut headers = HeaderMap::new();
+    let (code, message) = if err.is_not_found() {
+        (StatusCode::NOT_FOUND, "Not Found".to_string())
+    } else if let Some(e) = err.find::<AuthError>() {
+        match e {
+            AuthError::AuthNotPresent => {
+                headers.insert("www-authenticate", HeaderValue::from_static("Basic"));
+                (StatusCode::UNAUTHORIZED, e.to_string())
+            }
+            AuthError::BadCredentials => {
+                headers.insert("www-authenticate", HeaderValue::from_static("Basic"));
+                (StatusCode::UNAUTHORIZED, e.to_string())
+            },
+            _ => (StatusCode::BAD_REQUEST, e.to_string()),
+        }
+    } else if err.find::<warp::reject::MethodNotAllowed>().is_some() {
+        (
+            StatusCode::METHOD_NOT_ALLOWED,
+            "Method Not Allowed".to_string(),
+        )
+    } else {
+        eprintln!("unhandled error: {:?}", err);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Internal Server Error".to_string(),
+        )
+    };
+
+    let response = Response::new(message);
+    let (mut parts, body) = response.into_parts();
+    parts.status = code;
+    parts.headers = headers;
+    let response = Response::from_parts(parts, body);
+
+    Ok(response)
 }
