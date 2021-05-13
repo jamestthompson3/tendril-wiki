@@ -10,28 +10,32 @@ use tasks::normalize_wiki_location;
 use urlencoding::decode;
 use warp::Filter;
 
-pub fn with_location(wiki_location: String) -> impl Filter<Extract = (String,), Error = std::convert::Infallible> + Clone {
+pub fn with_location(
+    wiki_location: String,
+) -> impl Filter<Extract = (String,), Error = std::convert::Infallible> + Clone {
     warp::any().map(move || normalize_wiki_location(&wiki_location))
 }
 
-pub async fn with_file(path: String, refs: RefBuilder, wiki_location: String) -> Result<impl warp::Reply, warp::Rejection> {
+pub async fn with_file(
+    path: String,
+    refs: RefBuilder,
+    wiki_location: String,
+) -> Result<impl warp::Reply, warp::Rejection> {
     match path.as_str() {
         "links" => {
             let ref_links = refs.links();
             let links = ref_links.lock().unwrap();
             let ctx = LinkPage {
-                links: links.clone()
+                links: links.clone(),
             };
             Ok(warp::reply::html(ctx.render_once().unwrap()))
-        },
+        }
         "tags" => {
             let ref_tags = refs.tags();
             let tags = ref_tags.lock().unwrap();
-            let ctx = TagIndex {
-                tags: tags.clone()
-            };
+            let ctx = TagIndex { tags: tags.clone() };
             Ok(warp::reply::html(ctx.render_once().unwrap()))
-        },
+        }
         _ => {
             let links = refs.links();
             let tags = refs.tags();
@@ -51,7 +55,12 @@ pub async fn with_file(path: String, refs: RefBuilder, wiki_location: String) ->
 }
 
 // TODO: Not repeat this the same as file
-pub async fn with_nested_file(mut main_path: String, sub_path: String, refs: RefBuilder, wiki_location: String)-> Result<impl warp::Reply, warp::Rejection> {
+pub async fn with_nested_file(
+    mut main_path: String,
+    sub_path: String,
+    refs: RefBuilder,
+    wiki_location: String,
+) -> Result<impl warp::Reply, warp::Rejection> {
     match main_path.as_str() {
         "tags" => {
             let ref_tags = refs.tags();
@@ -62,15 +71,13 @@ pub async fn with_nested_file(mut main_path: String, sub_path: String, refs: Ref
                 Some(tags) => {
                     let ctx = TagPage {
                         title: sub_path_decoded,
-                        tags: tags.to_owned()
+                        tags: tags.to_owned(),
                     };
                     Ok(warp::reply::html(ctx.render_once().unwrap()))
                 }
-                None => {
-                    Err(warp::reject())
-                }
+                None => Err(warp::reject()),
             }
-        },
+        }
         _ => {
             // I don't know why warp doesn't decode the sub path here...
             let sub_path_decoded = decode(&sub_path).unwrap();
@@ -83,10 +90,14 @@ pub async fn with_nested_file(mut main_path: String, sub_path: String, refs: Ref
     }
 }
 
-pub fn with_user(user: Arc<String>) -> impl Filter<Extract = (Arc<String>,), Error = std::convert::Infallible> + Clone {
+pub fn with_user(
+    user: Arc<String>,
+) -> impl Filter<Extract = (Arc<String>,), Error = std::convert::Infallible> + Clone {
     warp::any().map(move || user.clone())
 }
 
-pub fn with_refs(refs: RefBuilder)-> impl Filter<Extract = (RefBuilder,), Error = std::convert::Infallible> + Clone {
+pub fn with_refs(
+    refs: RefBuilder,
+) -> impl Filter<Extract = (RefBuilder,), Error = std::convert::Infallible> + Clone {
     warp::any().map(move || refs.clone())
 }

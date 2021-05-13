@@ -1,7 +1,9 @@
 use ::build::{config::General, RefBuilder};
 use ::markdown::ingestors::fs::write;
 use ::markdown::ingestors::EditPageData;
-use markdown::parsers::{IndexPage, NewPage, SearchPage, SearchResultsContextPage, SearchResultsPage};
+use markdown::parsers::{
+    IndexPage, NewPage, SearchPage, SearchResultsContextPage, SearchResultsPage,
+};
 use sailfish::TemplateOnce;
 use std::{collections::HashMap, sync::Arc};
 use tasks::{context_search, search};
@@ -84,9 +86,9 @@ pub async fn server(config: General, ref_builder: RefBuilder) {
                                 warp::redirect(redir_uri.parse::<Uri>().unwrap())
                             }
                             Err(e) => {
-                                eprintln!("{}",e);
+                                eprintln!("{}", e);
                                 warp::redirect(Uri::from_static("/error"))
-                            },
+                            }
                         }
                     },
                 ),
