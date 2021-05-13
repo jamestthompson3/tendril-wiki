@@ -1,12 +1,14 @@
-use::markdown::ingestors::fs::read;
-use tasks::normalize_wiki_location;
-use warp::Filter;
-use markdown::parsers::{LinkPage, TagIndex, TagPage};
-use urlencoding::decode;
-use std::sync::Arc
-;
+use ::build::RefBuilder;
+use ::markdown::ingestors::fs::read;
+use markdown::{
+    ingestors::ReadPageError,
+    parsers::{LinkPage, NewPage, TagIndex, TagPage},
+};
 use sailfish::TemplateOnce;
-use::build::RefBuilder;
+use std::sync::Arc;
+use tasks::normalize_wiki_location;
+use urlencoding::decode;
+use warp::Filter;
 
 pub fn with_location(wiki_location: String) -> impl Filter<Extract = (String,), Error = std::convert::Infallible> + Clone {
     warp::any().map(move || normalize_wiki_location(&wiki_location))
@@ -33,8 +35,17 @@ pub async fn with_file(path: String, refs: RefBuilder, wiki_location: String) ->
         _ => {
             let links = refs.links();
             let tags = refs.tags();
-            let page = read(&wiki_location, path, tags, links).map_err(|_| warp::reject())?;
-            Ok(warp::reply::html(page))
+            match read(&wiki_location, path.clone(), tags, links) {
+                Ok(page) => Ok(warp::reply::html(page)),
+                Err(ReadPageError::PageNotFoundError) => {
+                    // TODO: Ideally, I want to redirect, but I'm not sure how to do this with
+                    // warp's filter system where some branches return HTML, and others redirect...
+                    let ctx = NewPage { title: Some(decode(&path).unwrap()) };
+
+                    Ok(warp::reply::html(ctx.render_once().unwrap()))
+                }
+                _ => Err(warp::reject()),
+            }
         }
     }
 }
