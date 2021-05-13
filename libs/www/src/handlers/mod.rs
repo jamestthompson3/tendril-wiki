@@ -1,103 +1,125 @@
-use ::build::RefBuilder;
-use ::markdown::ingestors::fs::read;
-use markdown::{
-    ingestors::ReadPageError,
-    parsers::{LinkPage, NewPage, TagIndex, TagPage},
+pub mod filters;
+
+pub use self::filters::*;
+
+use build::RefBuilder;
+use markdown::parsers::{
+    IndexPage, NewPage, SearchPage, SearchResultsContextPage, SearchResultsPage,
 };
 use sailfish::TemplateOnce;
-use std::sync::Arc;
-use tasks::normalize_wiki_location;
-use urlencoding::decode;
-use warp::Filter;
+use std::{collections::HashMap, sync::Arc};
+use urlencoding::encode;
 
-pub fn with_location(
-    wiki_location: String,
-) -> impl Filter<Extract = (String,), Error = std::convert::Infallible> + Clone {
-    warp::any().map(move || normalize_wiki_location(&wiki_location))
+use markdown::ingestors::fs::write;
+use markdown::ingestors::EditPageData;
+
+use tasks::{context_search, search};
+use warp::{http::Uri, Filter};
+
+pub fn index(
+    user: String,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::get().and(with_user(user)).map(|user: String| {
+        let idx_ctx = IndexPage { user };
+        warp::reply::html(idx_ctx.render_once().unwrap())
+    })
 }
 
-pub async fn with_file(
-    path: String,
-    refs: RefBuilder,
-    wiki_location: String,
-) -> Result<impl warp::Reply, warp::Rejection> {
-    match path.as_str() {
-        "links" => {
-            let ref_links = refs.links();
-            let links = ref_links.lock().unwrap();
-            let ctx = LinkPage {
-                links: links.clone(),
-            };
-            Ok(warp::reply::html(ctx.render_once().unwrap()))
-        }
-        "tags" => {
-            let ref_tags = refs.tags();
-            let tags = ref_tags.lock().unwrap();
-            let ctx = TagIndex { tags: tags.clone() };
-            Ok(warp::reply::html(ctx.render_once().unwrap()))
-        }
-        _ => {
-            let links = refs.links();
-            let tags = refs.tags();
-            match read(&wiki_location, path.clone(), tags, links) {
-                Ok(page) => Ok(warp::reply::html(page)),
-                Err(ReadPageError::PageNotFoundError) => {
-                    // TODO: Ideally, I want to redirect, but I'm not sure how to do this with
-                    // warp's filter system where some branches return HTML, and others redirect...
-                    let ctx = NewPage { title: Some(decode(&path).unwrap()) };
-
-                    Ok(warp::reply::html(ctx.render_once().unwrap()))
-                }
-                _ => Err(warp::reject()),
-            }
-        }
-    }
+pub fn wiki(
+    ref_builder: RefBuilder,
+    location: Arc<String>,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::get()
+        .and(warp::path::param())
+        .and(with_refs(ref_builder))
+        .and(with_location(location))
+        .and_then(with_file)
 }
 
-// TODO: Not repeat this the same as file
-pub async fn with_nested_file(
-    mut main_path: String,
-    sub_path: String,
-    refs: RefBuilder,
-    wiki_location: String,
-) -> Result<impl warp::Reply, warp::Rejection> {
-    match main_path.as_str() {
-        "tags" => {
-            let ref_tags = refs.tags();
-            let tags = ref_tags.lock().unwrap();
-            // I don't know why warp doesn't decode the sub path here...
-            let sub_path_decoded = decode(&sub_path).unwrap();
-            match tags.get(&sub_path_decoded) {
-                Some(tags) => {
-                    let ctx = TagPage {
-                        title: sub_path_decoded,
-                        tags: tags.to_owned(),
-                    };
-                    Ok(warp::reply::html(ctx.render_once().unwrap()))
-                }
-                None => Err(warp::reject()),
-            }
-        }
-        _ => {
-            // I don't know why warp doesn't decode the sub path here...
-            let sub_path_decoded = decode(&sub_path).unwrap();
-            let links = refs.links();
-            let tags = refs.tags();
-            main_path.push_str(&sub_path_decoded.as_str());
-            let page = read(&wiki_location, main_path, tags, links).map_err(|_| warp::reject())?;
-            Ok(warp::reply::html(page))
-        }
-    }
+pub fn nested_file(
+    ref_builder: RefBuilder,
+    location: Arc<String>,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::get()
+        .and(warp::path!(String / String))
+        .and(with_refs(ref_builder.clone()))
+        .and(with_location(location))
+        .and_then(with_nested_file)
 }
 
-pub fn with_user(
-    user: Arc<String>,
-) -> impl Filter<Extract = (Arc<String>,), Error = std::convert::Infallible> + Clone {
-    warp::any().map(move || user.clone())
+pub fn new_page() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::get().and(warp::path("new").map(|| {
+        let ctx = NewPage { title: None };
+        warp::reply::html(ctx.render_once().unwrap())
+    }))
 }
 
-pub fn with_refs(
-    refs: RefBuilder,
-) -> impl Filter<Extract = (RefBuilder,), Error = std::convert::Infallible> + Clone {
-    warp::any().map(move || refs.clone())
+pub fn search_handler(
+    location: Arc<String>,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::post().and(
+        warp::path("search").and(
+            warp::body::content_length_limit(1024 * 32)
+                .and(warp::body::form())
+                .and(with_location(location))
+                .map(
+                    |form_body: HashMap<String, String>, wiki_location: String| {
+                        let term = form_body.get("term").unwrap();
+                        let include_context = form_body.get("context");
+                        match include_context {
+                            Some(_) => {
+                                let found_pages = context_search(term, &wiki_location);
+                                // TODO: Maybe not a separate page here?
+                                let ctx = SearchResultsContextPage { pages: found_pages };
+                                warp::reply::html(ctx.render_once().unwrap())
+                            }
+                            None => {
+                                let found_pages = search(term, &wiki_location);
+                                let ctx = SearchResultsPage { pages: found_pages };
+                                warp::reply::html(ctx.render_once().unwrap())
+                            }
+                        }
+                    },
+                ),
+        ),
+    )
+}
+
+pub fn edit_handler(
+    ref_builder: RefBuilder,
+    location: Arc<String>,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::post().and(
+        warp::path("edit").and(
+            warp::body::content_length_limit(1024 * 32)
+                .and(warp::body::form())
+                .and(with_location(location))
+                .and(with_refs(ref_builder))
+                .map(
+                    |form_body: HashMap<String, String>,
+                     wiki_location: String,
+                     mut builder: RefBuilder| {
+                        let parsed_data = EditPageData::from(form_body);
+                        let redir_uri = format!("/{}", encode(&parsed_data.title));
+                        match write(&wiki_location, parsed_data, builder.links()) {
+                            Ok(()) => {
+                                builder.build(&wiki_location);
+                                warp::redirect(redir_uri.parse::<Uri>().unwrap())
+                            }
+                            Err(e) => {
+                                eprintln!("{}", e);
+                                warp::redirect(Uri::from_static("/error"))
+                            }
+                        }
+                    },
+                ),
+        ),
+    )
+}
+
+pub fn search_page() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::get().and(warp::path("search")).map(|| {
+        let ctx = SearchPage {};
+        warp::reply::html(ctx.render_once().unwrap())
+    })
 }
