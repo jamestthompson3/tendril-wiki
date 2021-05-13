@@ -23,6 +23,18 @@ pub enum WriteWikiError {
     Unknown,
 }
 
+#[derive(Error, Debug)]
+pub enum ReadPageError {
+    #[error("Could not decode page name")]
+    DecodeError,
+    #[error("could not deserialize page")]
+    DeserializationError,
+    #[error("could not find page")]
+    PageNotFoundError,
+    #[error("unknown read error")]
+    Unknown,
+}
+
 pub fn write(
     wiki_location: &str,
     data: EditPageData,
@@ -103,18 +115,28 @@ pub fn write(
 
 pub fn read(
     wiki_location: &str,
-    mut requested_file: String,
+    requested_file: String,
     _tags: TagMapping,
     backlinks: GlobalBacklinks,
-) -> Result<String, Box<dyn std::error::Error>> {
+) -> Result<String, ReadPageError> {
     let mut file_location = String::from(wiki_location);
-    requested_file = decode(&requested_file)?;
-    requested_file.push_str(".md");
-    file_location.push_str(&requested_file);
-    let note = path_to_data_structure(&PathBuf::from(file_location))?;
-    let templatted = to_template(&note);
-    let link_vals = backlinks.lock().unwrap();
-    let links = link_vals.get(&templatted.page.title);
-    let output = render_template(&templatted.page, links);
-    Ok(output)
+    if let Ok(mut file) = decode(&requested_file) {
+        file.push_str(".md");
+        file_location.push_str(&file);
+        let file_path = PathBuf::from(file_location);
+        if !file_path.exists() {
+            return Err(ReadPageError::PageNotFoundError);
+        }
+        if let Ok(note) = path_to_data_structure(&file_path) {
+            let templatted = to_template(&note);
+            let link_vals = backlinks.lock().unwrap();
+            let links = link_vals.get(&templatted.page.title);
+            let output = render_template(&templatted.page, links);
+            Ok(output)
+        } else {
+            Err(ReadPageError::DeserializationError)
+        }
+    } else {
+        Err(ReadPageError::DecodeError)
+    }
 }
