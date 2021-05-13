@@ -15,7 +15,7 @@ use markdown::ingestors::EditPageData;
 
 use tasks::{context_search, search};
 use warp::{
-    http::{HeaderMap, HeaderValue, StatusCode, Uri, Response},
+    http::{header, HeaderValue, Response, StatusCode, Uri},
     Filter, Rejection, Reply,
 };
 
@@ -177,19 +177,12 @@ pub fn search_page() -> impl Filter<Extract = impl Reply, Error = Rejection> + C
 }
 
 pub async fn handle_rejection(err: Rejection) -> std::result::Result<impl Reply, Infallible> {
-    let mut headers = HeaderMap::new();
     let (code, message) = if err.is_not_found() {
         (StatusCode::NOT_FOUND, "Not Found".to_string())
     } else if let Some(e) = err.find::<AuthError>() {
         match e {
-            AuthError::AuthNotPresent => {
-                headers.insert("www-authenticate", HeaderValue::from_static("Basic"));
-                (StatusCode::UNAUTHORIZED, e.to_string())
-            }
-            AuthError::BadCredentials => {
-                headers.insert("www-authenticate", HeaderValue::from_static("Basic"));
-                (StatusCode::UNAUTHORIZED, e.to_string())
-            },
+            AuthError::AuthNotPresent => (StatusCode::UNAUTHORIZED, e.to_string()),
+            AuthError::BadCredentials => (StatusCode::FORBIDDEN, e.to_string()),
             _ => (StatusCode::BAD_REQUEST, e.to_string()),
         }
     } else if err.find::<warp::reject::MethodNotAllowed>().is_some() {
