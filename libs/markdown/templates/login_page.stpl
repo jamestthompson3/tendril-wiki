@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en-US" prefix="og:http://ogp.me/ns#">
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    <link rel="stylesheet" href="/static/style.css" />
+    <link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+    <meta name="description" content="Login to your wiki" />
+    <meta property="og:title" content="Login" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="" />
+    <meta property="og:image" content="" />
+    <title>Login</title>
+  </head>
+  <body>
+    <div class="content-container">
+      <form class="editor visible" method="post" action="/login" target="_parent">
+        <label for="username">Username</label>
+        <input name="username" id="username-edit" type="text" value="" />
+        <label for="password-edit">Password</label>
+        <input id="password-edit" type="password" name="password" value="" />
+        <button type="submit">Login</button>
+      </form>
+    </div>
+  </body>
+</html>

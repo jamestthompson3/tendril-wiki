@@ -17,13 +17,16 @@ pub async fn server(config: General, ref_builder: RefBuilder) {
     let handle_search = search_handler(wiki_location.clone());
     let static_files = warp::path("static").and(warp::fs::dir("static"));
     let edit = edit_handler(ref_builder, wiki_location);
-    let routes = static_files.or(wiki)
-        .or(index)
+    // Order matters!!
+    let routes = static_files
+        .or(nested)
         .or(edit)
         .or(new_page)
         .or(search_page)
         .or(handle_search)
-        .or(nested)
+        .or(wiki)
+        .or(index)
+        .or(login())
         .recover(handle_rejection);
     let port: u16 = config.port;
     println!("┌──────────────────────────────────────────────┐");

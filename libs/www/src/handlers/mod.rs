@@ -4,7 +4,7 @@ pub use self::filters::*;
 
 use build::RefBuilder;
 use markdown::parsers::{
-    IndexPage, NewPage, SearchPage, SearchResultsContextPage, SearchResultsPage,
+    IndexPage, LoginPage, NewPage, SearchPage, SearchResultsContextPage, SearchResultsPage,
 };
 use sailfish::TemplateOnce;
 use std::{collections::HashMap, convert::Infallible, sync::Arc};
@@ -45,6 +45,43 @@ pub fn wiki(
         .and(with_refs(ref_builder))
         .and(with_location(location))
         .and_then(with_file)
+}
+
+pub fn login() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::post().and(warp::path("login")).and(
+        warp::body::content_length_limit(MAX_BODY_SIZE)
+            .and(warp::body::form())
+            .map(|form_body: HashMap<String, String>| {
+                let username = form_body.get("username").unwrap();
+                let pwd = form_body.get("password").unwrap();
+                match create_jwt(username, pwd) {
+                    Ok(token) => {
+                        // Response::builder().body(token)
+                        Response::builder()
+                            .status(StatusCode::MOVED_PERMANENTLY)
+                            .header(header::LOCATION, HeaderValue::from_static("/"))
+                            .header(
+                                header::SET_COOKIE,
+                                format!("token={}; Secure; HttpOnly;", token),
+                            )
+                            .body("ok")
+                    }
+                    Err(e) => {
+                        let status: StatusCode;
+                        if let AuthError::JWTDecodeError = e {
+                            status = StatusCode::BAD_REQUEST;
+                        } else {
+                            status = StatusCode::FORBIDDEN;
+                        }
+                        // Response::builder().body("Bad creds".into())
+                        Response::builder()
+                            .status(status)
+                            .header(header::LOCATION, HeaderValue::from_static("/"))
+                            .body("ok")
+                    }
+                }
+            }),
+    )
 }
 
 pub fn nested_file(
@@ -168,11 +205,21 @@ pub async fn handle_rejection(err: Rejection) -> std::result::Result<impl Reply,
         )
     };
 
-    let response = Response::new(message);
-    let (mut parts, body) = response.into_parts();
-    parts.status = code;
-    parts.headers = headers;
-    let response = Response::from_parts(parts, body);
+    // Redirect to users to the login page if not authenticated.
+    if code == StatusCode::UNAUTHORIZED {
+        let ctx = LoginPage {};
+        let response = warp::http::Response::builder()
+            .status(StatusCode::OK)
+            .body(ctx.render_once().unwrap())
+            .unwrap();
+
+        return Ok(response);
+    }
+
+    let response = warp::http::Response::builder()
+        .status(code)
+        .body(message)
+        .unwrap();
 
     Ok(response)
 }
