@@ -20,7 +20,9 @@ pub struct BasicPage<'a> {
 
 #[derive(TemplateOnce)]
 #[template(path = "new_page.stpl")]
-pub struct NewPage {}
+pub struct NewPage {
+    pub title: Option<String>,
+}
 
 #[derive(TemplateOnce)]
 #[template(path = "search_page.stpl")]

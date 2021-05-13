@@ -32,7 +32,7 @@ pub async fn server(config: General, ref_builder: RefBuilder) {
         .and(with_location(config.wiki_location.clone()))
         .and_then(with_nested_file);
     let new_page = warp::get().and(warp::path("new").map(|| {
-        let ctx = NewPage {};
+        let ctx = NewPage {title: None};
         warp::reply::html(ctx.render_once().unwrap())
     }));
     let search_page = warp::get().and(warp::path("search")).map(|| {

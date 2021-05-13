@@ -12,15 +12,27 @@
     <meta name="description" content="Create a new page" />
     <meta property="og:title" content="New Entry" />
     <meta property="og:type" content="website" />
-    <title>New Entry</title>
+        <% if let Some(ref prefilled_title) = title { %>
+        <title><%- prefilled_title %></title>
+        <% } else { %>
+          <title>New Entry</title>
+        <% } %>
   </head>
   <body>
     <div class="content-container">
-      <h1 class="title">New Entry</h1>
+        <% if let Some(ref prefilled_title) = title { %>
+        <h1 class="title"><%- prefilled_title %></h1>
+        <% } else { %>
+        <h1 class="title">New Entry</h1>
+        <% } %>
       <form class="editor visible" method="post" action="edit" target="_parent">
         <button type="submit">Save</button>
         <label for="title-edit">Title</label>
-        <input name="title" id="title-edit" type="text" value="New Entry" />
+        <% if let Some(ref prefilled_title) = title { %>
+        <input name="title" id="title-edit" type="text" value="<%- prefilled_title %>" />
+        <% } else { %>
+          <input name="title" id="title-edit" type="text" value="New Entry" />
+        <% } %>
         <label for="tag-edit">Tags</label>
         <input id="tag-edit" type="text" name="tags" />
         <label for="body">Body</label>
