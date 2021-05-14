@@ -9,6 +9,7 @@
     0 2px 10px 0 rgba(34, 36, 38, 0.15);
   --rad: 6px;
   --text-color: #000;
+  --table-border-color: #666;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -53,7 +54,7 @@ td {
 }
 
 td {
-  border: 1px solid #666;
+  border: 1px solid var(--table-border-color);
 }
 
 thead {
@@ -62,7 +63,7 @@ thead {
 }
 
 th {
-  border-left: 2px solid #666;
+  border-left: 2px solid var(--table-border-color);
 }
 
 th:nth-child(1) {

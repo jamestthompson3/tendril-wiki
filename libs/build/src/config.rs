@@ -40,13 +40,15 @@ pub fn get_config_location() -> (PathBuf, PathBuf) {
 }
 
 pub fn write_config() {
-    let (dir, file) = get_config_location();
+    let (mut dir, file) = get_config_location();
     if !file.exists() {
-        fs::create_dir_all(dir).unwrap();
+        fs::create_dir_all(&dir).unwrap();
         let mut default_conf: Config =
             toml::from_str(&fs::read_to_string("./config/config.toml").unwrap()).unwrap();
         default_conf.general.user = get_user();
         fs::write(&file, toml::to_string(&default_conf).unwrap()).unwrap();
+        dir.push("userstyles.css");
+        fs::copy("./config/userstyles.css", dir).unwrap();
     }
 }
 
@@ -107,9 +109,9 @@ pub fn write_config_interactive() {
         user = username.strip_suffix('\n').unwrap_or(&username).to_owned();
     }
 
-    let (dir, file) = get_config_location();
+    let (mut dir, file) = get_config_location();
     if !file.exists() {
-        fs::create_dir_all(dir).unwrap();
+        fs::create_dir_all(&dir).unwrap();
         let mut default_conf: Config =
             toml::from_str(&fs::read_to_string("./config/config.toml").unwrap()).unwrap();
         default_conf.general.user = user;
@@ -121,6 +123,8 @@ pub fn write_config_interactive() {
             default_conf.general.pass = pass;
         }
         fs::write(&file, toml::to_string(&default_conf).unwrap()).unwrap();
+        dir.push("userstyles.css");
+        fs::copy("./config/userstyles.css", dir).unwrap();
     }
 }
 
