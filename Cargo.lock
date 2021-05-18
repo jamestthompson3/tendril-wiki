@@ -732,6 +732,7 @@ version = "0.1.0"
 name = "markdown"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "logging",
  "pulldown-cmark",
  "sailfish",

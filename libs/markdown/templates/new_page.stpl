@@ -19,11 +19,14 @@
         <% } %>
   </head>
   <body>
+    <%  use chrono::Local;  %>
+    <%  let date = Local::now(); %>
+    <%  let date_id = date.format("%Y%m%d%H%M%S").to_string(); %>
     <div class="content-container">
         <% if let Some(ref prefilled_title) = title { %>
         <h1 class="title"><%- prefilled_title %></h1>
         <% } else { %>
-        <h1 class="title">New Entry</h1>
+          <h1 class="title"><%- date_id %></h1>
         <% } %>
       <form class="editor visible" method="post" action="edit" target="_parent">
         <button type="submit">Save</button>
@@ -31,7 +34,7 @@
         <% if let Some(ref prefilled_title) = title { %>
         <input name="title" id="title-edit" type="text" value="<%- prefilled_title %>" />
         <% } else { %>
-          <input name="title" id="title-edit" type="text" value="New Entry" />
+          <input name="title" id="title-edit" type="text" value="<%- date_id %>" />
         <% } %>
         <label for="tag-edit">Tags</label>
         <input id="tag-edit" type="text" name="tags" />
