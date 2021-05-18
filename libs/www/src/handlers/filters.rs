@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use ::build::RefBuilder;
 use ::markdown::ingestors::fs::read;
@@ -51,6 +51,7 @@ pub async fn with_file(
     path: String,
     refs: RefBuilder,
     wiki_location: String,
+    query_params: HashMap<String, String>,
 ) -> Result<impl warp::Reply, warp::Rejection> {
     match path.as_str() {
         "links" => {
@@ -77,6 +78,7 @@ pub async fn with_file(
                     // warp's filter system where some branches return HTML, and others redirect...
                     let ctx = NewPage {
                         title: Some(decode(&path).unwrap()),
+                        linkto: query_params.get("linkto"),
                     };
 
                     Ok(warp::reply::html(ctx.render_once().unwrap()))
@@ -157,7 +159,7 @@ pub async fn authorize(token: Option<String>) -> AuthResult<()> {
         &Validation::new(Algorithm::HS512),
     )
     .map_err(|e| {
-        eprintln!("{}",e);
+        eprintln!("{}", e);
         warp::reject::custom(AuthError::JWTDecodeError)
     })?;
     Ok(())

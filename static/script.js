@@ -67,3 +67,11 @@ document.onkeydown = function (e) {
       break;
   }
 };
+
+function replaceLinkTo() {
+  const linkTo = document.getElementById("linkto");
+  if (linkTo) return;
+  linkTo.href = `/new?linkto=${window.location.pathname.slice(1)}`;
+}
+
+replaceLinkTo();

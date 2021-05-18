@@ -44,6 +44,7 @@ pub fn wiki(
         .and(warp::path::param())
         .and(with_refs(ref_builder))
         .and(with_location(location))
+        .and(warp::query::<HashMap<String, String>>())
         .and_then(with_file)
 }
 
@@ -97,10 +98,17 @@ pub fn nested_file(
 }
 
 pub fn new_page() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    warp::get().and(with_auth()).and(warp::path("new").map(|| {
-        let ctx = NewPage { title: None };
-        warp::reply::html(ctx.render_once().unwrap())
-    }))
+    warp::get().and(with_auth()).and(
+        warp::path("new")
+            .and(warp::query::<HashMap<String, String>>())
+            .map(|query_params: HashMap<String, String>| {
+                let ctx = NewPage {
+                    title: None,
+                    linkto: query_params.get("linkto"),
+                };
+                warp::reply::html(ctx.render_once().unwrap())
+            }),
+    )
 }
 
 pub fn search_handler(
