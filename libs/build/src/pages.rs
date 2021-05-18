@@ -8,7 +8,7 @@ use markdown::processors::{
 use threadpool::ThreadPool;
 
 use std::{
-    collections::HashMap,
+    collections::BTreeMap,
     fs::{self, read_dir},
     path::{Path, PathBuf},
     sync::{Arc, Mutex},
@@ -33,8 +33,8 @@ pub struct Builder {
 impl Builder {
     pub fn new() -> Self {
         Builder {
-            tag_map: Arc::new(Mutex::new(HashMap::new())),
-            backlinks: Arc::new(Mutex::new(HashMap::new())),
+            tag_map: Arc::new(Mutex::new(BTreeMap::new())),
+            backlinks: Arc::new(Mutex::new(BTreeMap::new())),
             pages: Arc::new(Mutex::new(Vec::new())),
         }
     }

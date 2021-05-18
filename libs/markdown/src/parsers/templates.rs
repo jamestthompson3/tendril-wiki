@@ -1,5 +1,5 @@
 use std::{
-    collections::HashMap,
+    collections::BTreeMap,
     fs,
     sync::{Arc, Mutex},
 };
@@ -48,7 +48,7 @@ pub struct SearchResultsContextPage {
 #[derive(TemplateOnce)]
 #[template(path = "tag_idx.stpl")]
 pub struct TagIndex {
-    pub tags: HashMap<String, Vec<String>>,
+    pub tags: BTreeMap<String, Vec<String>>,
 }
 
 #[derive(TemplateOnce)]
@@ -67,7 +67,7 @@ pub struct TagPage {
 #[derive(TemplateOnce)]
 #[template(path = "backlinks.stpl")]
 pub struct LinkPage {
-    pub links: HashMap<String, Vec<String>>,
+    pub links: BTreeMap<String, Vec<String>>,
 }
 
 #[derive(Debug)]
@@ -83,8 +83,8 @@ pub struct ParsedTemplate {
     pub page: TemplattedPage,
 }
 
-pub type TagMapping = Arc<Mutex<HashMap<String, Vec<String>>>>;
-pub type GlobalBacklinks = Arc<Mutex<HashMap<String, Vec<String>>>>;
+pub type TagMapping = Arc<Mutex<BTreeMap<String, Vec<String>>>>;
+pub type GlobalBacklinks = Arc<Mutex<BTreeMap<String, Vec<String>>>>;
 pub type ParsedPages = Arc<Mutex<Vec<TemplattedPage>>>;
 
 pub fn render_template(page: &TemplattedPage, links: Option<&Vec<String>>) -> String {

@@ -1,5 +1,5 @@
 use std::{
-    collections::HashMap,
+    collections::BTreeMap,
     fs::read_dir,
     path::PathBuf,
     sync::{Arc, Mutex},
@@ -20,8 +20,8 @@ pub struct RefBuilder {
 impl RefBuilder {
     pub fn new() -> Self {
         RefBuilder {
-            tag_map: Arc::new(Mutex::new(HashMap::new())),
-            backlinks: Arc::new(Mutex::new(HashMap::new())),
+            tag_map: Arc::new(Mutex::new(BTreeMap::new())),
+            backlinks: Arc::new(Mutex::new(BTreeMap::new())),
         }
     }
     pub fn build(&mut self, path: &str) {
