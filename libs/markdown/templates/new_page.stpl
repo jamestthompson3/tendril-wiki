@@ -40,9 +40,7 @@
         <input id="tag-edit" type="text" name="tags" />
         <label for="body">Body</label>
         <textarea id="body" name="body"><% if let Some(link) = linkto { %>
-[[<%- link %>]]
-        <% } %>
-        </textarea>
+[[<%- link %>]]<% } %></textarea>
       </form>
     </div>
     <% include!("footer.stpl"); %>
