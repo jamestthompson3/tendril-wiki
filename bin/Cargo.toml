@@ -1,5 +1,5 @@
 [package]
-name = "platform-bin"
+name = "tendril"
 version = "0.1.0"
 authors = ["taylor <taylor@teukka.tech>"]
 edition = "2018"

@@ -965,18 +965,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 
 [[package]]
-name = "platform-bin"
-version = "0.1.0"
-dependencies = [
- "build",
- "logging",
- "tasks",
- "tokio",
- "urlencoding",
- "www",
-]
-
-[[package]]
 name = "ppv-lite86"
 version = "0.2.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1408,6 +1396,18 @@ dependencies = [
  "redox_syscall 0.2.5",
  "remove_dir_all",
  "winapi",
+]
+
+[[package]]
+name = "tendril"
+version = "0.1.0"
+dependencies = [
+ "build",
+ "logging",
+ "tasks",
+ "tokio",
+ "urlencoding",
+ "www",
 ]
 
 [[package]]
