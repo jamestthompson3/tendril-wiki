@@ -1,5 +1,6 @@
 use build::{
-    config::read_config, get_config_location, pages::Builder, write_config_interactive, RefBuilder,
+    config::read_config, get_config_location, install, pages::Builder,
+    RefBuilder,
 };
 use std::{path::PathBuf, process::exit, time::Instant};
 use tasks::{normalize_wiki_location, sync};
@@ -14,7 +15,7 @@ async fn main() {
             "-v" | "--version" => return print_version(),
             "-h" | "--help" => return print_help(),
             "-b" | "--build" => build_all = true,
-            "-i" | "--init" => return write_config_interactive(),
+            "-i" | "--init" => return install(),
             _ => {
                 if arg.starts_with('-') {
                     eprintln!("unknown option: {}", arg);
