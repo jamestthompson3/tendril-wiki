@@ -6,9 +6,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1, shrink-to-fit=no"
       />
-      <link rel="stylesheet" href="/static/style.css" />
-    <link rel="stylesheet" href="/static/style.css" />
-    <link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon">
+    <% include!("styles.stpl"); %>
     <meta name="description" content="Tagged Topics" />
     <meta property="og:title" content="Tagged Topics" />
     <meta property="og:type" content="website" />
