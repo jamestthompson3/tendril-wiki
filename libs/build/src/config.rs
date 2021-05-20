@@ -39,6 +39,12 @@ pub fn get_config_location() -> (PathBuf, PathBuf) {
     (config_dir.to_owned(), config_path)
 }
 
+pub fn get_data_dir_location() -> PathBuf {
+    let project_dir = ProjectDirs::from("", "", "tendril").unwrap();
+    let data_dir = project_dir.data_dir();
+    data_dir.to_owned()
+}
+
 pub fn write_config() {
     let (mut dir, file) = get_config_location();
     if !file.exists() {

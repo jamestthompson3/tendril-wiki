@@ -1,12 +1,9 @@
 use std::fs;
 
-use directories::ProjectDirs;
-
-use crate::write_config_interactive;
+use crate::{get_data_dir_location, write_config_interactive};
 
 pub fn install() {
-    let project_dir = ProjectDirs::from("", "", "tendril").unwrap();
-    let data_dir = project_dir.data_dir();
+    let data_dir = get_data_dir_location();
     let static_dir = data_dir.join("static");
     fs::create_dir_all(&static_dir).unwrap();
     for entry in fs::read_dir("./static").unwrap() {

@@ -1,6 +1,6 @@
-use build::get_config_location;
+use build::{get_config_location, get_data_dir_location};
 use ::build::{config::General, RefBuilder};
-use std::sync::Arc;
+use std::{path::PathBuf, sync::Arc};
 use warp::Filter;
 
 pub mod handlers;
@@ -19,7 +19,7 @@ pub async fn server(config: General, ref_builder: RefBuilder) {
     let search_page = search_page();
     let handle_search = search_handler(wiki_location.clone());
     let static_files = warp::path("static")
-        .and(warp::fs::dir("static"))
+        .and(warp::fs::dir(get_static_dir()))
         .or(warp::path("config").and(warp::fs::file(user_stylesheet)));
     let edit = edit_handler(ref_builder, wiki_location);
     // Order matters!!
@@ -38,4 +38,15 @@ pub async fn server(config: General, ref_builder: RefBuilder) {
     println!("│Starting web backend @ http://127.0.0.1:{}  │", port);
     println!("└──────────────────────────────────────────────┘");
     warp::serve(routes).run(([0, 0, 0, 0], port)).await;
+}
+
+#[cfg(debug_assertions)]
+fn get_static_dir() -> PathBuf {
+   PathBuf::from("static")
+}
+
+#[cfg(not(debug_assertions))]
+fn get_static_dir() -> PathBuf {
+    let data_dir = get_data_dir_location();
+    data_dir.join("static")
 }
