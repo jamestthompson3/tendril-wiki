@@ -1,9 +1,10 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, sync::Arc, time::Instant};
 
 use ::build::RefBuilder;
 use ::markdown::ingestors::fs::read;
 use build::read_config;
 use jsonwebtoken::{Algorithm, DecodingKey, Validation};
+use logging::log;
 use markdown::{
     ingestors::ReadPageError,
     parsers::{LinkPage, NewPage, TagIndex, TagPage},
@@ -55,24 +56,32 @@ pub async fn with_file(
 ) -> Result<impl warp::Reply, warp::Rejection> {
     match path.as_str() {
         "links" => {
+            let now = Instant::now();
             let ref_links = refs.links();
             let links = ref_links.lock().unwrap();
             let ctx = LinkPage {
                 links: links.clone(),
             };
+            log(format!("[BackLinks] render: {:?}", now.elapsed()));
             Ok(warp::reply::html(ctx.render_once().unwrap()))
         }
         "tags" => {
+            let now = Instant::now();
             let ref_tags = refs.tags();
             let tags = ref_tags.lock().unwrap();
             let ctx = TagIndex { tags: tags.clone() };
+            log(format!("[TagIndex] render: {:?}", now.elapsed()));
             Ok(warp::reply::html(ctx.render_once().unwrap()))
         }
         _ => {
+            let now = Instant::now();
             let links = refs.links();
             let tags = refs.tags();
             match read(&wiki_location, path.clone(), tags, links) {
-                Ok(page) => Ok(warp::reply::html(page)),
+                Ok(page) => {
+                    log(format!("[{}] render: {:?}", decode(&path).unwrap(), now.elapsed()));
+                    Ok(warp::reply::html(page))
+                },
                 Err(ReadPageError::PageNotFoundError) => {
                     // TODO: Ideally, I want to redirect, but I'm not sure how to do this with
                     // warp's filter system where some branches return HTML, and others redirect...
@@ -81,6 +90,7 @@ pub async fn with_file(
                         linkto: query_params.get("linkto"),
                     };
 
+                    log(format!("[{}] render: {:?}", decode(&path).unwrap(), now.elapsed()));
                     Ok(warp::reply::html(ctx.render_once().unwrap()))
                 }
                 _ => Err(warp::reject()),

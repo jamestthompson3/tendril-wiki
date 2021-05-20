@@ -7,11 +7,13 @@ use markdown::parsers::{
     IndexPage, LoginPage, NewPage, SearchPage, SearchResultsContextPage, SearchResultsPage,
 };
 use sailfish::TemplateOnce;
-use std::{collections::HashMap, convert::Infallible, sync::Arc};
+use std::{collections::HashMap, convert::Infallible, sync::Arc, time::Instant};
 use urlencoding::encode;
 
 use markdown::ingestors::fs::write;
 use markdown::ingestors::EditPageData;
+
+use logging::log;
 
 use tasks::{context_search, search};
 use warp::{
@@ -158,9 +160,11 @@ pub fn edit_handler(
                      mut builder: RefBuilder| {
                         let parsed_data = EditPageData::from(form_body);
                         let redir_uri = format!("/{}", encode(&parsed_data.title));
+                        let now = Instant::now();
                         match write(&wiki_location, parsed_data, builder.links()) {
                             Ok(()) => {
                                 builder.build(&wiki_location);
+                                log(format!("[Edit]: {:?}", now.elapsed()));
                                 warp::redirect(redir_uri.parse::<Uri>().unwrap())
                             }
                             Err(e) => {

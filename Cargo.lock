@@ -1851,6 +1851,7 @@ dependencies = [
  "build",
  "chrono",
  "jsonwebtoken",
+ "logging",
  "markdown",
  "sailfish",
  "serde",
