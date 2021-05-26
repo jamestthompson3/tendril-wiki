@@ -2,12 +2,13 @@ pub mod filters;
 
 pub use self::filters::*;
 
-use build::RefBuilder;
+use build::{get_config_location, RefBuilder};
 use markdown::parsers::{
     IndexPage, LoginPage, NewPage, SearchPage, SearchResultsContextPage, SearchResultsPage,
+    StylesPage,
 };
 use sailfish::TemplateOnce;
-use std::{collections::HashMap, convert::Infallible, sync::Arc, time::Instant};
+use std::{collections::HashMap, convert::Infallible, fs, sync::Arc, time::Instant};
 use urlencoding::encode;
 
 use markdown::ingestors::fs::write;
@@ -48,6 +49,32 @@ pub fn wiki(
         .and(with_location(location))
         .and(warp::query::<HashMap<String, String>>())
         .and_then(with_file)
+}
+
+pub fn serve_user_styles(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::path("styles").and(warp::get().and(with_auth()).map(|| {
+        let (path, _) = get_config_location();
+        let style_location = path.join("userstyles.css");
+        let body = fs::read_to_string(style_location).unwrap();
+        let ctx = StylesPage { body };
+        warp::reply::html(ctx.render_once().unwrap())
+    }))
+}
+
+pub fn update_user_styles(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::path("styles").and(warp::post().and(with_auth()).and(
+        warp::body::content_length_limit(MAX_BODY_SIZE).and(warp::body::form().map(
+            |form_body: HashMap<String, String>| {
+                let (path, _) = get_config_location();
+                let style_location = path.join("userstyles.css");
+                let body = form_body.get("body").unwrap();
+                fs::write(style_location, body).unwrap();
+                warp::redirect(Uri::from_static("/"))
+            },
+        )),
+    ))
 }
 
 pub fn login() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
