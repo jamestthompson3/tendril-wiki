@@ -19,6 +19,12 @@ pub struct BasicPage<'a> {
 }
 
 #[derive(TemplateOnce)]
+#[template(path = "user_style.stpl")]
+pub struct StylesPage {
+    pub body: String,
+}
+
+#[derive(TemplateOnce)]
 #[template(path = "new_page.stpl")]
 pub struct NewPage<'a> {
     pub title: Option<String>,

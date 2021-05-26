@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en-US" prefix="og:http://ogp.me/ns#">
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    <% include!("styles.stpl"); %>
+    <meta property="og:title" content="User Styles" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="" />
+    <meta property="og:image" content="" />
+    <title>Edit User Styles</title>
+  </head>
+  <body>
+    <% include!("nav.stpl"); %>
+    <div class="content-container">
+      <form class="editor visible" method="post" action="styles" target="_parent">
+      <button type="submit">Save</button>
+        <label for="body">Styles</label>
+        <textarea id="body" name="body"><%- body %></textarea>
+      </form>
+    </div>
+    <% include!("footer.stpl"); %>
+  </body>
+</html>
