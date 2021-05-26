@@ -3,9 +3,12 @@ pub mod filters;
 pub use self::filters::*;
 
 use build::{get_config_location, RefBuilder};
-use markdown::parsers::{
-    IndexPage, LoginPage, NewPage, SearchPage, SearchResultsContextPage, SearchResultsPage,
-    StylesPage,
+use markdown::{
+    ingestors::delete,
+    parsers::{
+        IndexPage, LoginPage, NewPage, SearchPage, SearchResultsContextPage, SearchResultsPage,
+        StylesPage,
+    },
 };
 use sailfish::TemplateOnce;
 use std::{collections::HashMap, convert::Infallible, fs, sync::Arc, time::Instant};
@@ -85,17 +88,14 @@ pub fn login() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejectio
                 let username = form_body.get("username").unwrap();
                 let pwd = form_body.get("password").unwrap();
                 match create_jwt(username, pwd) {
-                    Ok(token) => {
-                        // Response::builder().body(token)
-                        Response::builder()
-                            .status(StatusCode::MOVED_PERMANENTLY)
-                            .header(header::LOCATION, HeaderValue::from_static("/"))
-                            .header(
-                                header::SET_COOKIE,
-                                format!("token={}; Secure; HttpOnly;", token),
-                            )
-                            .body("ok")
-                    }
+                    Ok(token) => Response::builder()
+                        .status(StatusCode::MOVED_PERMANENTLY)
+                        .header(header::LOCATION, HeaderValue::from_static("/"))
+                        .header(
+                            header::SET_COOKIE,
+                            format!("token={}; Secure; HttpOnly;", token),
+                        )
+                        .body("ok"),
                     Err(e) => {
                         let status: StatusCode;
                         if let AuthError::JWTDecodeError = e {
@@ -138,6 +138,37 @@ pub fn new_page() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejec
                 warp::reply::html(ctx.render_once().unwrap())
             }),
     )
+}
+
+pub fn delete_page(
+    ref_builder: RefBuilder,
+    location: Arc<String>,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::post()
+        .and(with_auth())
+        .and(warp::path("delete"))
+        .and(with_refs(ref_builder))
+        .and(with_location(location))
+        .and(warp::body::content_length_limit(MAX_BODY_SIZE))
+        .and(warp::body::form())
+        .map(
+            |mut builder: RefBuilder, wiki_location: String, form_body: HashMap<String, String>| {
+                let title = form_body.get("title").unwrap();
+                let now = Instant::now();
+                match delete(&wiki_location, title) {
+                    Ok(()) => {
+                        builder.build(&wiki_location);
+                        println!("[Delete] {}: {:?}", title, now.elapsed());
+
+                        warp::redirect(Uri::from_static("/"))
+                    }
+                    Err(e) => {
+                        eprint!("{}", e);
+                        warp::redirect(Uri::from_static("/error"))
+                    }
+                }
+            },
+        )
 }
 
 pub fn search_handler(

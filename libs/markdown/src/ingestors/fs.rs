@@ -1,4 +1,4 @@
-use std::{fs, path::PathBuf};
+use std::{fs, io, path::PathBuf};
 
 use crate::{parsers::NoteMeta, processors::tags::TagsArray};
 use crate::{
@@ -110,6 +110,28 @@ pub fn write(
             Ok(()) => Ok(()),
             Err(e) => Err(WriteWikiError::WriteError(e)),
         }
+    }
+}
+
+pub fn delete(wiki_location: &str, requested_file: &str) -> Result<(), io::Error> {
+    let mut file_location = String::from(wiki_location);
+    if let Ok(mut file) = decode(&requested_file) {
+        file.push_str(".md");
+        file_location.push_str(&file);
+        let file_path = PathBuf::from(file_location);
+        if !file_path.exists() {
+            return Err(io::Error::new(
+                io::ErrorKind::NotFound,
+                "Could not find reuqested file",
+            ));
+        }
+        fs::remove_file(file_path)?;
+        Ok(())
+    } else {
+        Err(std::io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "Could not decode file name",
+        ))
     }
 }
 

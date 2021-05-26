@@ -17,8 +17,12 @@
   <body>
     <% include!("nav.stpl"); %>
     <div class="content-container">
-      <label for="edit">Edit:</label>
-      <input type="checkbox" id="edit" />
+        <label for="edit">Edit:</label>
+        <input type="checkbox" id="edit" />
+        <form action="delete" method="post" target="_parent" onsubmit="return confirm('Do you really want to delete <%- title %>?');">
+          <input class="hidden" type="text" name="title" value="<%- title %>" />
+          <button class="danger" type="submit">Delete</button>
+        </form>
       <form class="editor" method="post" action="edit" target="_parent">
       <input class="hidden" type="text" name="old_title" value="<%- title %>" />
       <button type="submit">Save</button>

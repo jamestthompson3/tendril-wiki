@@ -23,10 +23,12 @@ pub async fn server(config: General, ref_builder: RefBuilder) {
     let static_files = warp::path("static")
         .and(warp::fs::dir(get_static_dir()))
         .or(warp::path("config").and(warp::fs::file(user_stylesheet)));
-    let edit = edit_handler(ref_builder, wiki_location);
+    let edit = edit_handler(ref_builder.clone(), wiki_location.clone());
+    let delete = delete_page(ref_builder, wiki_location);
     // Order matters!!
     let routes = static_files
         .or(nested)
+        .or(delete)
         .or(edit)
         .or(user_styles)
         .or(update_user_styles)
