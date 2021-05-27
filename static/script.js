@@ -42,6 +42,10 @@
     window.location.href = url;
   }
 
+  function jumpPaint() {
+    window.location.pathname = "/styles";
+  }
+
   const textarea = document.getElementById("body");
   if (textarea) {
     textarea.onkeydown = function (e) {
@@ -71,6 +75,8 @@
         break;
       case "l":
         jumpLink();
+      case "p":
+        jumpPaint();
       default:
         break;
     }
