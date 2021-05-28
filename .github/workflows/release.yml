@@ -166,7 +166,7 @@ jobs:
         mkdir -p "$staging"
 
         cp install.sh "$staging/"
-        cp -r static,config "$staging/"
+        cp -r static config "$staging/"
 
         if [ "${{ matrix.os }}" = "windows-2019" ]; then
           cp "target/${{ matrix.target }}/release/tendril.exe" "$staging/"
