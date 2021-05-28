@@ -14,11 +14,11 @@ name: release
 on:
   # workflow_dispatch:
   push:
-  # Enable when testing release infrastructure on a branch.
-  # branches:
-  # - ag/release
-   tags:
-  - '[0-9]+.[0-9]+.[0-9]+'
+    # Enable when testing release infrastructure on a branch.
+    # branches:
+    # - ag/release
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
 jobs:
   create-release:
     name: create-release
