@@ -44,6 +44,8 @@ jobs:
           prerelease: false
           release_name: ${{ env.REL_VERSION }}
           tag_name: ${{ env.REL_VERSION }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
       - name: Create artifacts directory
         run: mkdir artifacts
 
