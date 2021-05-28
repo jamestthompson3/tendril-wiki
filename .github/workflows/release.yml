@@ -36,7 +36,7 @@ jobs:
           echo "REL_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
           echo "version is: ${{ env.REL_VERSION }}"
 
-      - name: release
+      - name: Create GH Release
         uses: actions/create-release@v1
         id: create_release
         with:
@@ -48,6 +48,9 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
       - name: Create artifacts directory
         run: mkdir artifacts
+
+      - name: Save release upload URL to artifact
+        run: echo "${{ steps.create_release.outputs.upload_url }}" > artifacts/release-upload-url
 
       - name: Save version number to artifact
         run: echo "${{ env.REL_VERSION }}" > artifacts/release-version
@@ -144,6 +147,9 @@ jobs:
         shell: bash
         run: |
           release_version="$(cat artifacts/release-version)"
+          release_upload_url="$(cat artifacts/release-upload-url)"
+          echo "RELEASE_UPLOAD_URL=$release_upload_url" >> $GITHUB_ENV
+          echo "release upload url: $RELEASE_UPLOAD_URL"
           echo "RELEASE_VERSION=$release_version" >> $GITHUB_ENV
           echo "release version: $RELEASE_VERSION"
 
@@ -187,7 +193,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
           asset_path: ${{ env.ASSET }}
           asset_name: ${{ env.ASSET }}
           asset_content_type: application/octet-stream
