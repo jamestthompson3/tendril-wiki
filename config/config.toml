@@ -4,6 +4,8 @@ port = 6683
 user = ""
 pass = ""
 version = 0.0.1
+# directory where images / pdfs / other files are stored
+media_location = "~/wiki_media"
 
 [sync]
 use_git = true

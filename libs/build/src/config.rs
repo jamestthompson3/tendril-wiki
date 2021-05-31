@@ -23,7 +23,9 @@ pub struct General {
     pub port: u16,
     pub user: String,
     pub pass: String,
-    pub version: String
+    pub version: String,
+    pub media_location: String
+
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -70,6 +72,10 @@ pub fn write_config_interactive() {
     print!("Enter wiki location (~/wiki/) >");
     stdout().flush().unwrap();
     stdin.read_line(&mut location).unwrap();
+    let mut media_location = String::new();
+    print!("Enter location for uploaded media (~/wiki_media/) >");
+    stdout().flush().unwrap();
+    stdin.read_line(&mut media_location).unwrap();
     let mut should_sync = String::new();
     let mut enable_sync = true;
     print!("Use git to sync wiki updates (y\\n)? ");
@@ -101,6 +107,12 @@ pub fn write_config_interactive() {
     } else {
         parsed_location = location.strip_suffix('\n').unwrap_or(&location).to_owned();
     }
+    let parsed_media_location: String;
+    if media_location == "\n" {
+        parsed_media_location = "~/wiki_media/".into();
+    } else {
+        parsed_media_location = media_location.strip_suffix('\n').unwrap_or(&location).to_owned();
+    }
     let branch: String;
     if git_branch == "\n" {
         branch = "main".into();
@@ -124,6 +136,7 @@ pub fn write_config_interactive() {
             toml::from_str(&fs::read_to_string("./config/config.toml").unwrap()).unwrap();
         default_conf.general.user = user;
         default_conf.general.wiki_location = parsed_location;
+        default_conf.general.media_location = parsed_media_location;
         default_conf.sync.use_git = enable_sync;
         default_conf.sync.branch = branch;
         if let Some(password) = password {
