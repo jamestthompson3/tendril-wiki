@@ -23,6 +23,7 @@ pub struct General {
     pub port: u16,
     pub user: String,
     pub pass: String,
+    pub version: String
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -52,6 +53,7 @@ pub fn write_config() {
         let mut default_conf: Config =
             toml::from_str(&fs::read_to_string("./config/config.toml").unwrap()).unwrap();
         default_conf.general.user = get_user();
+        default_conf.general.version = env!("CARGO_PKG_VERSION").into();
         fs::write(&file, toml::to_string(&default_conf).unwrap()).unwrap();
         dir.push("userstyles.css");
         fs::copy("./config/userstyles.css", dir).unwrap();

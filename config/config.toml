@@ -3,6 +3,7 @@ wiki_location = "~/wiki"
 port = 6683
 user = ""
 pass = ""
+version = 0.0.1
 
 [sync]
 use_git = true
