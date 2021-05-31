@@ -109,7 +109,13 @@ pub fn to_html(md: &str) -> Html {
                     parser_machine.send(ParserState::Accept);
                     Event::Text(format!("[{}", text).into())
                 }
-                _ => Event::Text(text),
+                _ => {
+                    // TODO: custom url schemas?
+                    if text.starts_with("http") {
+                        return Event::Html(format!(r#"<a href="{}">{}</a>"#, text, text).into())
+                    }
+                    Event::Text(text)
+                },
             },
         },
         _ => event,
