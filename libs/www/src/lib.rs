@@ -1,5 +1,6 @@
 use ::build::{config::General, RefBuilder};
 use build::{get_config_location, get_data_dir_location};
+use tasks::normalize_wiki_location;
 use std::{path::PathBuf, sync::Arc};
 use warp::Filter;
 
@@ -12,6 +13,7 @@ pub async fn server(config: General, ref_builder: RefBuilder) {
     let (config_dir, _) = get_config_location();
     let user_stylesheet = config_dir.join("userstyles.css");
     let wiki_location = Arc::new(config.wiki_location);
+    let media_location = Arc::new(normalize_wiki_location(&config.media_location));
     let index = index(config.user);
     let wiki = wiki(ref_builder.clone(), wiki_location.clone());
     let nested = nested_file(ref_builder.clone(), wiki_location.clone());
@@ -23,12 +25,17 @@ pub async fn server(config: General, ref_builder: RefBuilder) {
     let static_files = warp::path("static")
         .and(warp::fs::dir(get_static_dir()))
         .or(warp::path("config").and(warp::fs::file(user_stylesheet)));
+    let user_files = warp::path("files")
+        .and(warp::fs::dir(PathBuf::from(media_location.as_str())));
     let edit = edit_handler(ref_builder.clone(), wiki_location.clone());
     let delete = delete_page(ref_builder, wiki_location);
     let help = help_page();
+    let uploader = file_upload(media_location);
     // Order matters!!
-    let routes = static_files
+    let routes = user_files
+        .or(static_files)
         .or(nested)
+        .or(uploader)
         .or(delete)
         .or(help)
         .or(edit)

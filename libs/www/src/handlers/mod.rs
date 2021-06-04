@@ -8,7 +8,7 @@ pub use self::wiki_page::*;
 
 use build::{get_config_location, RefBuilder};
 use markdown::{
-    ingestors::delete,
+    ingestors::{delete, write_media},
     parsers::{LoginPage, NewPage, SearchResultsContextPage, SearchResultsPage, StylesPage},
 };
 use sailfish::TemplateOnce;
@@ -23,6 +23,7 @@ use logging::log;
 use tasks::{context_search, search};
 use warp::{
     http::{header, HeaderValue, Response, StatusCode, Uri},
+    hyper::body::Bytes,
     Filter, Rejection, Reply,
 };
 
@@ -163,6 +164,24 @@ pub fn search_handler(
                     },
                 ),
         ),
+    )
+}
+
+pub fn file_upload(
+    media_location: Arc<String>,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::post().and(with_auth()).and(
+        warp::path("files")
+            .and(warp::header::<String>("filename"))
+            .and(warp::body::bytes())
+            .and(with_location(media_location))
+            .map(
+                |filename: String, bytes: Bytes, mut media_location: String| {
+                    media_location.push_str(&filename);
+                    write_media(&media_location, bytes.as_ref()).unwrap();
+                    warp::reply::with_status("ok", StatusCode::OK)
+                },
+            ),
     )
 }
 
