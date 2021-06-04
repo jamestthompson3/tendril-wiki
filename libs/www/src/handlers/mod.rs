@@ -1,9 +1,16 @@
 pub mod filters;
+pub mod static_pages;
+pub mod wiki_page;
 
 pub use self::filters::*;
+pub use self::static_pages::*;
+pub use self::wiki_page::*;
 
 use build::{get_config_location, RefBuilder};
-use markdown::{ingestors::delete, parsers::{HelpPage, IndexPage, LoginPage, NewPage, SearchPage, SearchResultsContextPage, SearchResultsPage, StylesPage}};
+use markdown::{
+    ingestors::delete,
+    parsers::{LoginPage, NewPage, SearchResultsContextPage, SearchResultsPage, StylesPage},
+};
 use sailfish::TemplateOnce;
 use std::{collections::HashMap, convert::Infallible, fs, sync::Arc, time::Instant};
 use urlencoding::encode;
@@ -22,31 +29,6 @@ use warp::{
 use crate::services::*;
 
 pub const MAX_BODY_SIZE: u64 = 32768;
-
-pub fn index(
-    user: String,
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    warp::get()
-        .and(with_auth())
-        .and(with_user(user))
-        .map(|user: String| {
-            let idx_ctx = IndexPage { user };
-            warp::reply::html(idx_ctx.render_once().unwrap())
-        })
-}
-
-pub fn wiki(
-    ref_builder: RefBuilder,
-    location: Arc<String>,
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    warp::get()
-        .and(with_auth())
-        .and(warp::path::param())
-        .and(with_refs(ref_builder))
-        .and(with_location(location))
-        .and(warp::query::<HashMap<String, String>>())
-        .and_then(with_file)
-}
 
 pub fn serve_user_styles(
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
@@ -106,18 +88,6 @@ pub fn login() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejectio
                 }
             }),
     )
-}
-
-pub fn nested_file(
-    ref_builder: RefBuilder,
-    location: Arc<String>,
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    warp::get()
-        .and(with_auth())
-        .and(warp::path!(String / String))
-        .and(with_refs(ref_builder))
-        .and(with_location(location))
-        .and_then(with_nested_file)
 }
 
 pub fn new_page() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
@@ -228,26 +198,6 @@ pub fn edit_handler(
                 ),
         ),
     )
-}
-
-pub fn search_page() -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-    warp::get()
-        .and(with_auth())
-        .and(warp::path("search"))
-        .map(|| {
-            let ctx = SearchPage {};
-            warp::reply::html(ctx.render_once().unwrap())
-        })
-}
-
-pub fn help_page() -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-    warp::get()
-        .and(with_auth())
-        .and(warp::path("help"))
-        .map(|| {
-            let ctx = HelpPage {};
-            warp::reply::html(ctx.render_once().unwrap())
-        })
 }
 
 pub async fn handle_rejection(err: Rejection) -> std::result::Result<impl Reply, Infallible> {
