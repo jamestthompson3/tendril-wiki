@@ -1,6 +1,5 @@
 use std::{
     collections::HashMap,
-    fmt::Write,
     fs::{write, File},
     io::{BufRead, BufReader},
     path::Path,
@@ -44,12 +43,6 @@ impl MetaParserMachine {
     }
 }
 
-impl From<String> for NoteMeta {
-    fn from(stringified: String) -> Self {
-        parse_meta(stringified.lines().map(|s| s.to_string()), "raw_string") // mark that we've parsed from a passed string instead of a file
-    }
-}
-
 impl From<EditPageData> for NoteMeta {
     fn from(data: EditPageData) -> Self {
         let mut metadata: HashMap<String, String> = HashMap::new();
@@ -63,19 +56,24 @@ impl From<EditPageData> for NoteMeta {
     }
 }
 
+impl From<String> for NoteMeta {
+    fn from(stringified: String) -> Self {
+        parse_meta(stringified.lines().map(|l| l.into()), "raw_string") // mark that we've parsed from a passed string instead of a file
+    }
+}
+
+
 impl Into<String> for NoteMeta {
     fn into(self) -> String {
-        let mut metadata = String::new();
+        let mut formatted_string = String::from("---\n");
         for key in self.metadata.keys() {
-            metadata.push_str(key);
-            metadata.push_str(": ");
-            metadata.push_str(self.metadata.get(key).unwrap());
-            metadata.push('\n');
+            formatted_string.push_str(key);
+            formatted_string.push_str(": ");
+            formatted_string.push_str(self.metadata.get(key).unwrap());
+            formatted_string.push('\n');
         }
-        let mut formatted_string = String::new();
-        writeln!(&mut formatted_string, "---").unwrap();
-        writeln!(&mut formatted_string, "{}---", metadata).unwrap();
-        writeln!(&mut formatted_string, "{}", self.content).unwrap();
+        formatted_string.push_str("---\n");
+        formatted_string.push_str(&self.content);
         formatted_string
     }
 }

@@ -86,7 +86,7 @@ pub struct TemplattedPage {
 
 pub struct ParsedTemplate {
     pub outlinks: Vec<String>,
-    pub page: TemplattedPage,
+    pub page: TemplattedPage
 }
 
 pub type TagMapping = Arc<Mutex<BTreeMap<String, Vec<String>>>>;

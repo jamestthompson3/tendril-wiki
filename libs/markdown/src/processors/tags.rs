@@ -15,14 +15,15 @@ impl TagsArray {
                 .map(|s| s.trim())
                 .map(|s| s.to_owned())
                 .collect();
-            return TagsArray { values: split_tags };
-        }
-        TagsArray {
-            values: tag_str
-                .split(' ')
-                .filter(|s| !s.is_empty())
-                .map(|s| s.to_owned())
-                .collect(),
+            TagsArray { values: split_tags }
+        } else {
+            TagsArray {
+                values: tag_str
+                    .split(' ')
+                    .filter(|s| !s.is_empty())
+                    .map(|s| s.to_owned())
+                    .collect(),
+            }
         }
     }
     pub fn write(&self) -> String {
@@ -61,7 +62,7 @@ mod tests {
     fn parse_tags_with_wikilink() {
         let tag_string = "[reality building, Article]";
         assert_eq!(
-            TagsArray::new(tag_string).values,
+            TagsArray::new(tag_string.into()).values,
             vec!["reality building", "Article"]
         );
     }
@@ -70,7 +71,7 @@ mod tests {
     fn parse_tags_without_wikilinks() {
         let tag_string = "Tools Article project-management";
         assert_eq!(
-            TagsArray::new(tag_string).values,
+            TagsArray::new(tag_string.into()).values,
             vec!["Tools", "Article", "project-management"]
         );
     }
@@ -78,7 +79,7 @@ mod tests {
     #[test]
     fn writes_tags_without_quotes() {
         let tag_string = "[Tools Article, project-management]";
-        let tags_arr = TagsArray::new(tag_string);
+        let tags_arr = TagsArray::new(tag_string.into());
 
         assert_eq!(
             tags_arr.write(),

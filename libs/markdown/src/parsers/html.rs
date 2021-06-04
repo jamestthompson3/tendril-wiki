@@ -38,13 +38,12 @@ impl ParserMachine {
 }
 
 pub fn to_html(md: &str) -> Html {
-    let options = Options::all();
     // TODO maybe don't allocate...
     let mut wiki_link_location = String::new();
 
     let mut parser_machine = ParserMachine::new();
     let mut outlinks = Vec::new();
-    let parser = Parser::new_ext(&md, options).map(|event| match event {
+    let parser = Parser::new_ext(&md, Options::all()).map(|event| match event {
         Event::Text(text) => match &*text {
             "[" => match parser_machine.current_state() {
                 ParserState::Accept => {

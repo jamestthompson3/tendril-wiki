@@ -31,7 +31,7 @@ impl From<HashMap<String, String>> for EditPageData {
                         .get(key)
                         .unwrap()
                         .split(',')
-                        .map(|s| s.to_string())
+                        .map(|s| s.to_owned())
                         .collect()
                 }
                 "body" => body = form_body.get(key).unwrap().to_owned(),
