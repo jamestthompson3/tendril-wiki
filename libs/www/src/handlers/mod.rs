@@ -3,13 +3,7 @@ pub mod filters;
 pub use self::filters::*;
 
 use build::{get_config_location, RefBuilder};
-use markdown::{
-    ingestors::delete,
-    parsers::{
-        IndexPage, LoginPage, NewPage, SearchPage, SearchResultsContextPage, SearchResultsPage,
-        StylesPage,
-    },
-};
+use markdown::{ingestors::delete, parsers::{HelpPage, IndexPage, LoginPage, NewPage, SearchPage, SearchResultsContextPage, SearchResultsPage, StylesPage}};
 use sailfish::TemplateOnce;
 use std::{collections::HashMap, convert::Infallible, fs, sync::Arc, time::Instant};
 use urlencoding::encode;
@@ -242,6 +236,16 @@ pub fn search_page() -> impl Filter<Extract = impl Reply, Error = Rejection> + C
         .and(warp::path("search"))
         .map(|| {
             let ctx = SearchPage {};
+            warp::reply::html(ctx.render_once().unwrap())
+        })
+}
+
+pub fn help_page() -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+    warp::get()
+        .and(with_auth())
+        .and(warp::path("help"))
+        .map(|| {
+            let ctx = HelpPage {};
             warp::reply::html(ctx.render_once().unwrap())
         })
 }

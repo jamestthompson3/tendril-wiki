@@ -7,8 +7,8 @@
     content="width=device-width, initial-scale=1, shrink-to-fit=no"
     />
     <% include!("styles.stpl"); %>
-    <meta name="description" content="Create a new page" />
-    <meta property="og:title" content="New Entry" />
+    <meta name="description" content="Search your wiki" />
+    <meta property="og:title" content="Search" />
     <meta property="og:type" content="website" />
     <title>Search</title>
   </head>

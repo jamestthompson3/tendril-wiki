@@ -35,6 +35,11 @@ pub struct NewPage<'a> {
 #[template(path = "login_page.stpl")]
 pub struct LoginPage {}
 
+
+#[derive(TemplateOnce)]
+#[template(path = "help_page.stpl")]
+pub struct HelpPage {}
+
 #[derive(TemplateOnce)]
 #[template(path = "search_page.stpl")]
 pub struct SearchPage {}

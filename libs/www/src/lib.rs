@@ -25,10 +25,12 @@ pub async fn server(config: General, ref_builder: RefBuilder) {
         .or(warp::path("config").and(warp::fs::file(user_stylesheet)));
     let edit = edit_handler(ref_builder.clone(), wiki_location.clone());
     let delete = delete_page(ref_builder, wiki_location);
+    let help = help_page();
     // Order matters!!
     let routes = static_files
         .or(nested)
         .or(delete)
+        .or(help)
         .or(edit)
         .or(user_styles)
         .or(update_user_styles)
