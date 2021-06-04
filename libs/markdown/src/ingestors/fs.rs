@@ -35,6 +35,11 @@ pub enum ReadPageError {
     Unknown,
 }
 
+pub fn write_media(file_location: &str, bytes: &[u8]) -> Result<(), io::Error> {
+    fs::write(file_location, bytes)?;
+    Ok(())
+}
+
 pub fn write(
     wiki_location: &str,
     data: EditPageData,
