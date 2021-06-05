@@ -28,15 +28,23 @@
       <p>you can reference files inside of notes by using the following link syntax, <code>&lsqb;&lsqb;files:&lt;filename&gt;&rsqb;&rsqb;</code></p>
       <p>If you are uploading a file named, <span>report.pdf</span>, you can reference it via <code>&lsqb;&lsqb;files:report.pdf&rsqb;&rsqb;</code></p>
       <p>Wiki syntax (using <code>&lsqb;&lsqb;link text|link location&rsqb;&rsqb;</code>) around the page you want to link is applicable here as well. In the previous example, if you wanted to link the report with the link text <span>this report</span>, you could do so with <code>&lsqb;&lsqb;this report|files:report.pdf&rsqb;&rsqb;</code></p>
-          <form class="editor visible" method="post" enctype="multipart/form-data" action="upload" target="_parent">
-            <button type="submit">Save</button>
-            <div class="uploader">
-              <label for="file">File</label>
-              <input name="file" type="file" />
-            </div>
-          </form>
+      <form class="editor visible" method="post" enctype="multipart/form-data" action="upload" target="_parent">
+        <div class="uploader" data-text="Choose a file to upload">
+          <label for="file">File</label>
+          <input name="file" type="file" />
+        </div>
+        <button id="submit-file" type="submit">Upload</button>
+      </form>
     </div>
     <% include!("footer.stpl"); %>
+    <script>
+      const filenameDisplay = document.querySelector("[data-text='Choose a file to upload']");
+      const fileInput = document.querySelector("input");
+      fileInput.addEventListener("change", e => {
+              const filename = e.target.value.replace(/^.*?([^\\\/]*)$/, '$1');
+              filenameDisplay.dataset.text = filename
+            })
+    </script>
   </body>
 </html>
 
