@@ -63,6 +63,7 @@
   }
   document.onkeydown = function (e) {
     if (e.target !== document.body) return;
+    if (e.ctrlKey) return;
     switch (e.key) {
       case "e":
         edit();
@@ -75,8 +76,10 @@
         break;
       case "l":
         jumpLink();
+        break;
       case "p":
         jumpPaint();
+        break;
       default:
         break;
     }
@@ -135,4 +138,4 @@ function paster(event) {
 
 let textarea = document.getElementById("body");
 
-textarea.addEventListener("paste", paster);
+textarea && textarea.addEventListener("paste", paster);
