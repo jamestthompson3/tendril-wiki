@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en-US" prefix="og:http://ogp.me/ns#">
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    <% include!("styles.stpl"); %>
+    <meta name="description" content="Upload File or image" />
+    <meta property="og:title" content="Upload File" />
+    <meta property="og:type" content="website" />
+    <title>Upload File</title>
+    <style>
+      code {
+        display: inline;
+        background: var(--bg-darker);
+      }
+      span {
+        font-style: italic;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="content-container">
+      <h1 class="title">Upload File or Image</h1>
+      <p>After successfully uploading the file, you will be directed back to the home page.</p>
+      <p>you can reference files inside of notes by using the following link syntax, <code>&lsqb;&lsqb;files:&lt;filename&gt;&rsqb;&rsqb;</code></p>
+      <p>If you are uploading a file named, <span>report.pdf</span>, you can reference it via <code>&lsqb;&lsqb;files:report.pdf&rsqb;&rsqb;</code></p>
+      <p>Wiki syntax (using <code>&lsqb;&lsqb;link text|link location&rsqb;&rsqb;</code>) around the page you want to link is applicable here as well. In the previous example, if you wanted to link the report with the link text <span>this report</span>, you could do so with <code>&lsqb;&lsqb;this report|files:report.pdf&rsqb;&rsqb;</code></p>
+          <form class="editor visible" method="post" enctype="multipart/form-data" action="upload" target="_parent">
+            <button type="submit">Save</button>
+            <div class="uploader">
+              <label for="file">File</label>
+              <input name="file" type="file" />
+            </div>
+          </form>
+    </div>
+    <% include!("footer.stpl"); %>
+  </body>
+</html>
+

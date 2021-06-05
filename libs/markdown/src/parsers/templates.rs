@@ -35,7 +35,6 @@ pub struct NewPage<'a> {
 #[template(path = "login_page.stpl")]
 pub struct LoginPage {}
 
-
 #[derive(TemplateOnce)]
 #[template(path = "help_page.stpl")]
 pub struct HelpPage {}
@@ -49,6 +48,10 @@ pub struct SearchPage {}
 pub struct SearchResultsPage {
     pub pages: Vec<String>,
 }
+
+#[derive(TemplateOnce)]
+#[template(path = "file_uploader.stpl")]
+pub struct FileUploader {}
 
 #[derive(TemplateOnce)]
 #[template(path = "search_results_context.stpl")]
@@ -91,7 +94,7 @@ pub struct TemplattedPage {
 
 pub struct ParsedTemplate {
     pub outlinks: Vec<String>,
-    pub page: TemplattedPage
+    pub page: TemplattedPage,
 }
 
 pub type TagMapping = Arc<Mutex<BTreeMap<String, Vec<String>>>>;

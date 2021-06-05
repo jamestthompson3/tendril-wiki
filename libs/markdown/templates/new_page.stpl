@@ -6,9 +6,7 @@
     name="viewport"
     content="width=device-width, initial-scale=1, shrink-to-fit=no"
     />
-    <link rel="stylesheet" href="/static/style.css" />
-    <link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon">
-    <link rel="stylesheet" href="/static/style.css" />
+    <% include!("styles.stpl"); %>
     <meta name="description" content="Create a new page" />
     <meta property="og:title" content="New Entry" />
     <meta property="og:type" content="website" />
