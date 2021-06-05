@@ -111,10 +111,10 @@ pub fn to_html(md: &str) -> Html {
                 _ => {
                     // TODO: custom url schemas?
                     if text.starts_with("http") {
-                        return Event::Html(format!(r#"<a href="{}">{}</a>"#, text, text).into())
+                        return Event::Html(format!(r#"<a href="{}">{}</a>"#, text, text).into());
                     }
                     Event::Text(text)
-                },
+                }
             },
         },
         _ => event,
@@ -128,11 +128,14 @@ pub fn to_html(md: &str) -> Html {
 }
 
 pub fn format_links(link: &str) -> String {
-    // TODO support custom url schemas?
-    if link.starts_with("http") {
-        return link.to_string();
+    let proto_prefixes = link.split(':').collect::<Vec<&str>>();
+    match proto_prefixes[0] {
+        "http" | "https" => link.to_string(),
+        "files" => {
+            format!("/files/{}", encode(link.strip_prefix("files:").unwrap()))
+        }
+        _ => format!("/{}", encode(&link)), // HACK: deal with warp decoding this later
     }
-    format!("/{}", encode(&link)) // HACK: deal with warp decoding this later
 }
 
 #[cfg(test)]
