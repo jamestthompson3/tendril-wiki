@@ -1,0 +1,39 @@
+body {
+  margin: 0px;
+  padding: 0.25rem;
+}
+
+h2 {
+  font-size: 1.2rem;
+}
+
+.content-container {
+  width: unset;
+  padding: 0.25rem;
+}
+
+.navigation {
+  width: unset;
+}
+
+.navigation ul {
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.navigation ul > li {
+  margin: 0.5rem 0rem;
+}
+
+.footer {
+  width: unset;
+}
+
+/** File Uploader **/
+.uploader {
+  width: 100%;
+}
+
+#submit-file {
+  width: 55%;
+}

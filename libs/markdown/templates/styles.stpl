@@ -1,4 +1,5 @@
-<link rel="stylesheet" href="/static/style.css" />
-<link rel="stylesheet" href="/config/userstyles.css" />
+<link rel="stylesheet" href="/static/style.css" >
+<link rel="stylesheet" href="/static/mobile.css" media="screen and (max-width: 600px)">
+<link rel="stylesheet" href="/config/userstyles.css">
 <link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon">
 <link rel="icon" href="/static/favicon.ico" type="image/x-icon">

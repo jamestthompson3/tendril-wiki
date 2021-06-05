@@ -25,7 +25,7 @@
         </form>
       <form class="editor" method="post" action="edit" target="_parent">
       <input class="hidden" type="text" name="old_title" value="<%- title %>" />
-      <button type="submit">Save</button>
+      <button type="submit" class="submit">Save</button>
         <label for="title-edit">Title</label>
         <input name="title" id="title-edit" type="text" value="<%- title %>" />
         <label for="tag-edit">Tags</label>

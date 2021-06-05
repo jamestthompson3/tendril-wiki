@@ -75,10 +75,11 @@ tbody tr:nth-child(odd) {
 }
 
 kbd {
-  padding: 3px;
-  background-color: var(--bg-darker);
-  border: 1px solid var(--accent);
-  border-radius: var(--rad);
+  font-size: 0.85em;
+  padding: 0.0625rem 0.5rem;
+  border-radius: 0.125rem;
+  border: 1px solid;
+  box-shadow: 1px 1px 0 var(--accent), 2px 2px 0 var(--accent);
 }
 
 li {
@@ -115,6 +116,10 @@ li {
  */
 
 #edit:checked ~ .content {
+  display: none;
+}
+
+#edit:checked ~ * > .danger {
   display: none;
 }
 
@@ -156,7 +161,6 @@ li {
 .danger {
   height: auto;
   text-align: center;
-  align-self: flex-end;
   background-color: var(--primary-variant);
   border: none;
   border-radius: calc(var(--rad) / 2);
@@ -260,7 +264,16 @@ li {
 /** Search **/
 .search {
   display: flex;
+  flex-direction: column;
   align-items: center;
+}
+.search.context {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+}
+.search > input[type="checkbox"] {
+  margin-left: 0.5rem;
 }
 .search > input[type="text"] {
   width: 50%;
@@ -275,7 +288,7 @@ li {
 
 /** File Uploader **/
 .uploader {
-  --height: 40px;
+  --height: 2.25rem;
   --font-size: 16px;
   position: relative;
   width: 55%;
@@ -292,7 +305,7 @@ li {
   background: var(--bg-darker);
   padding: 10px 15px;
   display: block;
-  width: calc(100% - 40px);
+  width: calc(100% - 2.25rem);
   pointer-events: none;
   z-index: 20;
   height: calc(var(--height) - 20px);
@@ -300,6 +313,10 @@ li {
   border-radius: var(--rad);
   font-weight: 300;
   box-shadow: var(--shadow);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  word-wrap: normal;
 }
 
 .uploader:before {
@@ -333,10 +350,10 @@ li {
   width: 100%;
 }
 
-#submit-file {
-  height: 40px;
+button.submit {
+  height: 2.25rem;
   font-size: 16px;
-  width: 55%;
+  width: 25%;
   margin: 2rem auto;
   align-self: stretch;
 }

@@ -29,21 +29,9 @@
     }
   }
 
-  function search() {
-    window.location.pathname = "/search";
-  }
-
-  function jumpNew() {
-    window.location.pathname = "/new";
-  }
-
-  function jumpLink() {
-    const url = new URL(`/new?linkto=${buildLinkTo()}`, window.location.origin);
+  function jump(location) {
+    const url = new URL(`/${location}`, window.location.origin);
     window.location.href = url;
-  }
-
-  function jumpPaint() {
-    window.location.pathname = "/styles";
   }
 
   const textarea = document.getElementById("body");
@@ -60,7 +48,10 @@
           break;
       }
     };
+
+    textarea.addEventListener("paste", detectImagePaste);
   }
+
   document.onkeydown = function (e) {
     if (e.target !== document.body) return;
     if (e.ctrlKey) return;
@@ -69,73 +60,72 @@
         edit();
         break;
       case "/":
-        search();
+        jump("search");
         break;
       case "n":
-        jumpNew();
+        jump("new");
         break;
-      case "l":
-        jumpLink();
+      case "l": {
+        // Remove leading '/' of the current note
+        const currentWiki = window.location.pathname.slice(1);
+        jump(`new?linkto=${currentWiki}`);
         break;
+      }
       case "p":
-        jumpPaint();
+        jump("styles");
+        break;
+      case "u":
+        jump("upload");
         break;
       default:
         break;
     }
   };
 
-  function buildLinkTo() {
-    // Remove leading '/'
-    return window.location.pathname.slice(1);
-  }
-
   function replaceLinkTo() {
     const linkTo = document.getElementById("linkto");
     if (!linkTo) return;
-    linkTo.href = `/new?linkto=${buildLinkTo()}`;
+    // Remove leading '/' of the current note
+    const currentWiki = window.location.pathname.slice(1);
+    linkTo.href = `/new?linkto=${currentWiki}`;
   }
 
   replaceLinkTo();
-})();
 
-function paster(event) {
-  const items = (event.clipboardData || event.originalEvent.clipboardData)
-    .items;
-  for (let index in items) {
-    const item = items[index];
-    if (item.kind === "file") {
-      // we need to get the filename, and `getAsFile` clobbers this with a generic name
-      // so we can just use FormData here.
-      const formData = new FormData();
-      const file = item.getAsFile();
-      const extension = file.type.split("image/").find(Boolean);
-      formData.append(
-        "file",
-        item.getAsFile(),
-        `image-${new Date().valueOf()}.${extension}`
-      );
-      const blob = formData.get("file");
-      console.log(blob);
-      fetch("/files", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/octet-stream",
-          Filename: `${blob.name}`,
-        },
-        body: blob,
-      })
-        .then(() => {
-          event.target.value += `![${blob.name} *alt text*](/files/${blob.name}) "image title"`;
+  function detectImagePaste(event) {
+    const items = (event.clipboardData || event.originalEvent.clipboardData)
+      .items;
+    for (let index in items) {
+      const item = items[index];
+      if (item.kind === "file") {
+        // we need to get the filename, and `getAsFile` clobbers this with a generic name
+        // so we can just use FormData here.
+        const formData = new FormData();
+        const file = item.getAsFile();
+        const extension = file.type.split("image/").find(Boolean);
+        formData.append(
+          "file",
+          item.getAsFile(),
+          `image-${new Date().valueOf()}.${extension}`
+        );
+        const blob = formData.get("file");
+        console.log(blob);
+        fetch("/files", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/octet-stream",
+            Filename: `${blob.name}`,
+          },
+          body: blob,
         })
-        .catch((e) => {
-          console.error(e);
-          event.target.value += "Failed to upload image";
-        });
+          .then(() => {
+            event.target.value += `![${blob.name} *alt text*](/files/${blob.name}) "image title"`;
+          })
+          .catch((e) => {
+            console.error(e);
+            event.target.value += "Failed to upload image";
+          });
+      }
     }
   }
-}
-
-let textarea = document.getElementById("body");
-
-textarea && textarea.addEventListener("paste", paster);
+})();
