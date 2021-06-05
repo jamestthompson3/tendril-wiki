@@ -6,6 +6,7 @@ use warp::Filter;
 
 pub mod handlers;
 pub mod services;
+pub mod controllers;
 
 use crate::handlers::*;
 
@@ -29,14 +30,18 @@ pub async fn server(config: General, ref_builder: RefBuilder) {
         .and(warp::fs::dir(PathBuf::from(media_location.as_str())));
     let edit = edit_handler(ref_builder.clone(), wiki_location.clone());
     let delete = delete_page(ref_builder, wiki_location);
+    let upload_page = upload_page();
     let help = help_page();
-    let uploader = file_upload(media_location);
+    let img_uploader = img_upload(media_location.clone());
+    let file_uploader = file_upload(media_location);
     // Order matters!!
     let routes = user_files
         .or(static_files)
         .or(nested)
-        .or(uploader)
+        .or(img_uploader)
+        .or(file_uploader)
         .or(delete)
+        .or(upload_page)
         .or(help)
         .or(edit)
         .or(user_styles)

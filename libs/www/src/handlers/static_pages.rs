@@ -1,4 +1,4 @@
-use markdown::parsers::{HelpPage, IndexPage, SearchPage};
+use markdown::parsers::{FileUploader, HelpPage, IndexPage, SearchPage};
 use sailfish::TemplateOnce;
 use warp::{Filter, Rejection, Reply};
 
@@ -33,5 +33,15 @@ pub fn index(
         .map(|user: String| {
             let idx_ctx = IndexPage { user };
             warp::reply::html(idx_ctx.render_once().unwrap())
+        })
+}
+
+pub fn upload_page()  -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::get()
+        .and(with_auth())
+        .and(warp::path("upload"))
+        .map(|| {
+            let ctx = FileUploader {};
+            warp::reply::html(ctx.render_once().unwrap())
         })
 }
