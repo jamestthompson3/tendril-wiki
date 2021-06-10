@@ -94,6 +94,16 @@ pub fn file_upload(
         .and_then(file)
 }
 
+pub fn file_list(
+    media_location: Arc<String>,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::get()
+        .and(with_auth())
+        .and(warp::path("files/list"))
+        .and(with_location(media_location))
+        .and_then(list_files)
+}
+
 pub fn edit_handler(
     ref_builder: RefBuilder,
     location: Arc<String>,

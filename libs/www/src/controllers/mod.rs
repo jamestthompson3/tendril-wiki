@@ -1,10 +1,10 @@
 use bytes::BufMut;
 use sailfish::TemplateOnce;
-use std::{collections::HashMap, fs, time::Instant};
+use std::{collections::HashMap, fs::{self, read_dir}, time::Instant};
 use tasks::{context_search, search};
 use urlencoding::encode;
 
-use markdown::ingestors::{self, fs::write, write_media};
+use markdown::{ingestors::{self, fs::write, write_media}, parsers::UploadedFilesPage};
 use markdown::{
     ingestors::EditPageData,
     parsers::{SearchResultsContextPage, SearchResultsPage},
@@ -102,6 +102,13 @@ pub async fn note_search(
             Ok(warp::reply::html(ctx.render_once().unwrap()))
         }
     }
+}
+
+pub async fn list_files(wiki_location: String) -> Result<impl Reply, Rejection> {
+    // TODO: Make this async?
+    let entries = read_dir(wiki_location).unwrap();
+    let ctx = UploadedFilesPage { entries };
+    Ok(warp::reply::html(ctx.render_once().unwrap()))
 }
 
 pub async fn delete(

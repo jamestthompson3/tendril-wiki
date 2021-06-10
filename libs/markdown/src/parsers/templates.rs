@@ -1,6 +1,6 @@
 use std::{
     collections::BTreeMap,
-    fs,
+    fs::{self, ReadDir},
     sync::{Arc, Mutex},
 };
 
@@ -22,6 +22,12 @@ pub struct BasicPage<'a> {
 #[template(path = "user_style.stpl")]
 pub struct StylesPage {
     pub body: String,
+}
+
+#[derive(TemplateOnce)]
+#[template(path = "file_list.stpl")]
+pub struct UploadedFilesPage {
+    pub entries: ReadDir,
 }
 
 #[derive(TemplateOnce)]

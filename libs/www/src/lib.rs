@@ -1,12 +1,12 @@
 use ::build::{config::General, RefBuilder};
 use build::{get_config_location, get_data_dir_location};
-use tasks::normalize_wiki_location;
 use std::{path::PathBuf, sync::Arc};
+use tasks::normalize_wiki_location;
 use warp::Filter;
 
+pub mod controllers;
 pub mod handlers;
 pub mod services;
-pub mod controllers;
 
 use crate::handlers::*;
 
@@ -26,8 +26,8 @@ pub async fn server(config: General, ref_builder: RefBuilder) {
     let static_files = warp::path("static")
         .and(warp::fs::dir(get_static_dir()))
         .or(warp::path("config").and(warp::fs::file(user_stylesheet)));
-    let user_files = warp::path("files")
-        .and(warp::fs::dir(PathBuf::from(media_location.as_str())));
+    let user_files = warp::path("files").and(warp::fs::dir(PathBuf::from(media_location.as_str())));
+    let user_file_list = file_list(media_location.clone());
     let edit = edit_handler(ref_builder.clone(), wiki_location.clone());
     let delete = delete_page(ref_builder, wiki_location);
     let upload_page = upload_page();
@@ -35,7 +35,8 @@ pub async fn server(config: General, ref_builder: RefBuilder) {
     let img_uploader = img_upload(media_location.clone());
     let file_uploader = file_upload(media_location);
     // Order matters!!
-    let routes = user_files
+    let routes = user_file_list
+        .or(user_files)
         .or(static_files)
         .or(nested)
         .or(img_uploader)
