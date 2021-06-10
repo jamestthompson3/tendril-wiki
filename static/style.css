@@ -86,6 +86,12 @@ li {
   margin-bottom: 0.5rem;
 }
 
+code {
+  font-weight: bold;
+  background: var(--bg-darker);
+  padding: 3px;
+}
+
 .tags {
   list-style: none;
   display: flex;
@@ -200,6 +206,14 @@ li {
   background-color: var(--bg);
 }
 
+.content-body h2,
+h3,
+h4,
+h5,
+h6 {
+  border-bottom: 1px solid var(--accent);
+}
+
 .content-body {
   width: 100%;
 }
@@ -237,6 +251,10 @@ li {
   display: flex;
   flex-wrap: wrap;
   flex-direction: column;
+}
+
+.backlinks-container h3 {
+  border-bottom: none;
 }
 
 .backlinks a {

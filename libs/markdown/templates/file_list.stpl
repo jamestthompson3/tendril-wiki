@@ -16,7 +16,7 @@
     <div class="content-container">
       <div class="content">
         <h1 class="title">Uploaded Files</h1>
-        <main class="content-body">
+        <main class="content-body backlinks">
           <% for entry in entries { %>
           <%  let entry = entry.unwrap(); %>
           <!-- TODO: Make some sort of preview card for these using <object></object> -->

@@ -99,7 +99,7 @@ pub fn file_list(
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
         .and(with_auth())
-        .and(warp::path("files/list"))
+        .and(warp::path!("files" / "list"))
         .and(with_location(media_location))
         .and_then(list_files)
 }

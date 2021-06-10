@@ -17,6 +17,14 @@
       <div class="content">
         <h1 class="title">About</h1>
         <main class="content-body">
+          <h2>Wiki Syntax</h2>
+          <p>In addition supporting GitHub flavored markdown, Tendril Wiki supports some wiki syntax extensions.</p>
+          <p><code>[[My Note]]</code> will link to a page called, "My Note"</p>
+          <p><code>[[A cool note!|My Note]]</code> will link to a page called, "My Note", with the link text displaying, "A cool note!"</p>
+          <p><code>[[files:article.pdf]]</code> will link to an uploaded pdf called, "article"</p>
+          <p><code>[[this article|files:article.pdf]]</code> will link to an uploaded pdf called, "article" with the link text displaying, "this article"</p>
+          <h2>Editing Tips</h2>
+          <p>You can copy an image to your clipboard while editing a note, and paste it into the body of the note. This will automatically upload the image and link it as an image tag in the body of the note.</p>
           <h2>Keyboard Shortcuts</h2>
           <p>Keyboard shortcuts are enabled regardless of whether or not you are using JavaScript. If you aren't using JavaScript, the keyboard shortcuts are the same as the key listed below, in combination with your browser's <a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/accesskey">access key combination</a></p>
           <ul>
