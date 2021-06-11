@@ -1,5 +1,3 @@
-use std::time::Instant;
-
 use pulldown_cmark::{html, Event, Options, Parser};
 use urlencoding::encode;
 

@@ -1,9 +1,4 @@
-use std::{
-    collections::HashMap,
-    fs::{write, File},
-    io::{BufRead, BufReader},
-    path::Path,
-};
+use std::{collections::HashMap, path::Path};
 
 use crate::{ingestors::EditPageData, processors::tags::TagsArray};
 
@@ -62,7 +57,6 @@ impl From<String> for NoteMeta {
     }
 }
 
-
 impl Into<String> for NoteMeta {
     fn into(self) -> String {
         let mut formatted_string = String::from("---\n");
@@ -113,132 +107,4 @@ pub fn parse_meta(lines: impl Iterator<Item = String>, debug_marker: &str) -> No
         }
     }
     notemeta
-}
-
-/// Zombie utils that are useful when migrating from other formats
-/// Could be part of the config file if it is useful
-///
-#[allow(dead_code)]
-pub fn fix_tiddlywiki_tag_structures(path: &Path) {
-    let fd = File::open(&path).unwrap();
-    let reader = BufReader::new(fd);
-    let mut parser = MetaParserMachine::new();
-    let mut fixed = String::new();
-    for line in reader.lines() {
-        let line_result = line.unwrap();
-        let refline = line_result.as_str();
-        match refline {
-            "---" => match parser.current_state() {
-                MetaParserState::Ready => {
-                    parser.send(MetaParserState::Parsing);
-                    fixed.push_str(&refline);
-                }
-                MetaParserState::Parsing => {
-                    parser.send(MetaParserState::End);
-                    fixed.push_str(&format!("\n{}", refline));
-                }
-                _ => {}
-            },
-            _ => match parser.current_state() {
-                MetaParserState::Parsing => {
-                    let values: Vec<&str> = refline.split(": ").collect();
-                    if values[0] == "tags" {
-                        let tags_first_pass: String = values[1]
-                            .split("]]")
-                            .map(|s| {
-                                if s.starts_with("[[") {
-                                    s.strip_prefix("[[").unwrap();
-                                }
-                                if s.ends_with("]]") {
-                                    s.strip_suffix("]]").unwrap();
-                                }
-                                s
-                            })
-                            .collect::<Vec<&str>>()
-                            .join("");
-                        let tags = tags_first_pass
-                            .split("[[")
-                            .filter(|s| !s.is_empty() && s != &" ")
-                            .map(|s| {
-                                println!("{}", s);
-                                s.trim()
-                            })
-                            .collect::<Vec<&str>>();
-                        let mut fixed_string = String::from("[");
-                        tags.iter().enumerate().for_each(|(_, tag)| {
-                            fixed_string.push_str(&tag.to_string());
-                        });
-                        fixed_string.push(']');
-                        fixed.push_str(&format!("\ntags: {}", fixed_string));
-                    } else {
-                        fixed.push_str(&format!("\n{}", refline));
-                    }
-                }
-                MetaParserState::End => {
-                    fixed.push_str(&format!("\n{}", refline));
-                }
-                _ => {
-                    fixed.push_str(&format!("\n{}", refline));
-                }
-            },
-        }
-    }
-    write(&path, fixed).unwrap();
-}
-
-#[allow(dead_code)]
-pub fn fix_tags(path: &Path) {
-    let fd = File::open(&path).unwrap();
-    let reader = BufReader::new(fd);
-    let mut parser = MetaParserMachine::new();
-    let mut fixed = String::new();
-    for line in reader.lines() {
-        let line_result = line.unwrap();
-        let refline = line_result.as_str();
-        match refline {
-            "---" => match parser.current_state() {
-                MetaParserState::Ready => {
-                    parser.send(MetaParserState::Parsing);
-                    fixed.push_str(&refline);
-                }
-                MetaParserState::Parsing => {
-                    parser.send(MetaParserState::End);
-                    fixed.push_str(&format!("\n{}", refline));
-                }
-                _ => {}
-            },
-            _ => match parser.current_state() {
-                MetaParserState::Parsing => {
-                    let values: Vec<&str> = refline.split(": ").collect();
-                    if values[0] == "tags" {
-                        let mut fixed_string = String::from("[");
-                        let tags: Vec<&str> = values[1]
-                            .strip_prefix('[')
-                            .unwrap()
-                            .strip_suffix(']')
-                            .unwrap()
-                            .split(',')
-                            .filter(|s| !s.is_empty() && s != &" ")
-                            .map(|s| s.trim())
-                            .map(|s| s.strip_prefix('"').unwrap().strip_suffix('"').unwrap())
-                            .collect();
-                        tags.iter().enumerate().for_each(|(_, tag)| {
-                            fixed_string.push_str(&tag.to_string());
-                        });
-                        fixed_string.push(']');
-                        fixed.push_str(&format!("\ntags: {}", fixed_string));
-                    } else {
-                        fixed.push_str(&format!("\n{}", refline));
-                    }
-                }
-                MetaParserState::End => {
-                    fixed.push_str(&format!("\n{}", refline));
-                }
-                _ => {
-                    fixed.push_str(&format!("\n{}", refline));
-                }
-            },
-        }
-    }
-    write(&path, fixed).unwrap();
 }
