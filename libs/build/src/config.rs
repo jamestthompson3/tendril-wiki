@@ -135,6 +135,15 @@ pub fn write_config_interactive() {
         let mut default_conf: Config =
             toml::from_str(&fs::read_to_string("./config/config.toml").unwrap()).unwrap();
         default_conf.general.user = user;
+        // Create the wiki and media paths if they don't already exist
+        let parsed_wiki_path = PathBuf::from(&parsed_location);
+        let parsed_media_path = PathBuf::from(&parsed_media_location);
+        if !parsed_wiki_path.exists() {
+            fs::create_dir_all(parsed_wiki_path).unwrap();
+        }
+        if !parsed_media_path.exists() {
+            fs::create_dir_all(parsed_media_path).unwrap();
+        }
         default_conf.general.wiki_location = parsed_location;
         default_conf.general.media_location = parsed_media_location;
         default_conf.sync.use_git = enable_sync;
