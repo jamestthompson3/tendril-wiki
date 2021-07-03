@@ -1,5 +1,3 @@
-use std::cell::RefCell;
-
 use pulldown_cmark::{html, Event, Options, Parser};
 use urlencoding::encode;
 
@@ -19,57 +17,83 @@ pub struct Html {
     pub body: String,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
+struct ParserMachineContext {
+    link_location: String,
+    outlinks: Vec<String>,
+}
+
+#[derive(Clone, Debug)]
 struct ParserMachine<'a> {
-    link_location: RefCell<String>,
-    outlinks: RefCell<Vec<String>>,
     state: ParserState<'a>,
+    context: ParserMachineContext,
 }
 
 impl<'a> ParserMachine<'a> {
-    fn send(mut self, message: ParserState<'a>) -> Event {
-        match (&message, self.state) {
-            (ParserState::Accept, ParserState::Accept) => {
-                self.state = message;
-                Event::Text("".into())
-            }
-            (ParserState::Accept, ParserState::LinkEnd) => {
-                self.state = message;
-                Event::Text("".into())
-            }
+    fn send(mut self, message: ParserState<'a>) -> (ParserMachine, Event) {
+        match (&message, &self.state) {
+            (ParserState::Accept, ParserState::Accept) => (
+                ParserMachine {
+                    state: message,
+                    context: self.context,
+                },
+                Event::Text("".into()),
+            ),
+            (ParserState::Accept, ParserState::LinkEnd) => (
+                ParserMachine {
+                    state: message,
+                    context: self.context,
+                },
+                Event::Text("".into()),
+            ),
 
             (ParserState::Accept, ParserState::LinkStart) => {
                 // [checkout thing]
-                {
-                    self.state = message;
-                    Event::Text("".into())
-                }
+                (
+                    ParserMachine {
+                        state: message,
+                        context: self.context,
+                    },
+                    Event::Text("".into()),
+                )
             }
             (ParserState::Accept, ParserState::LocationParsing(_)) => panic!("Unclosed link"), // [[kajdf akdj
             (ParserState::Accept, ParserState::TranscludeStart) => {
                 // {some brackets}
-                {
-                    self.state = message;
-                    Event::Text("".into())
-                }
+                (
+                    ParserMachine {
+                        state: message,
+                        context: self.context,
+                    },
+                    Event::Text("".into()),
+                )
             }
             (ParserState::Accept, ParserState::TranscludeParsing) => {
                 panic!("Unclosed transclusion")
             }
-            (ParserState::Accept, ParserState::TranscludeEnd) => {
-                self.state = message;
-                Event::Text("".into())
-            }
+            (ParserState::Accept, ParserState::TranscludeEnd) => (
+                ParserMachine {
+                    state: message,
+                    context: self.context,
+                },
+                Event::Text("".into()),
+            ),
 
-            (ParserState::LinkStart, ParserState::Accept) => {
-                self.state = message;
-                Event::Text("".into())
-            }
+            (ParserState::LinkStart, ParserState::Accept) => (
+                ParserMachine {
+                    state: message,
+                    context: self.context,
+                },
+                Event::Text("".into()),
+            ),
 
-            (ParserState::LinkStart, ParserState::LinkStart) => {
-                self.state = ParserState::LocationParsing("".into());
-                Event::Text("".into())
-            }
+            (ParserState::LinkStart, ParserState::LinkStart) => (
+                ParserMachine {
+                    state: ParserState::LocationParsing("".into()),
+                    context: self.context,
+                },
+                Event::Text("".into()),
+            ),
 
             (ParserState::LinkStart, ParserState::LocationParsing(_)) => {
                 panic!("Link parsing has already started")
@@ -81,15 +105,21 @@ impl<'a> ParserMachine<'a> {
 
             (ParserState::LinkStart, ParserState::TranscludeStart) => {
                 // {[some brackets]}
-                {
-                    self.state = message;
-                    Event::Text("".into())
-                }
+                (
+                    ParserMachine {
+                        state: message,
+                        context: self.context,
+                    },
+                    Event::Text("".into()),
+                )
             }
-            (ParserState::LinkStart, ParserState::TranscludeParsing) => {
-                self.state = message;
-                Event::Text("".into())
-            }
+            (ParserState::LinkStart, ParserState::TranscludeParsing) => (
+                ParserMachine {
+                    state: message,
+                    context: self.context,
+                },
+                Event::Text("".into()),
+            ),
 
             (ParserState::LinkStart, ParserState::TranscludeEnd) => {
                 panic!("Can't start link immediately from transclude ending")
@@ -97,15 +127,23 @@ impl<'a> ParserMachine<'a> {
             (ParserState::LocationParsing(_), ParserState::Accept) => {
                 panic!("must start parsing a link first")
             }
-            (ParserState::LocationParsing(text), ParserState::LinkStart) => {
-                self.state = message.clone();
-                Event::Text(text.to_owned())
-            }
+            (ParserState::LocationParsing(text), ParserState::LinkStart) => (
+                ParserMachine {
+                    state: message.to_owned(),
+                    context: self.context,
+                },
+                Event::Text(text.to_owned()),
+            ),
             (ParserState::LocationParsing(text), ParserState::LocationParsing(_)) => {
-                self.link_location.borrow_mut().push_str(text);
+                self.context.link_location.push_str(text);
                 {
-                    self.state = ParserState::LocationParsing(text.to_owned());
-                    Event::Text("".into())
+                    (
+                        ParserMachine {
+                            state: ParserState::LocationParsing(text.to_owned()),
+                            context: self.context,
+                        },
+                        Event::Text("".into()),
+                    )
                 }
             }
             (ParserState::LocationParsing(_), ParserState::LinkEnd) => {
@@ -121,48 +159,56 @@ impl<'a> ParserMachine<'a> {
                 panic!("Must start parsing a link first")
             }
             // event disregarded here
-            (ParserState::LinkEnd, ParserState::Accept) => {
-                self.state = ParserState::Accept;
-                Event::Text("]".into())
-            }
+            (ParserState::LinkEnd, ParserState::Accept) => (
+                ParserMachine {
+                    state: ParserState::Accept,
+                    context: self.context,
+                },
+                Event::Text("]".into()),
+            ),
             (ParserState::LinkEnd, ParserState::LinkStart) => {
                 panic!("must start parsing a link before ending")
             }
             (ParserState::LinkEnd, ParserState::LocationParsing(_)) => {
                 // Event disregarded here
-                {
-                    {
-                        self.state = message;
-                        Event::Text("".into())
-                    }
-                }
+                (
+                    ParserMachine {
+                        state: message,
+                        context: self.context,
+                    },
+                    Event::Text("".into()),
+                )
             }
             (ParserState::LinkEnd, ParserState::LinkEnd) => {
+                println!("{:?}", self.context);
                 // Event disregarded here
                 let location: &str;
                 let text: &str;
-                let link_location = self.link_location.clone(); // TODO: figure out why I have immutable borrow issues when I don't clone this.
-                if link_location.borrow().contains('|') {
-                    let split_vals: Vec<&str> = link_location.borrow_mut().split('|').collect();
+                let link_location = self.context.link_location.clone(); // TODO: figure out why I have immutable borrow issues when I don't clone this.
+                if link_location.contains('|') {
+                    let split_vals: Vec<&str> = link_location.split('|').collect();
                     assert!(
                         split_vals.len() < 3,
                         "Malformed wiki link: {} ---> {:?}",
-                        self.link_location.borrow(),
+                        self.context.link_location,
                         split_vals
                     );
                     location = split_vals[1];
                     text = split_vals[0];
                 } else {
-                    location = &link_location.borrow();
-                    text = &link_location.borrow();
+                    location = &link_location;
+                    text = &link_location;
                 }
                 let href = format_links(location);
-                self.link_location.borrow_mut().clear();
-                self.outlinks.borrow_mut().push(location.to_string());
-                {
-                    self.state = ParserState::Accept;
-                    Event::Html(format!(r#"<a href="{}">{}</a>"#, href, text).into())
-                }
+                self.context.link_location.clear();
+                self.context.outlinks.push(location.to_string());
+                (
+                    ParserMachine {
+                        state: ParserState::Accept,
+                        context: self.context,
+                    },
+                    Event::Html(format!(r#"<a href="{}">{}</a>"#, href, text).into()),
+                )
             }
             (ParserState::LinkEnd, ParserState::TranscludeStart) => {
                 panic!("Must start parsing a link first")
@@ -173,28 +219,44 @@ impl<'a> ParserMachine<'a> {
             (ParserState::LinkEnd, ParserState::TranscludeEnd) => {
                 panic!("Must start parsing a link first")
             }
-            (ParserState::TranscludeStart, ParserState::Accept) => {
-                self.state = message;
-                Event::Text("".into())
-            }
+            (ParserState::TranscludeStart, ParserState::Accept) => (
+                ParserMachine {
+                    state: message,
+                    context: self.context,
+                },
+                Event::Text("".into()),
+            ),
             (ParserState::TranscludeStart, ParserState::LinkStart) => {
                 // [{skjfkj}]
-                self.state = ParserState::Accept;
-                Event::Text("".into())
+                (
+                    ParserMachine {
+                        state: ParserState::Accept,
+                        context: self.context,
+                    },
+                    Event::Text("".into()),
+                )
             }
             (ParserState::TranscludeStart, ParserState::LocationParsing(_)) => {
                 // [[{some weird text}|https://example.com]]
-                self.state = ParserState::LocationParsing("".into());
-                Event::Text("".into())
+                (
+                    ParserMachine {
+                        state: ParserState::LocationParsing("".into()),
+                        context: self.context,
+                    },
+                    Event::Text("".into()),
+                )
             }
             (ParserState::TranscludeStart, ParserState::LinkEnd) => {
                 // ]}
                 panic!("Must close existing link")
             }
-            (ParserState::TranscludeStart, ParserState::TranscludeStart) => {
-                self.state = ParserState::TranscludeStart;
-                Event::Text("".into())
-            }
+            (ParserState::TranscludeStart, ParserState::TranscludeStart) => (
+                ParserMachine {
+                    state: ParserState::TranscludeStart,
+                    context: self.context,
+                },
+                Event::Text("".into()),
+            ),
             (ParserState::TranscludeStart, ParserState::TranscludeParsing) => {
                 panic!("Must finish current transclusion first")
             }
@@ -213,14 +275,20 @@ impl<'a> ParserMachine<'a> {
             (ParserState::TranscludeParsing, ParserState::LinkEnd) => {
                 panic!("Must start transclusion first")
             }
-            (ParserState::TranscludeParsing, ParserState::TranscludeStart) => {
-                self.state = message;
-                Event::Text("".into())
-            }
-            (ParserState::TranscludeParsing, ParserState::TranscludeParsing) => {
-                self.state = ParserState::TranscludeParsing;
-                Event::Text("".into())
-            }
+            (ParserState::TranscludeParsing, ParserState::TranscludeStart) => (
+                ParserMachine {
+                    state: message,
+                    context: self.context,
+                },
+                Event::Text("".into()),
+            ),
+            (ParserState::TranscludeParsing, ParserState::TranscludeParsing) => (
+                ParserMachine {
+                    state: ParserState::TranscludeParsing,
+                    context: self.context,
+                },
+                Event::Text("".into()),
+            ),
             (ParserState::TranscludeParsing, ParserState::TranscludeEnd) => {
                 panic!("Must start transclusion first")
             }
@@ -229,81 +297,127 @@ impl<'a> ParserMachine<'a> {
             }
             (ParserState::TranscludeEnd, ParserState::LinkStart) => {
                 // [}
-                {
-                    self.state = ParserState::Accept;
-                    Event::Text("".into())
-                }
+                (
+                    ParserMachine {
+                        state: ParserState::Accept,
+                        context: self.context,
+                    },
+                    Event::Text("".into()),
+                )
             }
             (ParserState::TranscludeEnd, ParserState::LocationParsing(_)) => {
                 // [[}my note
-                {
-                    self.state = ParserState::LocationParsing("".into());
-                    Event::Text("".into())
-                }
+                (
+                    ParserMachine {
+                        state: ParserState::LocationParsing("".into()),
+                        context: self.context,
+                    },
+                    Event::Text("".into()),
+                )
             }
 
             (ParserState::TranscludeEnd, ParserState::LinkEnd) => panic!("must close the link!"), // ]} [[my note kjsdfkj kdjf ]}
             (ParserState::TranscludeEnd, ParserState::TranscludeStart) => {
                 // {}
-                {
-                    self.state = ParserState::Accept;
-                    Event::Text("".into())
-                }
+                (
+                    ParserMachine {
+                        state: ParserState::Accept,
+                        context: self.context,
+                    },
+                    Event::Text("".into()),
+                )
             }
-            (ParserState::TranscludeEnd, ParserState::TranscludeParsing) => {
-                self.state = message;
-                Event::Text("".into())
-            }
-            (ParserState::TranscludeEnd, ParserState::TranscludeEnd) => {
-                self.state = message;
-                Event::Text("".into())
-            }
+            (ParserState::TranscludeEnd, ParserState::TranscludeParsing) => (
+                ParserMachine {
+                    state: message,
+                    context: self.context,
+                },
+                Event::Text("".into()),
+            ),
+            (ParserState::TranscludeEnd, ParserState::TranscludeEnd) => (
+                ParserMachine {
+                    state: message,
+                    context: self.context,
+                },
+                Event::Text("".into()),
+            ),
         }
     }
 }
 
 pub fn to_html(md: &str) -> Html {
     let outlinks: Vec<String> = Vec::new();
-    let parser_machine = ParserMachine {
-        outlinks: RefCell::new(outlinks),
-        link_location: RefCell::new(String::new()),
+    let mut parser_machine = ParserMachine {
+        context: ParserMachineContext {
+            outlinks,
+            link_location: String::new(),
+        },
         state: ParserState::Accept,
     };
-    let parser = Parser::new_ext(md, Options::all()).map(|event| {
+    let parser = Parser::new_ext(md, Options::all());
+    let mut final_events: Vec<Event> = Vec::new();
+    for event in parser {
         match event {
             Event::Text(text) => match &*text {
-                "[" => parser_machine.send(ParserState::LinkEnd),
+                "[" => {
+                    let (machine, event) = parser_machine.send(ParserState::LinkStart);
+                    parser_machine = machine;
+                    final_events.push(event);
+                }
+                "{" => {
+                    let (machine, event) = parser_machine.send(ParserState::TranscludeStart);
+                    parser_machine = machine;
+                    final_events.push(event);
+                }
+                "]" => {
+                    let (machine, event) = parser_machine.send(ParserState::LinkEnd);
+                    parser_machine = machine;
+                    final_events.push(event);
+                }
+                "}" => {
+                    let (machine, event) = parser_machine.send(ParserState::TranscludeEnd);
+                    parser_machine = machine;
+                    final_events.push(event);
+                }
                 _ => match parser_machine.state {
                     ParserState::LocationParsing(_) => {
-                        parser_machine.send(ParserState::LocationParsing(text))
+                        let (machine, event) =
+                            parser_machine.send(ParserState::LocationParsing(text));
+                        parser_machine = machine;
+                        final_events.push(event);
                     }
                     ParserState::LinkEnd => {
-                        parser_machine.send(ParserState::Accept);
-                        Event::Text(format!("]{}", text).into())
+                        let (machine, _) = parser_machine.send(ParserState::Accept);
+                        parser_machine = machine;
+                        final_events.push(Event::Text(format!("]{}", text).into()));
                     }
                     ParserState::LinkStart => {
-                        parser_machine.send(ParserState::Accept);
-                        Event::Text(format!("[{}", text).into())
+                        let (machine, _) = parser_machine.send(ParserState::Accept);
+                        parser_machine = machine;
+                        final_events.push(Event::Text(format!("[{}", text).into()));
                     }
                     _ => {
                         // TODO: custom url schemas?
                         if text.starts_with("http") {
-                            return Event::Html(
+                            final_events.push(Event::Html(
                                 format!(r#"<a href="{}">{}</a>"#, text, text).into(),
-                            );
+                            ));
                         }
-                        Event::Text(text)
+                        final_events.push(Event::Text(text));
                     }
                 },
             },
-            _ => event,
+            _ => {
+                final_events.push(event);
+            }
         }
-    });
+    }
+
     let mut output = String::new();
-    html::push_html(&mut output, parser);
+    html::push_html(&mut output, final_events.into_iter());
     Html {
         body: output,
-        outlinks: *parser_machine.outlinks.borrow(),
+        outlinks: parser_machine.context.outlinks,
     }
 }
 
@@ -332,18 +446,52 @@ mod tests {
     #[test]
     fn state_transitions_work() {
         let outlinks: Vec<String> = Vec::new();
-        let parser_machine = ParserMachine {
-            link_location: RefCell::new(String::new()),
-            outlinks: RefCell::new(outlinks),
+        let mut parser_machine = ParserMachine {
+            context: ParserMachineContext {
+                link_location: String::new(),
+                outlinks,
+            },
             state: ParserState::Accept,
         };
 
-        let event = parser_machine.send(ParserState::LinkStart);
+        let valid_transitions = vec![
+            ParserState::LinkStart,
+            ParserState::LinkStart,
+            ParserState::LocationParsing("Testing!".into()),
+            ParserState::LinkEnd,
+            ParserState::Accept,
+        ];
+        let valid_next_states = vec![
+            ParserState::LinkStart,
+            ParserState::LocationParsing("".into()),
+            ParserState::LocationParsing("Testing!".into()),
+            ParserState::LinkEnd,
+            ParserState::Accept,
+        ];
 
-        assert_eq!(event, Event::Text("".into()));
+        let valid_events = vec![
+            Event::Text("".into()),
+            Event::Text("".into()),
+            Event::Text("".into()),
+            Event::Text("".into()),
+            Event::Text("".into()),
+        ];
+
+        for (indx, event) in valid_events.iter().enumerate() {
+            let message = &valid_transitions[indx];
+            let state = &valid_next_states[indx];
+            let (machine, machine_event) = parser_machine.send(message.to_owned());
+            parser_machine = machine;
+            println!(
+                "Indx: {}, Sent: {:?}, Machine State: {:?}, Expected: {:?}",
+                indx, message, parser_machine.state, state
+            );
+
+            assert_eq!(machine_event, *event);
+            assert_eq!(parser_machine.state, *state);
+        }
     }
     #[test]
-    #[ignore]
     fn parses_md_to_html_with_wikilinks() {
         let test_string = "# Title\n [[Some Page]]. Another thing\n * Hi\n * List\n * Output";
         let test_html = Html {
