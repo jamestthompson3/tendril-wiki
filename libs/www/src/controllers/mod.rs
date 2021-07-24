@@ -1,13 +1,20 @@
 use bytes::BufMut;
 use sailfish::TemplateOnce;
-use std::{collections::HashMap, fs::{self, read_dir}, time::Instant};
+use std::{
+    collections::HashMap,
+    fs::{self, read_dir},
+    time::Instant,
+};
 use tasks::{context_search, search};
 use urlencoding::encode;
 
-use markdown::{ingestors::{self, fs::write, write_media}, parsers::UploadedFilesPage};
 use markdown::{
     ingestors::EditPageData,
     parsers::{SearchResultsContextPage, SearchResultsPage},
+};
+use markdown::{
+    ingestors::{self, fs::write, write_media},
+    parsers::UploadedFilesPage,
 };
 
 use logging::log;
@@ -22,7 +29,10 @@ use warp::{
     Rejection, Reply,
 };
 
-use crate::{handlers::filters::AuthError, services::create_jwt};
+use crate::{
+    handlers::filters::AuthError,
+    services::{create_jwt, MONTH},
+};
 
 pub async fn file(
     form: multipart::FormData,
@@ -149,7 +159,10 @@ pub async fn authorize(form_body: HashMap<String, String>) -> Result<impl Reply,
             .header(header::LOCATION, HeaderValue::from_static("/"))
             .header(
                 header::SET_COOKIE,
-                format!("token={}; Secure; HttpOnly;", token),
+                format!(
+                    "token={}; Secure; HttpOnly; Max-Age={}; Path=/",
+                    token, MONTH
+                ),
             )
             .body("ok")),
         Err(e) => {
