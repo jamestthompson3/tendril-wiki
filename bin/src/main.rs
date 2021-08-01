@@ -1,5 +1,5 @@
 use build::{
-    config::read_config, get_config_location, install, pages::Builder,
+    config::read_config, get_config_location, get_data_dir_location, install, pages::Builder,
     RefBuilder,
 };
 use std::{path::PathBuf, process::exit, time::Instant};
@@ -47,9 +47,10 @@ async fn main() {
 
 fn print_version() {
     println!(
-        "tendril-wiki v{}\nConfig file found at {:?}",
+        "tendril-wiki v{}\nConfig file found at {:?}\nInstall files found at {:?}",
         env!("CARGO_PKG_VERSION"),
-        get_config_location().0
+        get_config_location().0,
+        get_data_dir_location()
     );
 }
 fn print_help() {
