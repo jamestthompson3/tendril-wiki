@@ -15,7 +15,7 @@ pub struct SearchResult {
 // Search for text within wiki pages
 pub fn context_search(term: &str, wiki_location: &str) -> Vec<SearchResult> {
     let mut results = Vec::new();
-    let location = normalize_wiki_location(&wiki_location);
+    let location = normalize_wiki_location(wiki_location);
     let mut searcher = SearcherBuilder::new().multi_line(true).build();
     let matcher = RegexMatcherBuilder::new()
         .line_terminator(Some(b'\n'))
@@ -32,11 +32,25 @@ pub fn context_search(term: &str, wiki_location: &str) -> Vec<SearchResult> {
                     &matcher,
                     entry.path(),
                     UTF8(|_, matches| {
-                        let result = SearchResult {
-                            location: name.strip_suffix(".md").unwrap().to_owned(),
-                            matched_text: matches.to_owned(),
-                        };
-                        results.push(result);
+                        let match_str = matches.to_string();
+                        let mut match_vec: Vec<&str> = match_str.split(' ').collect();
+                        let matched_idx = match_vec.iter().position(|i| i.contains(term));
+                        if let Some(idx) = matched_idx {
+                            match_vec.insert(idx, "<mark>");
+                            match_vec.insert(idx + 2, "</mark>");
+                            let matched_words = match_vec.join(" ");
+                            let result = SearchResult {
+                                location: name.strip_suffix(".md").unwrap().to_owned(),
+                                matched_text: matched_words,
+                            };
+                            results.push(result);
+                        } else {
+                            let result = SearchResult {
+                                location: name.strip_suffix(".md").unwrap().to_owned(),
+                                matched_text: matches.to_owned(),
+                            };
+                            results.push(result);
+                        }
                         Ok(true)
                     }),
                 )
@@ -49,7 +63,7 @@ pub fn context_search(term: &str, wiki_location: &str) -> Vec<SearchResult> {
 // Search for wiki by title
 pub fn search(term: &str, wiki_location: &str) -> Vec<String> {
     let mut found_files = Vec::new();
-    let location = normalize_wiki_location(&wiki_location);
+    let location = normalize_wiki_location(wiki_location);
     let term = term.to_lowercase();
     for entry in read_dir(location).unwrap() {
         let entry = entry.unwrap();
