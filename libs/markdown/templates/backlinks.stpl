@@ -18,7 +18,7 @@
   <div class="content-container">
     <h1 class="title">Backlinks</h1>
     <div>
-        <% use super::html::format_links;  %>
+        <% use super::machine::format_links;  %>
         <% for key in links.keys() {  %>
           <h2><%- key %></h2>
           <ul>

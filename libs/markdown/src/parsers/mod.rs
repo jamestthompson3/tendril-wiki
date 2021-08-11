@@ -1,6 +1,7 @@
 pub mod html;
 pub mod meta;
 pub mod templates;
+pub mod machine;
 
 use std::{
     fs::File,

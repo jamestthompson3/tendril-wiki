@@ -50,7 +50,7 @@
           <hr />
           <h3>Mentioned in:</h3>
           <div class="backlinks">
-            <% use super::html::format_links;  %>
+            <% use super::machine::format_links;  %>
             <% for link in backlinks.iter() {  %>
             <a href="<%- format_links(&link) %>"><%- link %></a>
             <% } %>

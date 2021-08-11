@@ -20,7 +20,7 @@
   <div class="content-container">
     <h1 class="title">Search Results</h1>
     <div>
-        <% use super::html::format_links;  %>
+        <% use super::machine::format_links;  %>
           <ul>
           <% for page in pages {  %>
               <li><a href="<%- format_links(&page) %>"><%- page %></a></li>
