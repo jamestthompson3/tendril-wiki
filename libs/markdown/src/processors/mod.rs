@@ -1,5 +1,6 @@
 use crate::parsers::{
-    to_html, GlobalBacklinks, NoteMeta, ParsedPages, ParsedTemplate, TagMapping, TemplattedPage,
+    to_html, FileReader, GlobalBacklinks, NoteMeta, ParsedPages, ParsedTemplate, TagMapping,
+    TemplattedPage,
 };
 
 pub mod tags;
@@ -7,7 +8,12 @@ pub mod tags;
 use self::tags::*;
 
 pub fn to_template(note: &NoteMeta) -> ParsedTemplate {
-    let html = to_html(&note.content);
+    let html = to_html(
+        &note.metadata.get("title").unwrap(),
+        note.content.clone(),
+        &FileReader {},
+        &mut Vec::new(),
+    );
     let default_title = "Untitled".to_string();
     let title = note
         .metadata

@@ -7,7 +7,7 @@ pub(crate) enum ParserState<'a> {
     LocationParsing(pulldown_cmark::CowStr<'a>), // [[
     LinkEnd,                                     // ]
     TranscludeStart,                             // {
-    TranscludeParsing,                           // {{
+    TranscludeParsing(&'a str),                  // {{
     TranscludeEnd,                               // }
     Accept,                                      // default
 }
@@ -26,6 +26,7 @@ pub(crate) struct ParserMachine<'a> {
 
 impl<'a> ParserMachine<'a> {
     pub(crate) fn send(mut self, message: ParserState<'a>) -> (ParserMachine, Event) {
+        // println!("{:?}", self.state);
         match (&message, &self.state) {
             (ParserState::Accept, ParserState::Accept) => (
                 ParserMachine {
@@ -63,7 +64,7 @@ impl<'a> ParserMachine<'a> {
                     Event::Text("".into()),
                 )
             }
-            (ParserState::Accept, ParserState::TranscludeParsing) => {
+            (ParserState::Accept, ParserState::TranscludeParsing(_)) => {
                 panic!("Unclosed transclusion")
             }
             (ParserState::Accept, ParserState::TranscludeEnd) => (
@@ -108,7 +109,7 @@ impl<'a> ParserMachine<'a> {
                     Event::Text("".into()),
                 )
             }
-            (ParserState::LinkStart, ParserState::TranscludeParsing) => (
+            (ParserState::LinkStart, ParserState::TranscludeParsing(_)) => (
                 ParserMachine {
                     state: message,
                     context: self.context,
@@ -147,7 +148,7 @@ impl<'a> ParserMachine<'a> {
             (ParserState::LocationParsing(_), ParserState::TranscludeStart) => {
                 panic!("Must start parsing a link first")
             }
-            (ParserState::LocationParsing(_), ParserState::TranscludeParsing) => {
+            (ParserState::LocationParsing(_), ParserState::TranscludeParsing(_)) => {
                 panic!("Must start parsing a link first")
             }
             (ParserState::LocationParsing(_), ParserState::TranscludeEnd) => {
@@ -175,7 +176,6 @@ impl<'a> ParserMachine<'a> {
                 )
             }
             (ParserState::LinkEnd, ParserState::LinkEnd) => {
-                println!("{:?}", self.context);
                 // Event disregarded here
                 let location: &str;
                 let text: &str;
@@ -208,7 +208,7 @@ impl<'a> ParserMachine<'a> {
             (ParserState::LinkEnd, ParserState::TranscludeStart) => {
                 panic!("Must start parsing a link first")
             }
-            (ParserState::LinkEnd, ParserState::TranscludeParsing) => {
+            (ParserState::LinkEnd, ParserState::TranscludeParsing(_)) => {
                 panic!("Must start parsing a link first")
             }
             (ParserState::LinkEnd, ParserState::TranscludeEnd) => {
@@ -247,44 +247,44 @@ impl<'a> ParserMachine<'a> {
             }
             (ParserState::TranscludeStart, ParserState::TranscludeStart) => (
                 ParserMachine {
-                    state: ParserState::TranscludeStart,
+                    state: ParserState::TranscludeParsing("asdf"),
                     context: self.context,
                 },
                 Event::Text("".into()),
             ),
-            (ParserState::TranscludeStart, ParserState::TranscludeParsing) => {
+            (ParserState::TranscludeStart, ParserState::TranscludeParsing(_)) => {
                 panic!("Must finish current transclusion first")
             }
             (ParserState::TranscludeStart, ParserState::TranscludeEnd) => {
                 panic!("Must finish current transclusion first")
             }
-            (ParserState::TranscludeParsing, ParserState::Accept) => {
+            (ParserState::TranscludeParsing(_), ParserState::Accept) => {
                 panic!("Must start transclusion first")
             }
-            (ParserState::TranscludeParsing, ParserState::LinkStart) => {
+            (ParserState::TranscludeParsing(_), ParserState::LinkStart) => {
                 panic!("Must start transclusion first")
             }
-            (ParserState::TranscludeParsing, ParserState::LocationParsing(_)) => {
+            (ParserState::TranscludeParsing(_), ParserState::LocationParsing(_)) => {
                 panic!("Must start transclusion first")
             }
-            (ParserState::TranscludeParsing, ParserState::LinkEnd) => {
+            (ParserState::TranscludeParsing(_), ParserState::LinkEnd) => {
                 panic!("Must start transclusion first")
             }
-            (ParserState::TranscludeParsing, ParserState::TranscludeStart) => (
+            (ParserState::TranscludeParsing(_), ParserState::TranscludeStart) => (
                 ParserMachine {
                     state: message,
                     context: self.context,
                 },
                 Event::Text("".into()),
             ),
-            (ParserState::TranscludeParsing, ParserState::TranscludeParsing) => (
+            (ParserState::TranscludeParsing(_), ParserState::TranscludeParsing(title)) => (
                 ParserMachine {
-                    state: ParserState::TranscludeParsing,
+                    state: ParserState::TranscludeParsing(title),
                     context: self.context,
                 },
                 Event::Text("".into()),
             ),
-            (ParserState::TranscludeParsing, ParserState::TranscludeEnd) => {
+            (ParserState::TranscludeParsing(_), ParserState::TranscludeEnd) => {
                 panic!("Must start transclusion first")
             }
             (ParserState::TranscludeEnd, ParserState::Accept) => {
@@ -322,7 +322,7 @@ impl<'a> ParserMachine<'a> {
                     Event::Text("".into()),
                 )
             }
-            (ParserState::TranscludeEnd, ParserState::TranscludeParsing) => (
+            (ParserState::TranscludeEnd, ParserState::TranscludeParsing(_)) => (
                 ParserMachine {
                     state: message,
                     context: self.context,
@@ -401,11 +401,63 @@ mod tests {
             let state = &valid_next_states[indx];
             let (machine, machine_event) = parser_machine.send(message.to_owned());
             parser_machine = machine;
-            println!(
-                "Indx: {}, Sent: {:?}, Machine State: {:?}, Expected: {:?}",
-                indx, message, parser_machine.state, state
-            );
+            assert_eq!(machine_event, *event);
+            assert_eq!(parser_machine.state, *state);
+        }
+    }
+    #[test]
+    fn valid_state_transitions_with_transclusion() {
+        let outlinks: Vec<String> = Vec::new();
+        let mut parser_machine = ParserMachine {
+            context: ParserMachineContext {
+                link_location: String::new(),
+                outlinks,
+            },
+            state: ParserState::Accept,
+        };
 
+        let valid_transitions = vec![
+            ParserState::LinkStart,
+            ParserState::LinkStart,
+            ParserState::LocationParsing("Testing!".into()),
+            ParserState::LinkEnd,
+            ParserState::Accept,
+            ParserState::TranscludeStart,
+            ParserState::TranscludeStart,
+            ParserState::TranscludeParsing("asdf"),
+            ParserState::TranscludeEnd,
+            ParserState::TranscludeEnd,
+            ParserState::Accept,
+        ];
+        let valid_next_states = vec![
+            ParserState::LinkStart,
+            ParserState::LocationParsing("".into()),
+            ParserState::LocationParsing("Testing!".into()),
+            ParserState::LinkEnd,
+            ParserState::Accept,
+            ParserState::TranscludeStart,
+            ParserState::TranscludeParsing("asdf"),
+            ParserState::TranscludeParsing("asdf"),
+            ParserState::TranscludeEnd,
+            ParserState::Accept,
+        ];
+
+        let valid_events = vec![
+            Event::Text("".into()),
+            Event::Text("".into()),
+            Event::Text("".into()),
+            Event::Text("".into()),
+            Event::Text("".into()),
+            Event::Text("".into()),
+            Event::Text("".into()),
+            Event::Text("".into()),
+        ];
+
+        for (indx, event) in valid_events.iter().enumerate() {
+            let message = &valid_transitions[indx];
+            let state = &valid_next_states[indx];
+            let (machine, machine_event) = parser_machine.send(message.to_owned());
+            parser_machine = machine;
             assert_eq!(machine_event, *event);
             assert_eq!(parser_machine.state, *state);
         }
