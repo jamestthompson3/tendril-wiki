@@ -23,7 +23,7 @@
     <!-- PWA Stuff -->
     <meta name="mobile-web-app-capable" content="yes" />
     <link rel="shortcut icon" href="icon.png" />
-    <link rel="manifest" href="manifest.json" />
+    <link rel="manifest" href="/static/manifest.json" />
 
     <title><%= user %>'s notebook</title>
   </head>
@@ -40,5 +40,17 @@
       </div>
     </div>
     <% include!("footer.stpl"); %>
+    <script>
+      function registerSW() {
+        <!-- if (location.hostname === "localhost") return; -->
+        if ("serviceWorker" in navigator) {
+          navigator.serviceWorker.register("/static/sw.js").catch((e) => {
+            console.log("Registration fail: ", e);
+          });
+        }
+      }
+
+    registerSW();
+    </script>
   </body>
 </html>

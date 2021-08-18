@@ -1,10 +1,9 @@
 const CACHE_NAME = "%VERSION%";
 const PAGES = [
-  "./style.css",
-  "./userstyles.css",
-  "./mobile.css",
-  "./index.html",
-  "./script.js",
+  "/static/style.css",
+  "/static/mobile.css",
+  "/",
+  "/static/script.js",
 ];
 
 // install pages
