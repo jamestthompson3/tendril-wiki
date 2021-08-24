@@ -1,5 +1,5 @@
 use std::{
-    collections::BTreeMap,
+    collections::{BTreeMap, HashMap},
     fs::{self, ReadDir},
     sync::{Arc, Mutex},
 };
@@ -15,6 +15,7 @@ pub struct BasicPage<'a> {
     body: &'a String,
     tags: &'a Vec<String>,
     raw_md: &'a str,
+    metadata: &'a HashMap<String, String>,
     backlinks: Vec<String>,
 }
 
@@ -96,6 +97,7 @@ pub struct TemplattedPage {
     pub body: String,
     pub tags: Vec<String>,
     pub raw_md: String,
+    pub metadata: HashMap<String, String>,
 }
 
 pub struct ParsedTemplate {
@@ -117,6 +119,7 @@ pub fn render_template(page: &TemplattedPage, links: Option<&Vec<String>>) -> St
         title: &page.title,
         tags: &page.tags,
         body: &page.body,
+        metadata: &page.metadata,
         raw_md: &page.raw_md,
         backlinks,
     };

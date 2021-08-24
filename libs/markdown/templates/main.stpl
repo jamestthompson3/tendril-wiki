@@ -45,6 +45,21 @@
         <main class="content-body">
           <%- body %>
         </main>
+        <details class="metadata">
+          <summary>Metadata</summary>
+            <table>
+              <tr>
+                <% for key in metadata.keys() { %>
+                <th><%- key %></th>
+                <% } %>
+              </tr>
+              <tr>
+                <% for value in metadata.values() { %>
+                <td><%- value %></td>
+                <% } %>
+              </tr>
+            </table>
+        </details>
         <% if !backlinks.is_empty() { %>
         <section class="backlinks-container">
           <hr />

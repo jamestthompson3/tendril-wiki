@@ -5,7 +5,7 @@ use build::RefBuilder;
 use logging::log;
 use markdown::{
     ingestors::{read, ReadPageError},
-    parsers::{LinkPage, NewPage, TagIndex, TagPage},
+    parsers::{LinkPage, NewPage, TagIndex},
 };
 use urlencoding::decode;
 

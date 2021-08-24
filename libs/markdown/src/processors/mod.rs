@@ -18,10 +18,15 @@ pub fn to_template(note: &NoteMeta) -> ParsedTemplate {
         None => Vec::with_capacity(0),
         Some(raw_tags) => TagsArray::new(raw_tags).values,
     };
+    let mut rendered_metadata = note.metadata.to_owned();
+    // We're already showing this, so no need to dump it in the table...
+    rendered_metadata.remove("title");
+    rendered_metadata.remove("tags");
     let page = TemplattedPage {
         title,
         tags,
         body: html.body,
+        metadata: rendered_metadata,
         raw_md: note.content.clone(),
     };
     ParsedTemplate {
