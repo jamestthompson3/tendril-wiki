@@ -91,7 +91,7 @@ pub fn parse_meta(lines: impl Iterator<Item = String>, debug_marker: &str) -> No
                 MetaParserState::Parsing => {
                     let values: Vec<&str> = line.split(": ").collect();
                     let vals: String;
-                    assert_eq!(values.len() > 1, true, "{}", debug_marker);
+                    assert!(values.len() > 1, "{}", debug_marker);
                     if values.len() > 2 {
                         vals = values[1..].join(": ");
                     } else {

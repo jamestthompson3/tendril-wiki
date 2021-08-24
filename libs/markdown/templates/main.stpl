@@ -52,7 +52,6 @@
           <summary>Metadata</summary>
           <div>
             <dl>
-              <% use chrono::prelude::*; %>
               <% for (key, value) in metadata.iter() { %>
               <dt><strong><%= key %>:</strong></dt>
               <%
