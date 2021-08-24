@@ -7,11 +7,12 @@ use warp::{Filter, Rejection, Reply};
 
 use crate::{
     controllers::{delete, edit},
-    handlers::filters::with_nested_file,
+    handlers::sinks::{render_file, render_nested_file},
 };
 
 use super::{
-    filters::{with_auth, with_file, with_location, with_refs},
+    filters::{with_auth, with_location, with_refs},
+    sinks::{render_backlink_index, render_tags},
     MAX_BODY_SIZE,
 };
 
@@ -26,29 +27,47 @@ impl WikiPageRouter {
             .or(self.delete())
             .or(self.edit())
             .or(self.new_page())
+            .or(self.tags())
+            .or(self.backlink_index())
             .or(self.get())
     }
 
-    pub fn get(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+    fn tags(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+        warp::get()
+            .and(with_auth())
+            .and(warp::path::path("tags"))
+            .and(with_refs(self.reference_builder.clone()))
+            .and_then(render_tags)
+    }
+
+    fn backlink_index(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+        warp::get()
+            .and(with_auth())
+            .and(warp::path("links"))
+            .and(with_refs(self.reference_builder.clone()))
+            .and_then(render_backlink_index)
+    }
+
+    fn get(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
         warp::get()
             .and(with_auth())
             .and(warp::path::param())
             .and(with_refs(self.reference_builder.clone()))
             .and(with_location(self.wiki_location.clone()))
             .and(warp::query::<HashMap<String, String>>())
-            .and_then(with_file)
+            .and_then(render_file)
     }
 
-    pub fn get_nested(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+    fn get_nested(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
         warp::get()
             .and(with_auth())
             .and(warp::path!(String / String))
             .and(with_refs(self.reference_builder.clone()))
             .and(with_location(self.wiki_location.clone()))
-            .and_then(with_nested_file)
+            .and_then(render_nested_file)
     }
 
-    pub fn delete(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+    fn delete(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
         warp::post()
             .and(with_auth())
             .and(warp::path("delete"))
@@ -59,9 +78,7 @@ impl WikiPageRouter {
             .and_then(delete)
     }
 
-    pub fn new_page(
-        &self,
-    ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    fn new_page(&self) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
         warp::get().and(with_auth()).and(
             warp::path("new")
                 .and(warp::query::<HashMap<String, String>>())
@@ -75,7 +92,7 @@ impl WikiPageRouter {
         )
     }
 
-    pub fn edit(&self) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    fn edit(&self) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
         warp::post().and(with_auth()).and(
             warp::path("edit").and(
                 warp::body::content_length_limit(MAX_BODY_SIZE)
