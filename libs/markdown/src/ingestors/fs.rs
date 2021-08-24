@@ -8,6 +8,7 @@ use crate::{
     },
     processors::to_template,
 };
+use chrono::Local;
 use urlencoding::decode;
 
 use super::EditPageData;
@@ -57,7 +58,10 @@ pub fn write(
     file_location.push_str(&title_location);
     // In the case that we're creating a new file
     if !PathBuf::from(&file_location).exists() {
-        let note_meta = NoteMeta::from(data);
+        let mut note_meta = NoteMeta::from(data);
+        note_meta
+            .metadata
+            .insert("created".into(), Local::now().to_string());
         let note: String = note_meta.into();
         return match fs::write(file_location, note) {
             Ok(()) => Ok(()),
@@ -70,17 +74,22 @@ pub fn write(
     let mut note_meta = parse_meta(path_to_reader(&file_location).unwrap(), &file_location);
     // Some reason the browser adds \r\n
     note_meta.content = data.body.replace("\r\n", "\n");
+    // FIXME: relying on the metadata title attribute when making the template when
+    // the path is used everywhere else isn't great...
+    note_meta.metadata = data.metadata;
+    note_meta
+        .metadata
+        .insert("title".into(), data.title.clone());
+    // Update last edited time
+    note_meta
+        .metadata
+        .insert("modified".into(), Local::now().to_string());
+
     let updated_tags: TagsArray = data.tags.into();
 
     note_meta
         .metadata
         .insert("tags".into(), updated_tags.write());
-
-    if data.old_title != data.title && !data.old_title.is_empty() {
-        note_meta
-            .metadata
-            .insert("title".into(), data.title.clone());
-    }
 
     let final_note: String = note_meta.into();
     if data.old_title != data.title && !data.old_title.is_empty() {

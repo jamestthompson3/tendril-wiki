@@ -64,9 +64,8 @@ pub fn to_html(md: &str) -> Html {
                     let text: &str;
                     if link_text.contains('|') {
                         let split_vals: Vec<&str> = link_text.split('|').collect();
-                        assert_eq!(
+                        assert!(
                             split_vals.len() < 3,
-                            true,
                             "Malformed wiki link: {} ---> {:?}",
                             link_text,
                             split_vals

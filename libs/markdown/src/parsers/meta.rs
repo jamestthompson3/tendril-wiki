@@ -40,7 +40,7 @@ impl MetaParserMachine {
 
 impl From<EditPageData> for NoteMeta {
     fn from(data: EditPageData) -> Self {
-        let mut metadata: HashMap<String, String> = HashMap::new();
+        let mut metadata: HashMap<String, String> = data.metadata;
         metadata.insert("title".into(), data.title);
         let tags = TagsArray::from(data.tags);
         metadata.insert("tags".into(), tags.write());
