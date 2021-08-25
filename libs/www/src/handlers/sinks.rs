@@ -5,7 +5,7 @@ use build::RefBuilder;
 use logging::log;
 use markdown::{
     ingestors::{read, ReadPageError},
-    parsers::{LinkPage, NewPage, TagIndex},
+    parsers::{LinkPage, NewPage, TagIndex, TagPage},
 };
 use urlencoding::decode;
 
@@ -64,6 +64,28 @@ pub async fn render_tags(refs: RefBuilder) -> Result<impl warp::Reply, warp::Rej
     let ctx = TagIndex { tags: tags.clone() };
     log(format!("[TagIndex] render: {:?}", now.elapsed()));
     Ok(warp::reply::html(ctx.render_once().unwrap()))
+}
+
+pub async fn render_tag_page(
+    refs: RefBuilder,
+    param: String,
+) -> Result<impl warp::Reply, warp::Rejection> {
+    let now = Instant::now();
+    let ref_tags = refs.tags();
+    let tags = ref_tags.lock().unwrap();
+    // I don't know why warp doesn't decode the sub path here...
+    let sub_path_decoded = decode(&param).unwrap();
+    match tags.get(&sub_path_decoded) {
+        Some(tags) => {
+            let ctx = TagPage {
+                title: sub_path_decoded,
+                tags: tags.to_owned(),
+            };
+            log(format!("[{}] render: {:?}", param, now.elapsed()));
+            Ok(warp::reply::html(ctx.render_once().unwrap()))
+        }
+        None => Err(warp::reject()),
+    }
 }
 
 // TODO: Not repeat this the same as file

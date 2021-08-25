@@ -12,7 +12,7 @@ use crate::{
 
 use super::{
     filters::{with_auth, with_location, with_refs},
-    sinks::{render_backlink_index, render_tags},
+    sinks::{render_backlink_index, render_tag_page, render_tags},
     MAX_BODY_SIZE,
 };
 
@@ -27,17 +27,27 @@ impl WikiPageRouter {
             .or(self.delete())
             .or(self.edit())
             .or(self.new_page())
-            .or(self.tags())
+            .or(self.tag_page())
+            .or(self.tag_index())
             .or(self.backlink_index())
             .or(self.get())
     }
 
-    fn tags(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+    fn tag_index(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
         warp::get()
             .and(with_auth())
             .and(warp::path::path("tags"))
             .and(with_refs(self.reference_builder.clone()))
             .and_then(render_tags)
+    }
+
+    fn tag_page(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+        warp::get()
+            .and(with_auth())
+            .and(warp::path::path("tags"))
+            .and(with_refs(self.reference_builder.clone()))
+            .and(warp::path::param())
+            .and_then(render_tag_page)
     }
 
     fn backlink_index(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
