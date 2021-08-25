@@ -1,8 +1,8 @@
 use std::{collections::HashMap, path::Path};
 
-use crate::{ingestors::EditPageData, processors::tags::TagsArray};
+use tasks::path_to_reader;
 
-use super::path_to_reader;
+use crate::{ingestors::EditPageData, processors::tags::TagsArray};
 
 #[derive(Copy, Clone, PartialEq, Debug)]
 enum MetaParserState {

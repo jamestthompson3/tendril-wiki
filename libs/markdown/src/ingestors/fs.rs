@@ -2,13 +2,11 @@ use std::{fs, io, path::PathBuf};
 
 use crate::{parsers::NoteMeta, processors::tags::TagsArray};
 use crate::{
-    parsers::{
-        parse_meta, path_to_data_structure, path_to_reader, render_template, GlobalBacklinks,
-        TagMapping,
-    },
+    parsers::{parse_meta, path_to_data_structure, render_template, GlobalBacklinks, TagMapping},
     processors::to_template,
 };
 use chrono::Local;
+use tasks::path_to_reader;
 use urlencoding::decode;
 
 use super::EditPageData;

@@ -1,11 +1,16 @@
-pub mod sync;
-pub mod search;
 pub mod password;
-use std::{path::{PathBuf, MAIN_SEPARATOR}, process::exit};
+pub mod search;
+pub mod sync;
+use std::{
+    fs::File,
+    io::{BufRead, BufReader},
+    path::{Path, PathBuf, MAIN_SEPARATOR},
+    process::exit,
+};
 
-pub use self::sync::*;
-pub use self::search::*;
 pub use self::password::*;
+pub use self::search::*;
+pub use self::sync::*;
 
 #[inline]
 fn parse_location(location: &str) -> String {
@@ -39,8 +44,21 @@ mod tests {
         assert_eq!(parse_location("./wiki"), String::from("./wiki/"));
         env::set_var("HOME", "test");
         assert_eq!(parse_location("~/wiki"), String::from("test/wiki/"));
-        assert_eq!(parse_location("/user/~/wiki"), String::from("/user/test/wiki/"));
-
+        assert_eq!(
+            parse_location("/user/~/wiki"),
+            String::from("/user/test/wiki/")
+        );
     }
+}
 
+pub fn path_to_reader<P: AsRef<Path> + ?Sized>(
+    path: &P,
+) -> Result<impl Iterator<Item = String>, std::io::Error> {
+    match File::open(&path) {
+        Ok(fd) => {
+            let reader = BufReader::new(fd);
+            Ok(reader.lines().map(|line| line.unwrap()))
+        }
+        Err(e) => Err(e),
+    }
 }

@@ -101,7 +101,7 @@ pub async fn note_search(
     let include_context = form_body.get("context");
     match include_context {
         Some(_) => {
-            let found_pages = context_search(term, &wiki_location);
+            let found_pages = context_search(term, &wiki_location).unwrap();
             // TODO: Maybe not a separate page here?
             let ctx = SearchResultsContextPage { pages: found_pages };
             Ok(warp::reply::html(ctx.render_once().unwrap()))
