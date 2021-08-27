@@ -1269,7 +1269,6 @@ dependencies = [
  "logging",
  "tasks",
  "tokio",
- "urlencoding",
  "www",
 ]
 

@@ -26,7 +26,7 @@
         <% } else { %>
           <h1 class="title"><%- date_id %></h1>
         <% } %>
-      <form class="editor visible" method="post" action="edit" target="_parent">
+      <form class="editor visible" method="post" action="/edit<%- action_params.unwrap_or("") %>" target="_parent">
         <button type="submit">Save</button>
         <label for="title-edit">Title</label>
         <% if let Some(ref prefilled_title) = title { %>

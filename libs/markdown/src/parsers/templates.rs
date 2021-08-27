@@ -36,6 +36,7 @@ pub struct UploadedFilesPage {
 pub struct NewPage<'a> {
     pub title: Option<String>,
     pub linkto: Option<&'a String>,
+    pub action_params: Option<&'a str>,
 }
 
 #[derive(TemplateOnce)]

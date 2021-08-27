@@ -23,7 +23,7 @@
           <input class="hidden" type="text" name="title" value="<%- title %>" />
           <button class="danger" type="submit">Delete</button>
         </form>
-      <form class="editor" method="post" action="edit" target="_parent">
+      <form class="editor" method="post" action="/edit" target="_parent">
       <input class="hidden" type="text" name="old_title" value="<%- title %>" />
       <button type="submit" class="submit">Save</button>
         <label for="title-edit">Title</label>

@@ -47,6 +47,7 @@ impl WikiPageRouter {
             .and(warp::path::path("tags"))
             .and(with_refs(self.reference_builder.clone()))
             .and(warp::path::param())
+            .and(with_location(self.wiki_location.clone()))
             .and_then(render_tag_page)
     }
 
@@ -96,6 +97,7 @@ impl WikiPageRouter {
                     let ctx = NewPage {
                         title: None,
                         linkto: query_params.get("linkto"),
+                        action_params: None,
                     };
                     warp::reply::html(ctx.render_once().unwrap())
                 }),
@@ -109,6 +111,7 @@ impl WikiPageRouter {
                     .and(warp::body::form())
                     .and(with_location(self.wiki_location.clone()))
                     .and(with_refs(self.reference_builder.clone()))
+                    .and(warp::query::<HashMap<String, String>>())
                     .and_then(edit),
             ),
         )

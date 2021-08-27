@@ -76,9 +76,15 @@ pub async fn edit(
     form_body: HashMap<String, String>,
     wiki_location: String,
     mut builder: RefBuilder,
+    query_params: HashMap<String, String>,
 ) -> Result<impl Reply, Rejection> {
     let parsed_data = EditPageData::from(form_body);
-    let redir_uri = format!("/{}", encode(&parsed_data.title));
+    let redir_uri;
+    if let Some(redirect_addition) = query_params.get("redir_to") {
+        redir_uri = format!("/{}/{}", redirect_addition, encode(&parsed_data.title));
+    } else {
+        redir_uri = format!("/{}", encode(&parsed_data.title));
+    }
     let now = Instant::now();
     match write(&wiki_location, parsed_data, builder.links()) {
         Ok(()) => {

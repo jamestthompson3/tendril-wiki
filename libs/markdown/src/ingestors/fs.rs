@@ -153,6 +153,19 @@ pub fn read(
     _tags: TagMapping,
     backlinks: GlobalBacklinks,
 ) -> Result<String, ReadPageError> {
+    let file_path = get_file_path(wiki_location, &requested_file)?;
+    if let Ok(note) = path_to_data_structure(&file_path) {
+        let templatted = to_template(&note);
+        let link_vals = backlinks.lock().unwrap();
+        let links = link_vals.get(&templatted.page.title);
+        let output = render_template(&templatted.page, links);
+        Ok(output)
+    } else {
+        Err(ReadPageError::DeserializationError)
+    }
+}
+
+pub fn get_file_path(wiki_location: &str, requested_file: &str) -> Result<PathBuf, ReadPageError> {
     let mut file_location = String::from(wiki_location);
     if let Ok(mut file) = decode(&requested_file) {
         file.push_str(".md");
@@ -161,15 +174,7 @@ pub fn read(
         if !file_path.exists() {
             return Err(ReadPageError::PageNotFoundError);
         }
-        if let Ok(note) = path_to_data_structure(&file_path) {
-            let templatted = to_template(&note);
-            let link_vals = backlinks.lock().unwrap();
-            let links = link_vals.get(&templatted.page.title);
-            let output = render_template(&templatted.page, links);
-            Ok(output)
-        } else {
-            Err(ReadPageError::DeserializationError)
-        }
+        Ok(file_path)
     } else {
         Err(ReadPageError::DecodeError)
     }
