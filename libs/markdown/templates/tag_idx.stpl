@@ -22,7 +22,7 @@
     <div>
         <% use super::html::format_links;  %>
         <% for key in tags.keys() {  %>
-        <h2><a href="tags/<%- key %>" class="block"><%- key %></a></h2>
+        <h2><a href="/tags/<%- key %>" class="block"><%- key %></a></h2>
           <ul>
            <% let mut tags = tags.get(key).unwrap().to_owned(); %>
            <% tags.dedup(); %>

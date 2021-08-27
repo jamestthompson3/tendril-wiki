@@ -158,7 +158,7 @@ pub fn read(
         let templatted = to_template(&note);
         let link_vals = backlinks.lock().unwrap();
         let links = link_vals.get(&templatted.page.title);
-        let output = render_template(&templatted.page, links);
+        let output = render_template(&templatted.page, links, false);
         Ok(output)
     } else {
         Err(ReadPageError::DeserializationError)

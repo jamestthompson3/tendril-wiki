@@ -15,26 +15,15 @@
     <title><%= title %></title>
   </head>
   <body>
-    <% include!("nav.stpl"); %>
+    <% if !render_static {
+        include!("nav.stpl");
+      }
+    %>
     <div class="content-container">
-        <label for="edit">Edit:</label>
-        <input type="checkbox" id="edit" />
-        <form action="delete" method="post" target="_parent" onsubmit="return confirm('Do you really want to delete <%- title %>?');">
-          <input class="hidden" type="text" name="title" value="<%- title %>" />
-          <button class="danger" type="submit">Delete</button>
-        </form>
-      <form class="editor" method="post" action="/edit" target="_parent">
-      <input class="hidden" type="text" name="old_title" value="<%- title %>" />
-      <button type="submit" class="submit">Save</button>
-        <label for="title-edit">Title</label>
-        <input name="title" id="title-edit" type="text" value="<%- title %>" />
-        <label for="tag-edit">Tags</label>
-        <input id="tag-edit" type="text" name="tags" value="<%- tags.join(",") %>" />
-        <label for="body">Body</label>
-        <textarea id="body" name="body"><%- raw_md %></textarea>
-        <label for="metadata">Metadata</label>
-        <textarea id="metadata" name="metadata" style="height: 150px;"><%- metadata.iter().map(|(k, v)| format!("{}:{}", k, v) ).collect::<Vec<String>>().join("\n") %></textarea>
-      </form>
+    <% if !render_static {
+        include!("edit.stpl");
+      }
+    %>
 
       <div class="content">
         <h1 class="title"><%= title %></h1>

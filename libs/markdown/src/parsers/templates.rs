@@ -17,6 +17,7 @@ pub struct BasicPage<'a> {
     raw_md: &'a str,
     metadata: &'a HashMap<String, String>,
     backlinks: Vec<String>,
+    render_static: bool,
 }
 
 #[derive(TemplateOnce)]
@@ -110,7 +111,11 @@ pub type TagMapping = Arc<Mutex<BTreeMap<String, Vec<String>>>>;
 pub type GlobalBacklinks = Arc<Mutex<BTreeMap<String, Vec<String>>>>;
 pub type ParsedPages = Arc<Mutex<Vec<TemplattedPage>>>;
 
-pub fn render_template(page: &TemplattedPage, links: Option<&Vec<String>>) -> String {
+pub fn render_template(
+    page: &TemplattedPage,
+    links: Option<&Vec<String>>,
+    render_static: bool,
+) -> String {
     let mut backlinks = match links {
         Some(links) => links.to_owned(),
         None => Vec::new(),
@@ -123,6 +128,7 @@ pub fn render_template(page: &TemplattedPage, links: Option<&Vec<String>>) -> St
         metadata: &page.metadata,
         raw_md: &page.raw_md,
         backlinks,
+        render_static,
     };
     ctx.render_once().unwrap()
 }
@@ -139,7 +145,7 @@ pub fn write_entries(pages: &ParsedPages, backlinks: &GlobalBacklinks) {
     let link_vals = backlinks.lock().unwrap();
     for page in page_vals.iter() {
         let links = link_vals.get(&page.title);
-        let output = render_template(&page, links);
+        let output = render_template(&page, links, true);
         // TODO use path here instead of title? Since `/` in title can cause issues in fs::write
         fs::create_dir(format!("public/{}", page.title.replace('/', "-"))).unwrap();
         fs::write(
@@ -151,21 +157,29 @@ pub fn write_entries(pages: &ParsedPages, backlinks: &GlobalBacklinks) {
 }
 
 #[inline]
-pub fn write_tag_pages(map: TagMapping) {
+pub fn write_tag_pages(map: TagMapping, pages: &ParsedPages) {
     let tag_map = map.lock().unwrap();
     for key in tag_map.keys() {
         let title = key.to_string();
         let tags = tag_map.get(key).unwrap().to_owned();
-        let ctx = TagPage {
-            title: title.clone(),
-            tags,
-        };
-        fs::create_dir(format!("public/tags/{}", title)).unwrap();
-        fs::write(
-            format!("public/tags/{}/index.html", title),
-            ctx.render_once().unwrap(),
-        )
-        .unwrap();
+        let pages = pages.lock().unwrap();
+        let page = pages.iter().find(|pg| pg.title == title);
+        if let Some(template) = page {
+            let output = render_template(template, Some(&tags), true);
+            fs::create_dir(format!("public/tags/{}", title)).unwrap();
+            fs::write(format!("public/tags/{}/index.html", title), output).unwrap();
+        } else {
+            let ctx = TagPage {
+                title: title.clone(),
+                tags,
+            };
+            fs::create_dir(format!("public/tags/{}", title)).unwrap();
+            fs::write(
+                format!("public/tags/{}/index.html", title),
+                ctx.render_once().unwrap(),
+            )
+            .unwrap();
+        }
     }
 }
 

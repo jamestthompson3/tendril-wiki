@@ -289,6 +289,10 @@ h6 {
   width: 100%;
 }
 
+details {
+  cursor: pointer;
+}
+
 .metadata[open] {
   overflow-x: auto;
 }

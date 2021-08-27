@@ -61,7 +61,7 @@ pub async fn render_tag_page(
             if let Ok(file_path) = get_file_path(&location, &sub_path_decoded) {
                 if let Ok(note) = path_to_data_structure(&file_path) {
                     let templatted = to_template(&note);
-                    let output = render_template(&templatted.page, Some(tags));
+                    let output = render_template(&templatted.page, Some(tags), false);
                     log(format!(
                         "[{}] render: {:?}",
                         sub_path_decoded,

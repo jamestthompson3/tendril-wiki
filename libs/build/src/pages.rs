@@ -43,7 +43,7 @@ impl Builder {
         let links = Arc::clone(&self.backlinks);
         let pages = Arc::clone(&self.pages);
         write_entries(&pages, &self.backlinks);
-        write_tag_pages(map);
+        write_tag_pages(map, &pages);
         write_tag_index(Arc::clone(&self.tag_map));
         write_backlinks(links);
         write_index_page(read_config().general.user);
