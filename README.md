@@ -2,6 +2,14 @@
 
 [![Build And Test](https://github.com/jamestthompson3/platform/actions/workflows/rust.yml/badge.svg)](https://github.com/jamestthompson3/platform/actions/workflows/rust.yml)
 
+![Tag Page](assets/screenshot1.png)
+![Note](assets/screenshot2.png)
+
+### Nice features
+- Works without JavaScript
+- Self hosted, files can be composed easily with other tools since they are plaintext
+- Both light and dark themes
+
 ## Installation
 
 ### From source
