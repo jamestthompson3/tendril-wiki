@@ -3,7 +3,7 @@
   "name": "Notebook for exploration",
   "icons": [
     {
-      "src": "icon.png",
+      "src": "static/icon.png",
       "sizes": "192x192",
       "type": "image/png"
     }

@@ -42,7 +42,7 @@
     <% include!("footer.stpl"); %>
     <script>
       function registerSW() {
-        <!-- if (location.hostname === "localhost") return; -->
+        if (location.hostname === "localhost") return;
         if ("serviceWorker" in navigator) {
           navigator.serviceWorker.register("/static/sw.js").catch((e) => {
             console.log("Registration fail: ", e);
