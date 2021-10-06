@@ -1,6 +1,7 @@
 use std::{
     collections::{BTreeMap, HashMap},
-    fs::{self, ReadDir},
+    fs::{self, File, ReadDir},
+    io::Read,
     sync::{Arc, Mutex},
 };
 
@@ -8,8 +9,8 @@ use tasks::search::SearchResult;
 
 use sailfish::TemplateOnce;
 
-#[derive(TemplateOnce)]
-#[template(path = "main.stpl")]
+use crate::parsers::format_links;
+
 pub struct BasicPage<'a> {
     title: &'a String,
     body: &'a String,
@@ -121,16 +122,59 @@ pub fn render_template(
         None => Vec::new(),
     };
     backlinks.dedup();
-    let ctx = BasicPage {
-        title: &page.title,
-        tags: &page.tags,
-        body: &page.body,
-        metadata: &page.metadata,
-        raw_md: &page.raw_md,
-        backlinks,
-        render_static,
-    };
-    ctx.render_once().unwrap()
+    let tag_string = page
+        .tags
+        .iter()
+        .map(|t| format!("<li><a href=\"/tags/{}\">#{}</a></li>", t, t))
+        .collect::<Vec<String>>()
+        .join("\n");
+    let backlinks_string = backlinks
+        .iter()
+        .map(|l| format!("<a href=\"{}\">{}</a>", format_links(l), l))
+        .collect::<Vec<String>>()
+        .join("\n");
+    let mut ctx = File::open("templates/main.html").unwrap();
+    let mut ctx_string = String::new();
+    ctx.read_to_string(&mut ctx_string).unwrap();
+    ctx_string = ctx_string
+        .replace("<%= title %>", &page.title)
+        .replace("<%= body %>", &page.body)
+        .replace("<%= tags %>", &tag_string)
+        .replace("<%= links %>", &backlinks_string);
+    let parsed = ctx_string.split('\n');
+    parsed
+        .map(|line| {
+            if line.trim().starts_with("<%= include") {
+                parse_includes(line.trim())
+            } else {
+                line.to_string()
+            }
+        })
+        .collect::<Vec<String>>()
+        .join("\n")
+
+    // let ctx = BasicPage {
+    //     title: &page.title,
+    //     tags: &page.tags,
+    //     body: &page.body,
+    //     metadata: &page.metadata,
+    //     raw_md: &page.raw_md,
+    //     backlinks,
+    //     render_static,
+    // };
+    //ctx.render_once().unwrap()
+}
+
+fn parse_includes(include_str: &str) -> String {
+    println!("{}", include_str);
+    let included_file = include_str
+        .strip_prefix("<%= include \"")
+        .unwrap()
+        .strip_suffix("\" %>")
+        .unwrap();
+    let template = format!("templates/{}.html", included_file);
+    println!("{}", template);
+    fs::read_to_string(template).unwrap()
 }
 
 pub fn write_index_page(user: String) {

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en-US" prefix="og:http://ogp.me/ns#">
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    <%= include "styles" %>
+    <meta name="description" content="An HTML File" />
+    <meta property="og:title" content="<%= title %>" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="" />
+    <meta property="og:image" content="" />
+    <title><%= title %></title>
+  </head>
+  <body>
+    <% if !render_static {
+        include!("nav.stpl");
+      }
+    %>
+    <div class="content-container">
+    <% if !render_static {
+        include!("edit.stpl");
+      }
+    %>
+
+      <div class="content">
+        <h1 class="title"><%= title %></h1>
+        <div>
+          <ul class="tags">
+            <%= tags %>
+          </ul>
+        </div>
+        <main class="content-body">
+          <%= body %>
+        </main>
+        <details class="metadata">
+          <summary>Metadata</summary>
+          <div>
+            <dl>
+              <% for (key, value) in metadata.iter() { %>
+              <dt><strong><%= key %>:</strong></dt>
+              <%
+              let mut val = String::new();
+              // TODO: Add "created" date here as well
+              // TODO: Modify dates to be compliant with DT parsing
+              // if key == "modified" {
+              //     val = value.parse::<DateTime<FixedOffset>>().unwrap().format("%Y-%m-%d %H:%M").to_string();
+              //   }
+              if value.starts_with("http") {
+                match key.as_str() {
+                  "cover" => {
+                    val = format!("<img src=\"{}\" style=\"max-height: 200px; max-width: 200px;\">", value);
+                  }
+                  _ => {
+                    val = format!("<a href=\"{}\">{}</a>", value, value);
+                  }
+                }
+              }
+              else {
+                val = value.into();
+              }
+            %>
+            <dd><%- val %></dd>
+            <% } %>
+            </dl>
+          </div>
+        </details>
+        <% if !backlinks.is_empty() { %>
+        <section class="backlinks-container">
+          <hr />
+          <h3>Mentioned in:</h3>
+          <div class="backlinks">
+            <%= links %>
+          </div>
+        </section>
+      </div>
+    </div>
+    <%= include "footer" %>
+  </body>
+</html>
