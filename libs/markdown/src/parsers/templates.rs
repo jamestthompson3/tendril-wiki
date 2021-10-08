@@ -9,17 +9,7 @@ use tasks::search::SearchResult;
 
 use sailfish::TemplateOnce;
 
-use crate::parsers::format_links;
-
-pub struct BasicPage<'a> {
-    title: &'a String,
-    body: &'a String,
-    tags: &'a Vec<String>,
-    raw_md: &'a str,
-    metadata: &'a HashMap<String, String>,
-    backlinks: Vec<String>,
-    render_static: bool,
-}
+use crate::{ingestors::get_template_file, parsers::format_links};
 
 #[derive(TemplateOnce)]
 #[template(path = "user_style.stpl")]
@@ -128,11 +118,6 @@ pub fn render_template(
         .map(|t| format!("<li><a href=\"/tags/{}\">#{}</a></li>", t, t))
         .collect::<Vec<String>>()
         .join("\n");
-    let backlinks_string = backlinks
-        .iter()
-        .map(|l| format!("<a href=\"{}\">{}</a>", format_links(l), l))
-        .collect::<Vec<String>>()
-        .join("\n");
     let mut ctx = File::open("templates/main.html").unwrap();
     let mut ctx_string = String::new();
     ctx.read_to_string(&mut ctx_string).unwrap();
@@ -140,41 +125,114 @@ pub fn render_template(
         .replace("<%= title %>", &page.title)
         .replace("<%= body %>", &page.body)
         .replace("<%= tags %>", &tag_string)
-        .replace("<%= links %>", &backlinks_string);
+        .replace("<%= links %>", &render_page_backlinks(&backlinks))
+        .replace("<%= metadata %>", &render_page_metadata(&page.metadata));
     let parsed = ctx_string.split('\n');
     parsed
         .map(|line| {
             if line.trim().starts_with("<%= include") {
-                parse_includes(line.trim())
+                let included_file = parse_includes(line.trim());
+                match included_file.as_ref() {
+                    "nav" | "edit" => {
+                        if render_static {
+                            return String::with_capacity(0);
+                        }
+                        process_included_file(included_file, page)
+                    }
+
+                    _ => get_template_file(&included_file).unwrap(),
+                }
             } else {
                 line.to_string()
             }
         })
         .collect::<Vec<String>>()
         .join("\n")
+}
 
-    // let ctx = BasicPage {
-    //     title: &page.title,
-    //     tags: &page.tags,
-    //     body: &page.body,
-    //     metadata: &page.metadata,
-    //     raw_md: &page.raw_md,
-    //     backlinks,
-    //     render_static,
-    // };
-    //ctx.render_once().unwrap()
+fn render_page_backlinks(links: &[String]) -> String {
+    if !links.is_empty() {
+        let backlinks_string = links
+            .iter()
+            .map(|l| format!("<a href=\"{}\">{}</a>", format_links(l), l))
+            .collect::<Vec<String>>()
+            .join("\n");
+        format!(
+            r#"
+<section class="backlinks-container">
+  <hr />
+  <h3>Mentioned in:</h3>
+  <div class="backlinks">{}</div>
+</section>
+"#,
+            backlinks_string
+        )
+    } else {
+        String::with_capacity(0)
+    }
+}
+
+fn render_page_metadata(metadata: &HashMap<String, String>) -> String {
+    let mut metadata_html = String::new();
+    for (key, value) in metadata.iter() {
+        metadata_html.push_str(&format!("<dt><strong>{}:</strong></dt>", key));
+        // TODO: Add "created" date here as well
+        // TODO: Modify dates to be compliant with DT parsing
+        // if key == "modified" {
+        //     val = value.parse::<DateTime<FixedOffset>>().unwrap().format("%Y-%m-%d %H:%M").to_string();
+        //   }
+        if value.starts_with("http") {
+            match key.as_str() {
+                "cover" => {
+                    let val = format!(
+                        "<img src=\"{}\" style=\"max-height: 200px; max-width: 200px;\">",
+                        value
+                    );
+                    metadata_html.push_str(&format!("\n<dd>{}</dd>", val));
+                }
+                _ => {
+                    let val = format!("<a href=\"{}\">{}</a>", value, value);
+                    metadata_html.push_str(&format!("\n<dd>{}</dd>", val));
+                }
+            }
+        } else {
+            metadata_html.push_str(&format!("\n<dd>{}</dd>", &value));
+        }
+    }
+    metadata_html
+}
+
+fn process_included_file(file: String, page: &TemplattedPage) -> String {
+    match file.as_ref() {
+        "nav" => {
+            let templatefile = get_template_file("nav").unwrap();
+            templatefile.replace("{{TITLE}}", &page.title)
+        }
+        "edit" => {
+            let templatefile = get_template_file("edit").unwrap();
+            let metadata_string = page
+                .metadata
+                .iter()
+                .map(|(k, v)| format!("{}:{}", k, v))
+                .collect::<Vec<String>>()
+                .join("\n");
+            templatefile
+                .replace("<%= title %>", &page.title)
+                .replace("<%= tags %>", &page.tags.join(","))
+                .replace("<%= raw_md %>", &page.raw_md)
+                .replace("<%= metadata %>", &metadata_string)
+        }
+        _ => String::with_capacity(0),
+    }
 }
 
 fn parse_includes(include_str: &str) -> String {
-    println!("{}", include_str);
     let included_file = include_str
         .strip_prefix("<%= include \"")
         .unwrap()
         .strip_suffix("\" %>")
         .unwrap();
-    let template = format!("templates/{}.html", included_file);
-    println!("{}", template);
-    fs::read_to_string(template).unwrap()
+    included_file.to_string()
 }
 
 pub fn write_index_page(user: String) {

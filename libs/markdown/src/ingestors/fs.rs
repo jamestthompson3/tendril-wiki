@@ -167,7 +167,7 @@ pub fn read(
 
 pub fn get_file_path(wiki_location: &str, requested_file: &str) -> Result<PathBuf, ReadPageError> {
     let mut file_location = String::from(wiki_location);
-    if let Ok(mut file) = decode(&requested_file) {
+    if let Ok(mut file) = decode(requested_file) {
         file.push_str(".md");
         file_location.push_str(&file);
         let file_path = PathBuf::from(file_location);
@@ -177,5 +177,14 @@ pub fn get_file_path(wiki_location: &str, requested_file: &str) -> Result<PathBu
         Ok(file_path)
     } else {
         Err(ReadPageError::DecodeError)
+    }
+}
+
+pub fn get_template_file(requested_file: &str) -> Result<String, ReadPageError> {
+    let file_path = format!("templates/{}.html", requested_file);
+    if let Ok(filestring) = fs::read_to_string(&file_path) {
+        Ok(filestring)
+    } else {
+        Err(ReadPageError::PageNotFoundError)
     }
 }
