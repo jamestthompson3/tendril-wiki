@@ -1,8 +1,7 @@
 use std::{collections::HashMap, sync::Arc};
 
 use build::RefBuilder;
-use markdown::parsers::NewPage;
-use sailfish::TemplateOnce;
+use render::{new_page::NewPage, Render};
 use warp::{filters::BoxedFilter, Filter, Reply};
 
 use crate::{
@@ -108,7 +107,7 @@ impl WikiPageRouter {
                             linkto: query_params.get("linkto"),
                             action_params: None,
                         };
-                        warp::reply::html(ctx.render_once().unwrap())
+                        warp::reply::html(ctx.render())
                     }),
             )
             .boxed()

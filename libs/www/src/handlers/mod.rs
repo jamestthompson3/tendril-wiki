@@ -12,10 +12,9 @@ pub use self::static_files::*;
 pub use self::static_pages::*;
 pub use self::wiki_page::*;
 
-use markdown::parsers::LoginPage;
-use sailfish::TemplateOnce;
 use std::convert::Infallible;
 
+use render::{login_page::LoginPage, Render};
 use warp::{http::StatusCode, Rejection, Reply};
 
 // 40MB file limit
@@ -48,7 +47,7 @@ pub async fn handle_rejection(err: Rejection) -> std::result::Result<impl Reply,
         let ctx = LoginPage {};
         let response = warp::http::Response::builder()
             .status(StatusCode::OK)
-            .body(ctx.render_once().unwrap())
+            .body(ctx.render())
             .unwrap();
 
         return Ok(response);

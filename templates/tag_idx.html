@@ -5,29 +5,22 @@
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1, shrink-to-fit=no"
-      />
-    <% include!("styles.stpl"); %>
+    />
+    <%= include "styles" %>
     <meta name="description" content="Tagged Topics" />
     <meta property="og:title" content="Tagged Topics" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="" />
     <meta property="og:image" content="" />
-    <meta name="robots" content="index, follow">
-    <title>Search Results</title>
+    <meta name="robots" content="index, follow" />
+    <title>Tagged Topics</title>
   </head>
   <body>
-  <% include!("nav.stpl"); %>
-  <div class="content-container">
-    <h1 class="title">Search Results</h1>
-    <div>
-        <% use super::html::format_links;  %>
-          <ul>
-          <% for page in pages {  %>
-              <li><a href="<%- format_links(&page) %>"><%- page %></a></li>
-          <% } %>
-          </ul>
+    <%= include "nav" %>
+    <div class="content-container">
+      <h1 class="title">Tagged Topics</h1>
+      <div><%= tag_idx %></div>
     </div>
-    </div>
-    <% include!("footer.stpl"); %>
+    <%= include "footer" %>
   </body>
 </html>

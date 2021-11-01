@@ -1,5 +1,0 @@
-<footer class="footer">
-  <a href="/">Home</a>
-  <a href="/help">Help</a>
-  <script defer="true" src="/static/script.js"></script>
-</footer>

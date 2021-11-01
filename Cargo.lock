@@ -102,6 +102,8 @@ dependencies = [
  "directories",
  "markdown",
  "num_cpus",
+ "persistance",
+ "render",
  "rpassword",
  "serde",
  "serde_derive",
@@ -212,18 +214,6 @@ checksum = "8e93d7f5705de3e49895a2b5e0b8855a1c27f080192ae9c32a6432d50741a57a"
 dependencies = [
  "libc",
  "redox_users",
- "winapi",
-]
-
-[[package]]
-name = "filetime"
-version = "0.2.14"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1d34cfa13a63ae058bfa601fe9e313bbdb3746427c1459185464ce0fcf62e1e8"
-dependencies = [
- "cfg-if",
- "libc",
- "redox_syscall 0.2.5",
  "winapi",
 ]
 
@@ -429,15 +419,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "home"
-version = "0.5.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2456aef2e6b6a9784192ae780c0f15bc57df0e918585282325e8c8ac27737654"
-dependencies = [
- "winapi",
-]
-
-[[package]]
 name = "http"
 version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -541,12 +522,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dd25036021b0de88a0aff6b850051563c6516d0bf53f8638938edbb9de732736"
 
 [[package]]
-name = "itoap"
-version = "1.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9028f49264629065d057f340a86acb84867925865f73bbf8d47b4d149a7e88b8"
-
-[[package]]
 name = "js-sys"
 version = "0.3.51"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -582,12 +557,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9385f66bf6105b241aa65a61cb923ef20efc665cb9f9bb50ac2f0c4b7f378d41"
 
 [[package]]
-name = "linked-hash-map"
-version = "0.5.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7fb9b38af92608140b86b693604b9ffcc5824240a484d1ecd4795bacb2fe88f3"
-
-[[package]]
 name = "lock_api"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -616,7 +585,6 @@ dependencies = [
  "chrono",
  "logging",
  "pulldown-cmark",
- "sailfish",
  "tasks",
  "thiserror",
  "urlencoding",
@@ -802,6 +770,18 @@ name = "percent-encoding"
 version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d4fd5641d01c8f18a23da7b6fe29298ff4b55afcccdf78973b24cf3175fee32e"
+
+[[package]]
+name = "persistance"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "markdown",
+ "render",
+ "tasks",
+ "thiserror",
+ "urlencoding",
+]
 
 [[package]]
 name = "pin-project"
@@ -1020,6 +1000,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "render"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "markdown",
+ "tasks",
+]
+
+[[package]]
 name = "ring"
 version = "0.16.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1067,43 +1056,6 @@ name = "safemem"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ef703b7cb59335eae2eb93ceb664c0eb7ea6bf567079d843e09420219668e072"
-
-[[package]]
-name = "sailfish"
-version = "0.3.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "816920a08514d9741242b3efe70c16c350ed548bc4a5ba03426e56faf9d45f77"
-dependencies = [
- "itoap",
- "ryu",
- "sailfish-macros",
- "version_check",
-]
-
-[[package]]
-name = "sailfish-compiler"
-version = "0.3.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4276e7b848bde8e7813d534f014bc35ce5acd2b9e2b6b075727113fcf478ba63"
-dependencies = [
- "filetime",
- "home",
- "memchr",
- "proc-macro2",
- "quote",
- "syn",
- "yaml-rust",
-]
-
-[[package]]
-name = "sailfish-macros"
-version = "0.3.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6bba2458ef07ae12c9aed2edb866c3db2f9c21cf19a2c3f2613b2982bc1a4a46"
-dependencies = [
- "proc-macro2",
- "sailfish-compiler",
-]
 
 [[package]]
 name = "scoped-tls"
@@ -1690,20 +1642,12 @@ dependencies = [
  "jsonwebtoken",
  "logging",
  "markdown",
- "sailfish",
+ "persistance",
+ "render",
  "serde",
  "tasks",
  "thiserror",
  "tokio",
  "urlencoding",
  "warp",
-]
-
-[[package]]
-name = "yaml-rust"
-version = "0.4.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "56c1936c4cc7a1c9ab21a1ebb602eb942ba868cbd44a99cb7cdc5892335e1c85"
-dependencies = [
- "linked-hash-map",
 ]

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en-US" prefix="og:http://ogp.me/ns#">
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    <meta name="description" content="tagged-pages" />
+    <%= include "styles" %>
+    <meta property="og:title" content="Pages Tagged: <%= title %>" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="" />
+    <meta property="og:image" content="" />
+    <meta name="robots" content="index, follow" />
+    <title>Pages Tagged: <%= title %></title>
+  </head>
+  <body>
+    <%= include "nav" %>
+    <div class="content-container">
+      <h1 class="title">Pages Tagged: <%= title %></h1>
+      <div>
+        <ul class="tagged-pages">
+          <%= tags %>
+        </ul>
+      </div>
+    </div>
+    <%= include "footer" %>
+  </body>
+</html>

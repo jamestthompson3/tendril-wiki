@@ -1,10 +1,10 @@
-use markdown::parsers::{
-    path_to_data_structure, write_backlinks, write_entries, write_index_page, write_tag_index,
-    write_tag_pages, GlobalBacklinks, ParsedPages, TagMapping,
-};
+use markdown::parsers::{path_to_data_structure, GlobalBacklinks, ParsedPages, TagMapping};
+
 use markdown::processors::{
     to_template, update_backlinks, update_tag_map, update_templatted_pages,
 };
+use persistance::fs::{write_entries, write_index_page};
+use render::{write_backlinks, write_tag_index, write_tag_pages};
 use threadpool::ThreadPool;
 
 use std::{

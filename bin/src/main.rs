@@ -53,6 +53,7 @@ fn print_version() {
         get_data_dir_location()
     );
 }
+
 fn print_help() {
     print!(
         "Usage: tendril [options]

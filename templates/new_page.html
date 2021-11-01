@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en-US" prefix="og:http://ogp.me/ns#">
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    <meta name="description" content="Create a new page" />
+    <meta property="og:title" content="<%= page_title %>" />
+    <meta property="og:type" content="website" />
+    <title><%= page_title %></title>
+    <%= include "styles" %>
+  </head>
+  <body>
+    <div class="content-container">
+      <h1 class="title"><%= note_title %></h1>
+      <form
+        class="editor visible"
+        method="post"
+        action="/edit<%= action_params %>"
+        target="_parent"
+      >
+        <button type="submit">Save</button>
+        <label for="title-edit">Title</label>
+        <input
+          name="title"
+          id="title-edit"
+          type="text"
+          value="<%= note_title %>"
+        />
+        <label for="tag-edit">Tags</label>
+        <input id="tag-edit" type="text" name="tags" />
+        <label for="body">Body</label>
+        <textarea id="body" name="body"><%= linkto %></textarea>
+      </form>
+    </div>
+    <%= include "footer" %>
+    <script defer="true" src="/static/newPage.js"></script>
+  </body>
+</html>

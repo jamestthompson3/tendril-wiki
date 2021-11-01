@@ -3,17 +3,17 @@
   <head>
     <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
     <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, shrink-to-fit=no"
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
     />
     <meta name="mobile-web-app-capable" content="yes" />
-    <% include!("styles.stpl"); %>
+    <%= include "styles" %>
     <meta name="description" content="Index for your notebook" />
     <meta property="og:title" content="<%= user %>'s notebook" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="" />
     <meta property="og:image" content="" />
-    <meta name="robots" content="noindex, nofollow">
+    <meta name="robots" content="noindex, nofollow" />
     <!-- APPLE STUFF -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="<%= user %>'s notebook" />
@@ -28,18 +28,18 @@
     <title><%= user %>'s notebook</title>
   </head>
   <body>
-    <% include!("nav.stpl"); %>
+    <%= include "nav" %>
     <div class="content-container">
       <div class="content">
         <h1 class="title"><%= user %>'s notebook</h1>
         <div>
-        <h2><a href="/tags">Browse tagged topics</a></h2>
-        <h2><a href="/links">View content index</a></h2>
-        <h2><a href="/files/list">View uploaded files</a></h2>
+          <h2><a href="/tags">Browse tagged topics</a></h2>
+          <h2><a href="/links">View content index</a></h2>
+          <h2><a href="/files/list">View uploaded files</a></h2>
         </div>
       </div>
     </div>
-    <% include!("footer.stpl"); %>
+    <%= include "footer" %>
     <script>
       function registerSW() {
         if (location.hostname === "localhost") return;
@@ -50,7 +50,7 @@
         }
       }
 
-    registerSW();
+      registerSW();
     </script>
   </body>
 </html>

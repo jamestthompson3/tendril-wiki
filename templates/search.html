@@ -3,10 +3,10 @@
   <head>
     <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
     <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, shrink-to-fit=no"
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
     />
-    <% include!("styles.stpl"); %>
+    <%= include "styles" %>
     <meta name="description" content="Search your wiki" />
     <meta property="og:title" content="Search" />
     <meta property="og:type" content="website" />
@@ -27,7 +27,7 @@
         </div>
       </form>
     </div>
-    <% include!("footer.stpl"); %>
+    <%= include "footer" %>
     <script defer="true" src="/static/searchPage.js"></script>
   </body>
 </html>

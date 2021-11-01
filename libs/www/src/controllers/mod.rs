@@ -1,5 +1,9 @@
 use bytes::BufMut;
-use sailfish::TemplateOnce;
+use persistance::fs::{write, write_media};
+use render::{
+    search_results_context_page::SearchResultsContextPage, search_results_page::SearchResultsPage,
+    uploaded_files_page::UploadedFilesPage, Render,
+};
 use std::{
     collections::HashMap,
     fs::{self, read_dir},
@@ -8,14 +12,7 @@ use std::{
 use tasks::{context_search, search};
 use urlencoding::encode;
 
-use markdown::{
-    ingestors::EditPageData,
-    parsers::{SearchResultsContextPage, SearchResultsPage},
-};
-use markdown::{
-    ingestors::{self, fs::write, write_media},
-    parsers::UploadedFilesPage,
-};
+use markdown::parsers::EditPageData;
 
 use logging::log;
 
@@ -110,12 +107,12 @@ pub async fn note_search(
             let found_pages = context_search(term, &wiki_location).unwrap();
             // TODO: Maybe not a separate page here?
             let ctx = SearchResultsContextPage { pages: found_pages };
-            Ok(warp::reply::html(ctx.render_once().unwrap()))
+            Ok(warp::reply::html(ctx.render()))
         }
         None => {
             let found_pages = search(term, &wiki_location);
             let ctx = SearchResultsPage { pages: found_pages };
-            Ok(warp::reply::html(ctx.render_once().unwrap()))
+            Ok(warp::reply::html(ctx.render()))
         }
     }
 }
@@ -123,8 +120,14 @@ pub async fn note_search(
 pub async fn list_files(wiki_location: String) -> Result<impl Reply, Rejection> {
     // TODO: Make this async?
     let entries = read_dir(wiki_location).unwrap();
+    let entries = entries
+        .map(|entry| {
+            let entry = entry.unwrap();
+            entry.file_name().into_string().unwrap()
+        })
+        .collect::<Vec<String>>();
     let ctx = UploadedFilesPage { entries };
-    Ok(warp::reply::html(ctx.render_once().unwrap()))
+    Ok(warp::reply::html(ctx.render()))
 }
 
 pub async fn delete(
@@ -134,7 +137,7 @@ pub async fn delete(
 ) -> Result<impl Reply, Rejection> {
     let title = form_body.get("title").unwrap();
     let now = Instant::now();
-    match ingestors::delete(&wiki_location, title) {
+    match persistance::fs::delete(&wiki_location, title) {
         Ok(()) => {
             builder.build(&wiki_location);
             println!("[Delete] {}: {:?}", title, now.elapsed());

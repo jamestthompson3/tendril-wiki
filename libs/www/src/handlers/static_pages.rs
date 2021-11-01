@@ -1,8 +1,10 @@
 use std::{fs, sync::Arc};
 
 use build::get_config_location;
-use markdown::parsers::{FileUploader, HelpPage, IndexPage, SearchPage, StylesPage};
-use sailfish::TemplateOnce;
+use render::{
+    file_upload_page::FileUploader, help_page::HelpPage, index_page::IndexPage,
+    search_page::SearchPage, styles_page::StylesPage, Render,
+};
 use warp::{filters::BoxedFilter, Filter, Reply};
 
 use crate::{controllers::list_files, handlers::filters::with_location};
@@ -30,7 +32,7 @@ impl StaticPageRouter {
             .and(warp::path("search"))
             .map(|| {
                 let ctx = SearchPage {};
-                warp::reply::html(ctx.render_once().unwrap())
+                warp::reply::html(ctx.render())
             })
             .boxed()
     }
@@ -41,7 +43,7 @@ impl StaticPageRouter {
             .and(warp::path("help"))
             .map(|| {
                 let ctx = HelpPage {};
-                warp::reply::html(ctx.render_once().unwrap())
+                warp::reply::html(ctx.render())
             })
             .boxed()
     }
@@ -52,7 +54,7 @@ impl StaticPageRouter {
             .and(with_user(user.to_string()))
             .map(|user: String| {
                 let idx_ctx = IndexPage { user };
-                warp::reply::html(idx_ctx.render_once().unwrap())
+                warp::reply::html(idx_ctx.render())
             })
             .boxed()
     }
@@ -62,7 +64,7 @@ impl StaticPageRouter {
             .and(warp::path("upload"))
             .map(|| {
                 let ctx = FileUploader {};
-                warp::reply::html(ctx.render_once().unwrap())
+                warp::reply::html(ctx.render())
             })
             .boxed()
     }
@@ -74,7 +76,7 @@ impl StaticPageRouter {
                 let style_location = path.join("userstyles.css");
                 let body = fs::read_to_string(style_location).unwrap();
                 let ctx = StylesPage { body };
-                warp::reply::html(ctx.render_once().unwrap())
+                warp::reply::html(ctx.render())
             }))
             .boxed()
     }

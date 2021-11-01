@@ -3,10 +3,10 @@
   <head>
     <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
     <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, shrink-to-fit=no"
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
     />
-    <% include!("styles.stpl"); %>
+    <%= include "styles" %>
     <meta property="og:title" content="User Styles" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="" />
@@ -14,14 +14,19 @@
     <title>Edit User Styles</title>
   </head>
   <body>
-    <% include!("nav.stpl"); %>
+    <%= include "nav" %>
     <div class="content-container">
-      <form class="editor visible" method="post" action="styles" target="_parent">
-      <button type="submit">Save</button>
+      <form
+        class="editor visible"
+        method="post"
+        action="styles"
+        target="_parent"
+      >
+        <button type="submit">Save</button>
         <label for="body">Styles</label>
-        <textarea id="body" name="body"><%- body %></textarea>
+        <textarea id="body" name="body"><%= body %></textarea>
       </form>
     </div>
-    <% include!("footer.stpl"); %>
+    <%= include "footer" %>
   </body>
 </html>

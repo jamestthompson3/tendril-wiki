@@ -1,15 +1,17 @@
 use std::{fs, io, path::PathBuf};
 
-use crate::{parsers::NoteMeta, processors::tags::TagsArray};
-use crate::{
-    parsers::{parse_meta, path_to_data_structure, render_template, GlobalBacklinks, TagMapping},
-    processors::to_template,
-};
 use chrono::Local;
+use markdown::{
+    parsers::{
+        parse_meta, path_to_data_structure, EditPageData, GlobalBacklinks, NoteMeta, ParsedPages,
+        TagMapping,
+    },
+    processors::{tags::TagsArray, to_template},
+};
+use render::{index_page::IndexPage, wiki_page::WikiPage, Render};
 use tasks::path_to_reader;
 use urlencoding::decode;
 
-use super::EditPageData;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -127,7 +129,7 @@ pub fn write(
 
 pub fn delete(wiki_location: &str, requested_file: &str) -> Result<(), io::Error> {
     let mut file_location = String::from(wiki_location);
-    if let Ok(mut file) = decode(&requested_file) {
+    if let Ok(mut file) = decode(requested_file) {
         file.push_str(".md");
         file_location.push_str(&file);
         let file_path = PathBuf::from(file_location);
@@ -158,7 +160,7 @@ pub fn read(
         let templatted = to_template(&note);
         let link_vals = backlinks.lock().unwrap();
         let links = link_vals.get(&templatted.page.title);
-        let output = render_template(&templatted.page, links, false);
+        let output = WikiPage::new(&templatted.page, links, false).render();
         Ok(output)
     } else {
         Err(ReadPageError::DeserializationError)
@@ -180,11 +182,25 @@ pub fn get_file_path(wiki_location: &str, requested_file: &str) -> Result<PathBu
     }
 }
 
-pub fn get_template_file(requested_file: &str) -> Result<String, ReadPageError> {
-    let file_path = format!("templates/{}.html", requested_file);
-    if let Ok(filestring) = fs::read_to_string(&file_path) {
-        Ok(filestring)
-    } else {
-        Err(ReadPageError::PageNotFoundError)
+#[inline]
+pub fn write_entries(pages: &ParsedPages, backlinks: &GlobalBacklinks) {
+    let page_vals = pages.lock().unwrap();
+    let link_vals = backlinks.lock().unwrap();
+    for page in page_vals.iter() {
+        let links = link_vals.get(&page.title);
+        let output = WikiPage::new(page, links, true).render();
+        // TODO use path here instead of title? Since `/` in title can cause issues in fs::write
+        fs::create_dir(format!("public/{}", page.title.replace('/', "-"))).unwrap();
+        fs::write(
+            format!("public/{}/index.html", page.title.replace('/', "-")),
+            output,
+        )
+        .unwrap();
     }
+}
+
+#[inline]
+pub fn write_index_page(user: String) {
+    let ctx = IndexPage { user };
+    fs::write("public/index.html", ctx.render()).unwrap();
 }

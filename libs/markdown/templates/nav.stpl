@@ -1,9 +1,0 @@
-<nav class="navigation">
-  <ul>
-    <li><a href="/new" accesskey="n">✏️  new</a></li>
-    <li><a href="/search" accesskey="/">🔎 search</a></li>
-    <li><a accesskey="l" href="/new?linkto={{TITLE}}" id="linkto">🔗 link here</a></li>
-    <li><a accesskey="p" href="/styles"> 🖌️ edit look and feel</a></li>
-    <li><a accesskey="u" href="/upload">📄  upload a file</a></li>
-  </ul>
-</nav>

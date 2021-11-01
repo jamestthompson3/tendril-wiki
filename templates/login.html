@@ -3,10 +3,10 @@
   <head>
     <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
     <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, shrink-to-fit=no"
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
     />
-    <% include!("styles.stpl"); %>
+    <%= include "styles" %>
     <meta name="description" content="Login to your wiki" />
     <meta property="og:title" content="Login" />
     <meta property="og:type" content="website" />
@@ -16,7 +16,12 @@
   </head>
   <body>
     <div class="content-container">
-      <form class="editor visible" method="post" action="/login" target="_parent">
+      <form
+        class="editor visible"
+        method="post"
+        action="/login"
+        target="_parent"
+      >
         <label for="username">Username</label>
         <input name="username" id="username-edit" type="text" value="" />
         <label for="password-edit">Password</label>
