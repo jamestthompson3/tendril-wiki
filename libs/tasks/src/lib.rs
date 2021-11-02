@@ -12,7 +12,6 @@ pub use self::password::*;
 pub use self::search::*;
 pub use self::sync::*;
 
-#[inline]
 fn parse_location(location: &str) -> String {
     let mut loc: String;
     if location.contains('~') {

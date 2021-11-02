@@ -28,11 +28,11 @@ impl MetaParserMachine {
             state: MetaParserState::Ready,
         }
     }
-    #[inline]
+
     pub fn send(&mut self, next_state: MetaParserState) {
         self.state = next_state;
     }
-    #[inline]
+
     pub fn current_state(self) -> MetaParserState {
         self.state
     }

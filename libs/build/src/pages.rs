@@ -50,7 +50,7 @@ impl Builder {
         fs::create_dir("public/static").unwrap();
         fs::copy("./static/style.css", "./public/static/style.css").unwrap();
     }
-    #[inline]
+
     pub fn sweep(&self, wiki_location: &str) {
         if !Path::new("./public").exists() {
             fs::create_dir_all("./public/tags").unwrap();
