@@ -3,7 +3,7 @@ use std::{fs, sync::Arc};
 use build::get_config_location;
 use markdown::parsers::{FileUploader, HelpPage, IndexPage, SearchPage, StylesPage};
 use sailfish::TemplateOnce;
-use warp::{Filter, Rejection, Reply};
+use warp::{filters::BoxedFilter, Filter, Reply};
 
 use crate::{controllers::list_files, handlers::filters::with_location};
 
@@ -15,15 +15,16 @@ pub struct StaticPageRouter {
 }
 
 impl StaticPageRouter {
-    pub fn routes(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+    pub fn routes(&self) -> BoxedFilter<(impl Reply,)> {
         self.file_list()
             .or(self.search())
             .or(self.upload())
             .or(self.help())
             .or(self.styles())
+            .boxed()
     }
 
-    fn search(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+    fn search(&self) -> BoxedFilter<(impl Reply,)> {
         warp::get()
             .and(with_auth())
             .and(warp::path("search"))
@@ -31,9 +32,10 @@ impl StaticPageRouter {
                 let ctx = SearchPage {};
                 warp::reply::html(ctx.render_once().unwrap())
             })
+            .boxed()
     }
 
-    fn help(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+    fn help(&self) -> BoxedFilter<(impl Reply,)> {
         warp::get()
             .and(with_auth())
             .and(warp::path("help"))
@@ -41,8 +43,9 @@ impl StaticPageRouter {
                 let ctx = HelpPage {};
                 warp::reply::html(ctx.render_once().unwrap())
             })
+            .boxed()
     }
-    pub fn index(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+    pub fn index(&self) -> BoxedFilter<(impl Reply,)> {
         let user = self.user.clone();
         warp::get()
             .and(with_auth())
@@ -51,8 +54,9 @@ impl StaticPageRouter {
                 let idx_ctx = IndexPage { user };
                 warp::reply::html(idx_ctx.render_once().unwrap())
             })
+            .boxed()
     }
-    fn upload(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+    fn upload(&self) -> BoxedFilter<(impl Reply,)> {
         warp::get()
             .and(with_auth())
             .and(warp::path("upload"))
@@ -60,24 +64,26 @@ impl StaticPageRouter {
                 let ctx = FileUploader {};
                 warp::reply::html(ctx.render_once().unwrap())
             })
+            .boxed()
     }
 
-    fn styles(&self) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-        warp::path("styles").and(warp::get().and(with_auth()).map(|| {
-            let (path, _) = get_config_location();
-            let style_location = path.join("userstyles.css");
-            let body = fs::read_to_string(style_location).unwrap();
-            let ctx = StylesPage { body };
-            warp::reply::html(ctx.render_once().unwrap())
-        }))
+    fn styles(&self) -> BoxedFilter<(impl Reply,)> {
+        warp::path("styles")
+            .and(warp::get().and(with_auth()).map(|| {
+                let (path, _) = get_config_location();
+                let style_location = path.join("userstyles.css");
+                let body = fs::read_to_string(style_location).unwrap();
+                let ctx = StylesPage { body };
+                warp::reply::html(ctx.render_once().unwrap())
+            }))
+            .boxed()
     }
-    fn file_list(
-        &self,
-    ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    fn file_list(&self) -> BoxedFilter<(impl Reply,)> {
         warp::get()
             .and(with_auth())
             .and(warp::path!("files" / "list"))
             .and(with_location(self.media_location.clone()))
             .and_then(list_files)
+            .boxed()
     }
 }

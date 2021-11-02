@@ -1,7 +1,7 @@
 use std::{path::PathBuf, sync::Arc};
 
 use build::get_config_location;
-use warp::{Filter, Rejection, Reply};
+use warp::{filters::BoxedFilter, Filter, Reply};
 
 use crate::get_static_dir;
 
@@ -10,19 +10,22 @@ pub struct StaticFileRouter {
 }
 
 impl StaticFileRouter {
-    pub fn routes(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-        self.files().or(self.styles())
+    pub fn routes(&self) -> BoxedFilter<(impl Reply,)> {
+        self.files().or(self.styles()).boxed()
     }
 
-    fn styles(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+    fn styles(&self) -> BoxedFilter<(impl Reply,)> {
         let (config_dir, _) = get_config_location();
         let user_stylesheet = config_dir.join("userstyles.css");
         warp::path("static")
             .and(warp::fs::dir(get_static_dir()))
             .or(warp::path("config").and(warp::fs::file(user_stylesheet)))
+            .boxed()
     }
-    fn files(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+    fn files(&self) -> BoxedFilter<(impl Reply,)> {
         let media_location = self.media_location.clone();
-        warp::path("files").and(warp::fs::dir(PathBuf::from(media_location.as_str())))
+        warp::path("files")
+            .and(warp::fs::dir(PathBuf::from(media_location.as_str())))
+            .boxed()
     }
 }

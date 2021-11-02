@@ -3,7 +3,7 @@ use std::{collections::HashMap, sync::Arc};
 use build::RefBuilder;
 use markdown::parsers::NewPage;
 use sailfish::TemplateOnce;
-use warp::{Filter, Rejection, Reply};
+use warp::{filters::BoxedFilter, Filter, Reply};
 
 use crate::{
     controllers::{delete, edit},
@@ -22,7 +22,7 @@ pub struct WikiPageRouter {
 }
 
 impl WikiPageRouter {
-    pub fn routes(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+    pub fn routes(&self) -> BoxedFilter<(impl Reply,)> {
         self.get_nested()
             .or(self.delete())
             .or(self.edit())
@@ -31,17 +31,19 @@ impl WikiPageRouter {
             .or(self.tag_index())
             .or(self.backlink_index())
             .or(self.get())
+            .boxed()
     }
 
-    fn tag_index(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+    fn tag_index(&self) -> BoxedFilter<(impl Reply,)> {
         warp::get()
             .and(with_auth())
             .and(warp::path::path("tags"))
             .and(with_refs(self.reference_builder.clone()))
             .and_then(render_tags)
+            .boxed()
     }
 
-    fn tag_page(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+    fn tag_page(&self) -> BoxedFilter<(impl Reply,)> {
         warp::get()
             .and(with_auth())
             .and(warp::path::path("tags"))
@@ -49,17 +51,19 @@ impl WikiPageRouter {
             .and(warp::path::param())
             .and(with_location(self.wiki_location.clone()))
             .and_then(render_tag_page)
+            .boxed()
     }
 
-    fn backlink_index(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+    fn backlink_index(&self) -> BoxedFilter<(impl Reply,)> {
         warp::get()
             .and(with_auth())
             .and(warp::path("links"))
             .and(with_refs(self.reference_builder.clone()))
             .and_then(render_backlink_index)
+            .boxed()
     }
 
-    fn get(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+    fn get(&self) -> BoxedFilter<(impl Reply,)> {
         warp::get()
             .and(with_auth())
             .and(warp::path::param())
@@ -67,18 +71,20 @@ impl WikiPageRouter {
             .and(with_location(self.wiki_location.clone()))
             .and(warp::query::<HashMap<String, String>>())
             .and_then(render_file)
+            .boxed()
     }
 
-    fn get_nested(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+    fn get_nested(&self) -> BoxedFilter<(impl Reply,)> {
         warp::get()
             .and(with_auth())
             .and(warp::path!(String / String))
             .and(with_refs(self.reference_builder.clone()))
             .and(with_location(self.wiki_location.clone()))
             .and_then(render_nested_file)
+            .boxed()
     }
 
-    fn delete(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+    fn delete(&self) -> BoxedFilter<(impl Reply,)> {
         warp::post()
             .and(with_auth())
             .and(warp::path("delete"))
@@ -87,33 +93,40 @@ impl WikiPageRouter {
             .and(warp::body::content_length_limit(MAX_BODY_SIZE))
             .and(warp::body::form())
             .and_then(delete)
+            .boxed()
     }
 
-    fn new_page(&self) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-        warp::get().and(with_auth()).and(
-            warp::path("new")
-                .and(warp::query::<HashMap<String, String>>())
-                .map(|query_params: HashMap<String, String>| {
-                    let ctx = NewPage {
-                        title: None,
-                        linkto: query_params.get("linkto"),
-                        action_params: None,
-                    };
-                    warp::reply::html(ctx.render_once().unwrap())
-                }),
-        )
-    }
-
-    fn edit(&self) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-        warp::post().and(with_auth()).and(
-            warp::path("edit").and(
-                warp::body::content_length_limit(MAX_BODY_SIZE)
-                    .and(warp::body::form())
-                    .and(with_location(self.wiki_location.clone()))
-                    .and(with_refs(self.reference_builder.clone()))
+    fn new_page(&self) -> BoxedFilter<(impl Reply,)> {
+        warp::get()
+            .and(with_auth())
+            .and(
+                warp::path("new")
                     .and(warp::query::<HashMap<String, String>>())
-                    .and_then(edit),
-            ),
-        )
+                    .map(|query_params: HashMap<String, String>| {
+                        let ctx = NewPage {
+                            title: None,
+                            linkto: query_params.get("linkto"),
+                            action_params: None,
+                        };
+                        warp::reply::html(ctx.render_once().unwrap())
+                    }),
+            )
+            .boxed()
+    }
+
+    fn edit(&self) -> BoxedFilter<(impl Reply,)> {
+        warp::post()
+            .and(with_auth())
+            .and(
+                warp::path("edit").and(
+                    warp::body::content_length_limit(MAX_BODY_SIZE)
+                        .and(warp::body::form())
+                        .and(with_location(self.wiki_location.clone()))
+                        .and(with_refs(self.reference_builder.clone()))
+                        .and(warp::query::<HashMap<String, String>>())
+                        .and_then(edit),
+                ),
+            )
+            .boxed()
     }
 }
