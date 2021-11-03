@@ -41,7 +41,7 @@ pub fn to_html(md: &str) -> Html {
 
     let mut parser_machine = ParserMachine::new();
     let mut outlinks = Vec::new();
-    let parser = Parser::new_ext(&md, Options::all()).map(|event| match event {
+    let parser = Parser::new_ext(md, Options::all()).map(|event| match event {
         Event::Text(text) => match &*text {
             "[" => match parser_machine.current_state() {
                 ParserState::Accept => {
@@ -131,7 +131,7 @@ pub fn format_links(link: &str) -> String {
         "files" => {
             format!("/files/{}", encode(link.strip_prefix("files:").unwrap()))
         }
-        _ => format!("/{}", encode(&link)), // HACK: deal with warp decoding this later
+        _ => format!("/{}", encode(link)), // HACK: deal with warp decoding this later
     }
 }
 
@@ -142,12 +142,9 @@ mod tests {
     #[test]
     fn format_links_properly() {
         let http_link = "https://example.com";
-        assert_eq!(
-            String::from("https://example.com"),
-            format_links(&http_link)
-        );
+        assert_eq!(String::from("https://example.com"), format_links(http_link));
         let wiki_page = "My Cool Page";
-        assert_eq!(String::from("/My%20Cool%20Page"), format_links(&wiki_page));
+        assert_eq!(String::from("/My%20Cool%20Page"), format_links(wiki_page));
     }
     #[test]
     fn parses_md_to_html_with_wikilinks() {

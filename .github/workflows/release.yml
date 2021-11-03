@@ -166,7 +166,7 @@ jobs:
           staging="tendril-${{ env.RELEASE_VERSION }}-${{ matrix.target }}"
           mkdir -p "$staging"
 
-          cp -r static config "$staging/"
+          cp -r static config templates "$staging/"
 
           if [ "${{ matrix.os }}" = "windows-2019" ]; then
             cp "target/${{ matrix.target }}/release/tendril.exe" "$staging/"

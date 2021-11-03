@@ -21,5 +21,5 @@ pub fn verify_password(password: String, hash: String) -> Result<(), VerifyError
     let argon2 = Argon2::default();
     // Verify password against PHC string
     let parsed_hash = PasswordHash::new(&hash).unwrap();
-    argon2.verify_password(&password.as_bytes(), &parsed_hash)
+    argon2.verify_password(password.as_bytes(), &parsed_hash)
 }

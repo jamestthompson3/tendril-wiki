@@ -31,7 +31,7 @@ pub fn create_jwt(username: &str, password: &str) -> Result<String, AuthError> {
             let encode = encode(
                 &header,
                 &claims,
-                &EncodingKey::from_secret(&config.general.pass.as_bytes()),
+                &EncodingKey::from_secret(config.general.pass.as_bytes()),
             )
             .map_err(|_| AuthError::JWTTokenCreationError)
             .unwrap();

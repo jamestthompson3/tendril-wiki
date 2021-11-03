@@ -46,21 +46,21 @@ async fn main() {
 }
 
 fn print_version() {
-    println!(
-        "tendril-wiki v{}\nConfig file found at {:?}\nInstall files found at {:?}",
-        env!("CARGO_PKG_VERSION"),
-        get_config_location().0,
-        get_data_dir_location()
-    );
+    println!("tendril-wiki v{}", env!("CARGO_PKG_VERSION"),);
 }
 
 fn print_help() {
+    println!(
+        "\nConfig file found at {}\nInstall files found at {}\n",
+        format!("\x1b[38;5;47m{:#?}\x1b[0m", get_config_location().0),
+        format!("\x1b[38;5;37m{:#?}\x1b[0m", get_data_dir_location())
+    );
     print!(
         "Usage: tendril [options]
         Options:
-        -i, --init                   Initialize config file
+        -i, --init                   Initialize config file and install
         -b, --build                  Build all pages as HTML and output to ./public
-        -v, --version                Print version and config information.
+        -v, --version                Print version.
         -h, --help                   Show this message.
         ",
     );

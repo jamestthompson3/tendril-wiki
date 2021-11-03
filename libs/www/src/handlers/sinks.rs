@@ -100,7 +100,7 @@ pub async fn render_nested_file(
     let sub_path_decoded = decode(&sub_path).unwrap();
     let links = refs.links();
     let tags = refs.tags();
-    main_path.push_str(&sub_path_decoded.as_str());
+    main_path.push_str(sub_path_decoded.as_str());
     let page = read(&wiki_location, main_path, tags, links).map_err(|_| warp::reject())?;
     Ok(warp::reply::html(page))
 }

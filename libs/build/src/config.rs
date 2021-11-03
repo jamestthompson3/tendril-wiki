@@ -24,8 +24,7 @@ pub struct General {
     pub user: String,
     pub pass: String,
     pub version: String,
-    pub media_location: String
-
+    pub media_location: String,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -111,7 +110,10 @@ pub fn write_config_interactive() {
     if media_location == "\n" {
         parsed_media_location = "~/wiki_media/".into();
     } else {
-        parsed_media_location = media_location.strip_suffix('\n').unwrap_or(&location).to_owned();
+        parsed_media_location = media_location
+            .strip_suffix('\n')
+            .unwrap_or(&location)
+            .to_owned();
     }
     let branch: String;
     if git_branch == "\n" {
@@ -149,7 +151,7 @@ pub fn write_config_interactive() {
         default_conf.sync.use_git = enable_sync;
         default_conf.sync.branch = branch;
         if let Some(password) = password {
-            let pass = hash_password(&password.as_bytes());
+            let pass = hash_password(password.as_bytes());
             default_conf.general.pass = pass;
         }
         fs::write(&file, toml::to_string(&default_conf).unwrap()).unwrap();
