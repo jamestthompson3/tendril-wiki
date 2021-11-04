@@ -15,7 +15,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use crate::read_config;
+use crate::{get_config_location, read_config};
 
 /// ## TODO:
 /// figure out how to encapsulate parse_entries and process_file better
@@ -48,8 +48,12 @@ impl Builder {
         write_tag_index(Arc::clone(&self.tag_map), CompileState::Static);
         write_backlinks(links, CompileState::Static);
         write_index_page(read_config().general.user, CompileState::Static);
+        let mut config_dir = get_config_location().0;
+        config_dir.push("userstyles.css");
         fs::create_dir("public/static").unwrap();
+        fs::create_dir("public/config").unwrap();
         fs::copy("./static/style.css", "./public/static/style.css").unwrap();
+        fs::copy(config_dir, "./public/config/userstyles.css").unwrap();
     }
 
     pub fn sweep(&self, wiki_location: &str) {
