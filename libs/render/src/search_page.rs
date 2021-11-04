@@ -1,4 +1,6 @@
-use crate::{get_template_file, parse_includes, process_included_file, Render};
+use tasks::CompileState;
+
+use crate::{get_template_file, render_includes, Render};
 
 pub struct SearchPage {}
 
@@ -9,16 +11,8 @@ impl SearchPage {
 }
 
 impl Render for SearchPage {
-    fn render(&self) -> String {
+    fn render(&self, state: &CompileState) -> String {
         let ctx = get_template_file("search").unwrap();
-        let lines = ctx.lines().map(|line| {
-            let line = line.trim();
-            if line.starts_with("<%=") {
-                process_included_file(parse_includes(line), None)
-            } else {
-                line.to_string()
-            }
-        });
-        lines.collect::<Vec<String>>().join(" ")
+        render_includes(ctx, state)
     }
 }

@@ -1,6 +1,7 @@
 use markdown::parsers::format_links;
+use tasks::CompileState;
 
-use crate::{get_template_file, parse_includes, process_included_file, Render};
+use crate::{get_template_file, render_includes, Render};
 
 pub struct SearchResultsPage {
     pub pages: Vec<String>,
@@ -21,23 +22,12 @@ impl SearchResultsPage {
         }
         page_list
     }
-    fn render_includes(&self, ctx: String) -> String {
-        let lines = ctx.lines().map(|line| {
-            let line = line.trim();
-            if line.starts_with("<%=") {
-                process_included_file(parse_includes(line), None)
-            } else {
-                line.to_string()
-            }
-        });
-        lines.collect::<Vec<String>>().join(" ")
-    }
 }
 
 impl Render for SearchResultsPage {
-    fn render(&self) -> String {
+    fn render(&self, state: &CompileState) -> String {
         let mut ctx = get_template_file("search_results").unwrap();
         ctx = ctx.replace("<%= pages %>", &self.render_pages());
-        self.render_includes(ctx)
+        render_includes(ctx, state)
     }
 }

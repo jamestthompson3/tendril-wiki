@@ -1,24 +1,16 @@
 use markdown::parsers::{format_links, TemplattedPage};
+use tasks::CompileState;
 
-use crate::{get_template_file, parse_includes, process_included_file, Render};
+use crate::{get_template_file, render_includes, Render};
 
 pub struct WikiPage<'a> {
     page: &'a TemplattedPage,
     links: Option<&'a Vec<String>>,
-    render_static: bool,
 }
 
 impl<'a> WikiPage<'a> {
-    pub fn new(
-        page: &'a TemplattedPage,
-        links: Option<&'a Vec<String>>,
-        render_static: bool,
-    ) -> Self {
-        Self {
-            page,
-            links,
-            render_static,
-        }
+    pub fn new(page: &'a TemplattedPage, links: Option<&'a Vec<String>>) -> Self {
+        Self { page, links }
     }
 
     fn render_page_backlinks(&self, links: &[String]) -> String {
@@ -75,7 +67,7 @@ impl<'a> WikiPage<'a> {
 }
 
 impl<'a> Render for WikiPage<'a> {
-    fn render(&self) -> String {
+    fn render(&self, state: &CompileState) -> String {
         let page = self.page;
         let mut backlinks = match self.links {
             Some(links) => links.to_owned(),
@@ -95,26 +87,6 @@ impl<'a> Render for WikiPage<'a> {
             .replace("<%= tags %>", &tag_string)
             .replace("<%= links %>", &self.render_page_backlinks(&backlinks))
             .replace("<%= metadata %>", &self.render_page_metadata());
-        let parsed = ctx.split('\n');
-        parsed
-            .map(|line| {
-                if line.trim().starts_with("<%= include") {
-                    let included_file = parse_includes(line.trim());
-                    match included_file.as_ref() {
-                        "nav" | "edit" => {
-                            if self.render_static {
-                                return String::with_capacity(0);
-                            }
-                            process_included_file(included_file, Some(page))
-                        }
-
-                        _ => get_template_file(&included_file).unwrap(),
-                    }
-                } else {
-                    line.to_string()
-                }
-            })
-            .collect::<Vec<String>>()
-            .join("\n")
+        render_includes(ctx, state)
     }
 }

@@ -5,6 +5,7 @@ use markdown::processors::{
 };
 use persistance::fs::{write_entries, write_index_page};
 use render::{write_backlinks, write_tag_index, write_tag_pages};
+use tasks::CompileState;
 use threadpool::ThreadPool;
 
 use std::{
@@ -42,11 +43,11 @@ impl Builder {
         let map = Arc::clone(&self.tag_map);
         let links = Arc::clone(&self.backlinks);
         let pages = Arc::clone(&self.pages);
-        write_entries(&pages, &self.backlinks);
-        write_tag_pages(map, &pages);
-        write_tag_index(Arc::clone(&self.tag_map));
-        write_backlinks(links);
-        write_index_page(read_config().general.user);
+        write_entries(&pages, &self.backlinks, CompileState::Static);
+        write_tag_pages(map, &pages, CompileState::Static);
+        write_tag_index(Arc::clone(&self.tag_map), CompileState::Static);
+        write_backlinks(links, CompileState::Static);
+        write_index_page(read_config().general.user, CompileState::Static);
         fs::create_dir("public/static").unwrap();
         fs::copy("./static/style.css", "./public/static/style.css").unwrap();
     }

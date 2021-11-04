@@ -33,6 +33,11 @@ pub fn normalize_wiki_location(wiki_location: &str) -> String {
     location
 }
 
+pub enum CompileState {
+    Static,
+    Dynamic,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -1,4 +1,6 @@
-use crate::{get_template_file, Render};
+use tasks::CompileState;
+
+use crate::{get_template_file, render_includes, Render};
 
 pub struct TagPage {
     pub title: String,
@@ -12,15 +14,17 @@ impl TagPage {
 }
 
 impl Render for TagPage {
-    fn render(&self) -> String {
-        let ctx = get_template_file("tags").unwrap();
+    fn render(&self, state: &CompileState) -> String {
+        let mut ctx = get_template_file("tags").unwrap();
         let tag_string = self
             .tags
             .iter()
-            .map(|t| format!("<li><a href=\"/tags/{}\">#{}</a></li>", t, t))
+            .map(|t| format!("<li><a href=\"/{}\">{}</a></li>", t, t))
             .collect::<Vec<String>>()
             .join("\n");
-        ctx.replace("<%= title %>", &self.title)
-            .replace("<%= tags %>", &tag_string)
+        ctx = ctx
+            .replace("<%= title %>", &self.title)
+            .replace("<%= tags %>", &tag_string);
+        render_includes(ctx, state)
     }
 }

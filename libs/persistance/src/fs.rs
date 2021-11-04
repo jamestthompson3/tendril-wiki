@@ -9,7 +9,7 @@ use markdown::{
     processors::{tags::TagsArray, to_template},
 };
 use render::{index_page::IndexPage, wiki_page::WikiPage, Render};
-use tasks::path_to_reader;
+use tasks::{path_to_reader, CompileState};
 use urlencoding::decode;
 
 use thiserror::Error;
@@ -160,7 +160,7 @@ pub fn read(
         let templatted = to_template(&note);
         let link_vals = backlinks.lock().unwrap();
         let links = link_vals.get(&templatted.page.title);
-        let output = WikiPage::new(&templatted.page, links, false).render();
+        let output = WikiPage::new(&templatted.page, links).render(&CompileState::Dynamic); // we have a hard coded type since this is only called on the web server
         Ok(output)
     } else {
         Err(ReadPageError::DeserializationError)
@@ -183,12 +183,12 @@ pub fn get_file_path(wiki_location: &str, requested_file: &str) -> Result<PathBu
 }
 
 #[inline]
-pub fn write_entries(pages: &ParsedPages, backlinks: &GlobalBacklinks) {
+pub fn write_entries(pages: &ParsedPages, backlinks: &GlobalBacklinks, state: CompileState) {
     let page_vals = pages.lock().unwrap();
     let link_vals = backlinks.lock().unwrap();
     for page in page_vals.iter() {
         let links = link_vals.get(&page.title);
-        let output = WikiPage::new(page, links, true).render();
+        let output = WikiPage::new(page, links).render(&state);
         // TODO use path here instead of title? Since `/` in title can cause issues in fs::write
         fs::create_dir(format!("public/{}", page.title.replace('/', "-"))).unwrap();
         fs::write(
@@ -200,7 +200,7 @@ pub fn write_entries(pages: &ParsedPages, backlinks: &GlobalBacklinks) {
 }
 
 #[inline]
-pub fn write_index_page(user: String) {
+pub fn write_index_page(user: String, state: CompileState) {
     let ctx = IndexPage { user };
-    fs::write("public/index.html", ctx.render()).unwrap();
+    fs::write("public/index.html", ctx.render(&state)).unwrap();
 }

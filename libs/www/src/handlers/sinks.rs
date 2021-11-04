@@ -3,6 +3,7 @@ use render::{
     link_page::LinkPage, new_page::NewPage, tag_index_page::TagIndex, wiki_page::WikiPage, Render,
 };
 use std::{collections::HashMap, time::Instant};
+use tasks::CompileState;
 
 use build::RefBuilder;
 use logging::log;
@@ -32,7 +33,7 @@ pub async fn render_backlink_index(refs: RefBuilder) -> Result<impl warp::Reply,
         links: links.clone(),
     };
     log(format!("[BackLinks] render: {:?}", now.elapsed()));
-    Ok(warp::reply::html(ctx.render()))
+    Ok(warp::reply::html(ctx.render(&CompileState::Dynamic)))
 }
 
 pub async fn render_tags(refs: RefBuilder) -> Result<impl warp::Reply, warp::Rejection> {
@@ -41,7 +42,7 @@ pub async fn render_tags(refs: RefBuilder) -> Result<impl warp::Reply, warp::Rej
     let tags = ref_tags.lock().unwrap();
     let ctx = TagIndex { tags: tags.clone() };
     log(format!("[TagIndex] render: {:?}", now.elapsed()));
-    Ok(warp::reply::html(ctx.render()))
+    Ok(warp::reply::html(ctx.render(&CompileState::Dynamic)))
 }
 
 pub async fn render_tag_page(
@@ -61,20 +62,20 @@ pub async fn render_tag_page(
             if let Ok(file_path) = get_file_path(&location, &sub_path_decoded) {
                 if let Ok(note) = path_to_data_structure(&file_path) {
                     let templatted = to_template(&note);
-                    let output = WikiPage::new(&templatted.page, Some(tags), false);
+                    let output = WikiPage::new(&templatted.page, Some(tags));
                     log(format!(
                         "[{}] render: {:?}",
                         sub_path_decoded,
                         now.elapsed()
                     ));
-                    Ok(warp::reply::html(output.render()))
+                    Ok(warp::reply::html(output.render(&CompileState::Dynamic)))
                 } else {
                     let ctx = NewPage {
                         title: Some(sub_path_decoded),
                         linkto: None,
                         action_params: Some("?redir_to=tags"),
                     };
-                    Ok(warp::reply::html(ctx.render()))
+                    Ok(warp::reply::html(ctx.render(&CompileState::Dynamic)))
                 }
             } else {
                 let ctx = NewPage {
@@ -82,7 +83,7 @@ pub async fn render_tag_page(
                     linkto: None,
                     action_params: Some("?redir_to=tags"),
                 };
-                Ok(warp::reply::html(ctx.render()))
+                Ok(warp::reply::html(ctx.render(&CompileState::Dynamic)))
             }
         }
         None => Err(warp::reject()),
@@ -136,7 +137,7 @@ pub fn render_from_path(
                 decode(&path).unwrap(),
                 now.elapsed()
             ));
-            Ok(warp::reply::html(ctx.render()))
+            Ok(warp::reply::html(ctx.render(&CompileState::Dynamic)))
         }
         _ => Err(warp::reject()),
     }

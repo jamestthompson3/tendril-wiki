@@ -1,8 +1,9 @@
 use std::collections::BTreeMap;
 
 use markdown::parsers::format_links;
+use tasks::CompileState;
 
-use crate::{get_template_file, parse_includes, process_included_file, Render};
+use crate::{get_template_file, render_includes, Render};
 
 pub struct TagIndex {
     pub tags: BTreeMap<String, Vec<String>>,
@@ -34,23 +35,12 @@ impl TagIndex {
         }
         tag_content.join("")
     }
-    fn render_includes(&self, ctx: String) -> String {
-        let lines = ctx.lines().map(|line| {
-            let line = line.trim();
-            if line.starts_with("<%=") {
-                process_included_file(parse_includes(line), None)
-            } else {
-                line.to_string()
-            }
-        });
-        lines.collect::<Vec<String>>().join(" ")
-    }
 }
 
 impl Render for TagIndex {
-    fn render(&self) -> String {
+    fn render(&self, state: &CompileState) -> String {
         let mut ctx = get_template_file("tag_idx").unwrap();
         ctx = ctx.replace("<%= tag_idx %>", &self.render_tag_body());
-        self.render_includes(ctx)
+        render_includes(ctx, state)
     }
 }

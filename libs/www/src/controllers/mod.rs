@@ -9,7 +9,7 @@ use std::{
     fs::{self, read_dir},
     time::Instant,
 };
-use tasks::{context_search, search};
+use tasks::{context_search, search, CompileState};
 use urlencoding::encode;
 
 use markdown::parsers::EditPageData;
@@ -107,12 +107,12 @@ pub async fn note_search(
             let found_pages = context_search(term, &wiki_location).unwrap();
             // TODO: Maybe not a separate page here?
             let ctx = SearchResultsContextPage { pages: found_pages };
-            Ok(warp::reply::html(ctx.render()))
+            Ok(warp::reply::html(ctx.render(&CompileState::Dynamic)))
         }
         None => {
             let found_pages = search(term, &wiki_location);
             let ctx = SearchResultsPage { pages: found_pages };
-            Ok(warp::reply::html(ctx.render()))
+            Ok(warp::reply::html(ctx.render(&CompileState::Dynamic)))
         }
     }
 }
@@ -127,7 +127,7 @@ pub async fn list_files(wiki_location: String) -> Result<impl Reply, Rejection> 
         })
         .collect::<Vec<String>>();
     let ctx = UploadedFilesPage { entries };
-    Ok(warp::reply::html(ctx.render()))
+    Ok(warp::reply::html(ctx.render(&CompileState::Dynamic)))
 }
 
 pub async fn delete(

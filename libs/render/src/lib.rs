@@ -3,6 +3,7 @@ use std::{fs, io};
 use link_page::LinkPage;
 use markdown::parsers::{GlobalBacklinks, ParsedPages, TagMapping, TemplattedPage};
 use tag_index_page::TagIndex;
+use tasks::CompileState;
 
 use crate::{tag_page::TagPage, wiki_page::WikiPage};
 
@@ -22,7 +23,7 @@ pub mod uploaded_files_page;
 pub mod wiki_page;
 
 pub trait Render {
-    fn render(&self) -> String;
+    fn render(&self, state: &CompileState) -> String;
 }
 
 pub fn parse_includes(include_str: &str) -> String {
@@ -35,7 +36,7 @@ pub fn parse_includes(include_str: &str) -> String {
 }
 
 #[inline]
-pub fn write_tag_pages(map: TagMapping, pages: &ParsedPages) {
+pub fn write_tag_pages(map: TagMapping, pages: &ParsedPages, state: CompileState) {
     let tag_map = map.lock().unwrap();
     for key in tag_map.keys() {
         let title = key.to_string();
@@ -43,7 +44,7 @@ pub fn write_tag_pages(map: TagMapping, pages: &ParsedPages) {
         let pages = pages.lock().unwrap();
         let page = pages.iter().find(|pg| pg.title == title);
         if let Some(template) = page {
-            let output = WikiPage::new(template, Some(&tags), true).render();
+            let output = WikiPage::new(template, Some(&tags)).render(&state);
             fs::create_dir(format!("public/tags/{}", title)).unwrap();
             fs::write(format!("public/tags/{}/index.html", title), output).unwrap();
         } else {
@@ -52,52 +53,78 @@ pub fn write_tag_pages(map: TagMapping, pages: &ParsedPages) {
                 tags,
             };
             fs::create_dir(format!("public/tags/{}", title)).unwrap();
-            fs::write(format!("public/tags/{}/index.html", title), ctx.render()).unwrap();
+            fs::write(
+                format!("public/tags/{}/index.html", title),
+                ctx.render(&state),
+            )
+            .unwrap();
         }
     }
 }
 
 #[inline]
-fn process_included_file(file: String, page: Option<&TemplattedPage>) -> String {
+fn process_included_file(
+    file: String,
+    page: Option<&TemplattedPage>,
+    state: &CompileState,
+) -> String {
     match file.as_ref() {
-        "nav" => get_template_file("nav").unwrap(),
-        "edit" => {
-            let page = page.unwrap();
-            let templatefile = get_template_file("edit").unwrap();
-            let metadata_string = page
-                .metadata
-                .iter()
-                .map(|(k, v)| format!("{}:{}", k, v))
-                .collect::<Vec<String>>()
-                .join("\n");
-            templatefile
-                .replace("<%= title %>", &page.title)
-                .replace("<%= tags %>", &page.tags.join(","))
-                .replace("<%= raw_md %>", &page.raw_md)
-                .replace("<%= metadata %>", &metadata_string)
-        }
+        "nav" => match state {
+            CompileState::Dynamic => get_template_file("nav").unwrap(),
+            CompileState::Static => String::with_capacity(0),
+        },
+        "edit" => match state {
+            CompileState::Dynamic => {
+                let page = page.unwrap();
+                let templatefile = get_template_file("edit").unwrap();
+                let metadata_string = page
+                    .metadata
+                    .iter()
+                    .map(|(k, v)| format!("{}:{}", k, v))
+                    .collect::<Vec<String>>()
+                    .join("\n");
+                templatefile
+                    .replace("<%= title %>", &page.title)
+                    .replace("<%= tags %>", &page.tags.join(","))
+                    .replace("<%= raw_md %>", &page.raw_md)
+                    .replace("<%= metadata %>", &metadata_string)
+            }
+            CompileState::Static => String::with_capacity(0),
+        },
         "styles" => get_template_file("styles").unwrap(),
         "footer" => get_template_file("footer").unwrap(),
         _ => String::with_capacity(0),
     }
 }
 
+pub fn render_includes(ctx: String, state: &CompileState) -> String {
+    let lines = ctx.lines().map(|line| {
+        let line = line.trim();
+        if line.starts_with("<%=") {
+            process_included_file(parse_includes(line), None, state)
+        } else {
+            line.to_string()
+        }
+    });
+    lines.collect::<Vec<String>>().join(" ")
+}
+
 #[inline]
-pub fn write_tag_index(map: TagMapping) {
+pub fn write_tag_index(map: TagMapping, state: CompileState) {
     let tag_map = map.lock().unwrap();
     let ctx = TagIndex {
         tags: tag_map.clone(),
     };
-    fs::write("public/tags/index.html", ctx.render()).unwrap();
+    fs::write("public/tags/index.html", ctx.render(&state)).unwrap();
 }
 
 #[inline]
-pub fn write_backlinks(map: GlobalBacklinks) {
+pub fn write_backlinks(map: GlobalBacklinks, state: CompileState) {
     let link_map = map.lock().unwrap();
     let ctx = LinkPage {
         links: link_map.clone(),
     };
-    fs::write("public/links/index.html".to_string(), ctx.render()).unwrap();
+    fs::write("public/links/index.html".to_string(), ctx.render(&state)).unwrap();
 }
 
 #[inline]

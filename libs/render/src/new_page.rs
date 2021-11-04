@@ -1,4 +1,6 @@
-use crate::{get_template_file, parse_includes, process_included_file, Render};
+use tasks::CompileState;
+
+use crate::{get_template_file, render_includes, Render};
 
 pub struct NewPage<'a> {
     pub title: Option<String>,
@@ -41,28 +43,16 @@ impl<'a> NewPage<'a> {
             String::new()
         }
     }
-    fn render_includes(&self, ctx: String) -> String {
-        let lines = ctx.lines().map(|line| {
-            let line = line.trim();
-            if line.starts_with("<%=") {
-                process_included_file(parse_includes(line), None)
-            } else {
-                line.to_string()
-            }
-        });
-        lines.collect::<Vec<String>>().join(" ")
-    }
 }
 
-// TODO: Include pages
 impl<'a> Render for NewPage<'a> {
-    fn render(&self) -> String {
+    fn render(&self, state: &CompileState) -> String {
         let mut ctx = get_template_file("new_page").unwrap();
         ctx = ctx
             .replace("<%= page_title %>", self.get_page_title())
             .replace("<%= note_title %>", &self.get_note_title())
             .replace("<%= action_params %>", self.action_params.unwrap_or(""))
             .replace("<%= linkto %>", &self.get_linkto());
-        self.render_includes(ctx)
+        render_includes(ctx, state)
     }
 }
