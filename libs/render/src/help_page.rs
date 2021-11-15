@@ -13,6 +13,6 @@ impl HelpPage {
 impl Render for HelpPage {
     fn render(&self, state: &CompileState) -> String {
         let ctx = get_template_file("help").unwrap();
-        render_includes(ctx, state)
+        render_includes(ctx, state, None)
     }
 }

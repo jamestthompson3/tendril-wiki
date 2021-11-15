@@ -13,6 +13,6 @@ impl SearchPage {
 impl Render for SearchPage {
     fn render(&self, state: &CompileState) -> String {
         let ctx = get_template_file("search").unwrap();
-        render_includes(ctx, state)
+        render_includes(ctx, state, None)
     }
 }

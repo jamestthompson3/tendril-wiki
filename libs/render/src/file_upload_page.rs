@@ -13,6 +13,6 @@ impl FileUploader {
 impl Render for FileUploader {
     fn render(&self, state: &CompileState) -> String {
         let ctx = get_template_file("file_upload").unwrap();
-        render_includes(ctx, state)
+        render_includes(ctx, state, None)
     }
 }

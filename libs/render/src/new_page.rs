@@ -53,6 +53,6 @@ impl<'a> Render for NewPage<'a> {
             .replace("<%= note_title %>", &self.get_note_title())
             .replace("<%= action_params %>", self.action_params.unwrap_or(""))
             .replace("<%= linkto %>", &self.get_linkto());
-        render_includes(ctx, state)
+        render_includes(ctx, state, None)
     }
 }

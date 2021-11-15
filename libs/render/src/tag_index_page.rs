@@ -41,6 +41,6 @@ impl Render for TagIndex {
     fn render(&self, state: &CompileState) -> String {
         let mut ctx = get_template_file("tag_idx").unwrap();
         ctx = ctx.replace("<%= tag_idx %>", &self.render_tag_body());
-        render_includes(ctx, state)
+        render_includes(ctx, state, None)
     }
 }

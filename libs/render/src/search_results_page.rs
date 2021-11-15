@@ -28,6 +28,6 @@ impl Render for SearchResultsPage {
     fn render(&self, state: &CompileState) -> String {
         let mut ctx = get_template_file("search_results").unwrap();
         ctx = ctx.replace("<%= pages %>", &self.render_pages());
-        render_includes(ctx, state)
+        render_includes(ctx, state, None)
     }
 }

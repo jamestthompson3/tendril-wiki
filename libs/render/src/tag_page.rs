@@ -25,6 +25,6 @@ impl Render for TagPage {
         ctx = ctx
             .replace("<%= title %>", &self.title)
             .replace("<%= tags %>", &tag_string);
-        render_includes(ctx, state)
+        render_includes(ctx, state, None)
     }
 }

@@ -38,6 +38,6 @@ impl Render for LinkPage {
     fn render(&self, state: &CompileState) -> String {
         let mut ctx = get_template_file("backlinks").unwrap();
         ctx = ctx.replace("<%= link_content %>", &self.create_link_content());
-        render_includes(ctx, state)
+        render_includes(ctx, state, None)
     }
 }

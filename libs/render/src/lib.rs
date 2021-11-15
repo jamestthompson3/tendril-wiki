@@ -97,11 +97,11 @@ fn process_included_file(
     }
 }
 
-pub fn render_includes(ctx: String, state: &CompileState) -> String {
+pub fn render_includes(ctx: String, state: &CompileState, page: Option<&TemplattedPage>) -> String {
     let lines = ctx.lines().map(|line| {
         let line = line.trim();
         if line.starts_with("<%=") {
-            process_included_file(parse_includes(line), None, state)
+            process_included_file(parse_includes(line), page, state)
         } else {
             line.to_string()
         }
@@ -133,6 +133,7 @@ pub fn get_template_file(requested_file: &str) -> Result<String, io::Error> {
     if let Ok(filestring) = fs::read_to_string(&file_path) {
         Ok(filestring)
     } else {
+        eprintln!("Could not find {}", requested_file);
         Err(io::Error::new(
             io::ErrorKind::NotFound,
             format!("Could not find {}", requested_file),

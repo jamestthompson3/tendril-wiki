@@ -87,6 +87,6 @@ impl<'a> Render for WikiPage<'a> {
             .replace("<%= tags %>", &tag_string)
             .replace("<%= links %>", &self.render_page_backlinks(&backlinks))
             .replace("<%= metadata %>", &self.render_page_metadata());
-        render_includes(ctx, state)
+        render_includes(ctx, state, Some(&self.page))
     }
 }

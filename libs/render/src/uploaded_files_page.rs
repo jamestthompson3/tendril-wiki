@@ -30,6 +30,6 @@ impl Render for UploadedFilesPage {
             line.to_string()
         });
         ctx = lines.collect::<Vec<String>>().join(" ");
-        render_includes(ctx, state)
+        render_includes(ctx, state, None)
     }
 }

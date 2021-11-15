@@ -4,12 +4,9 @@ use render::{
     search_results_context_page::SearchResultsContextPage, search_results_page::SearchResultsPage,
     uploaded_files_page::UploadedFilesPage, Render,
 };
-use std::{
-    collections::HashMap,
-    fs::{self, read_dir},
-    time::Instant,
-};
+use std::{collections::HashMap, fs::read_dir, time::Instant};
 use tasks::{context_search, search, CompileState};
+use tokio::{fs::read_to_string, spawn};
 use urlencoding::encode;
 
 use markdown::parsers::EditPageData;
@@ -18,7 +15,7 @@ use logging::log;
 
 use futures::TryStreamExt;
 
-use build::{get_config_location, RefBuilder};
+use build::{get_config_location, get_data_dir_location, RefBuilder};
 use warp::{
     http::{header, HeaderValue, Response, StatusCode},
     hyper::{body::Bytes, Uri},
@@ -83,9 +80,33 @@ pub async fn edit(
         redir_uri = format!("/{}", encode(&parsed_data.title));
     }
     let now = Instant::now();
+    let page_title = parsed_data.title.clone();
     match write(&wiki_location, parsed_data, builder.links()) {
         Ok(()) => {
             builder.build(&wiki_location);
+            spawn(async {
+                let mut data_dir = get_data_dir_location();
+                data_dir.push("note_cache");
+                match read_to_string(&data_dir).await {
+                    Ok(content) => {
+                        let mut lines = content
+                            .lines()
+                            .filter(|&line| line == page_title)
+                            .map(|l| l.to_string())
+                            .collect::<Vec<String>>();
+                        if lines.len() >= 5 {
+                            lines.pop();
+                        }
+                        lines.insert(0, page_title);
+                        tokio::fs::write(data_dir, lines.join("\n")).await.unwrap();
+                    }
+                    Err(_) => {
+                        tokio::fs::write(data_dir, page_title).await.unwrap();
+                    }
+                }
+            })
+            .await
+            .unwrap();
             log(format!("[Edit]: {:?}", now.elapsed()));
             Ok(warp::redirect(redir_uri.parse::<Uri>().unwrap()))
         }
@@ -155,7 +176,7 @@ pub async fn update_styles(form_body: HashMap<String, String>) -> Result<impl Re
     let (path, _) = get_config_location();
     let style_location = path.join("userstyles.css");
     let body = form_body.get("body").unwrap();
-    fs::write(style_location, body).unwrap();
+    std::fs::write(style_location, body).unwrap();
     Ok(warp::redirect(Uri::from_static("/")))
 }
 

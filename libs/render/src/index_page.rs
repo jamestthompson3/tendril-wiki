@@ -16,6 +16,6 @@ impl Render for IndexPage {
     fn render(&self, state: &CompileState) -> String {
         let mut ctx = get_template_file("index").unwrap();
         ctx = ctx.replace("<%= user %>", &self.user);
-        render_includes(ctx, state)
+        render_includes(ctx, state, None)
     }
 }

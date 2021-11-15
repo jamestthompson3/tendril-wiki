@@ -13,6 +13,6 @@ impl LoginPage {
 impl Render for LoginPage {
     fn render(&self, state: &CompileState) -> String {
         let ctx = get_template_file("login").unwrap();
-        render_includes(ctx, state)
+        render_includes(ctx, state, None)
     }
 }
