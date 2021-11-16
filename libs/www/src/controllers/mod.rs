@@ -89,11 +89,13 @@ pub async fn edit(
                 data_dir.push("note_cache");
                 match read_to_string(&data_dir).await {
                     Ok(content) => {
+                        println!("--- {}", content);
                         let mut lines = content
                             .lines()
-                            .filter(|&line| line == page_title)
+                            .filter(|&line| line != page_title)
                             .map(|l| l.to_string())
                             .collect::<Vec<String>>();
+                        println!(">> {:?}", lines);
                         if lines.len() >= 5 {
                             lines.pop();
                         }

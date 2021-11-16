@@ -122,6 +122,25 @@ code {
   text-decoration: none;
   color: var(--text-color);
 }
+
+/*
+ * Index page
+ *
+ */
+.mru {
+  list-style: none;
+  font-size: 1.25rem;
+}
+
+.mru ~ ul {
+  list-style: none;
+  font-size: 1.25rem;
+}
+
+.mru ~ ul ol {
+  margin: 0.5rem 0rem;
+}
+
 /**
  * Main content
  */
