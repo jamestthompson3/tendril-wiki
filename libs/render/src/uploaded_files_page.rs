@@ -22,14 +22,7 @@ impl UploadedFilesPage {
 impl Render for UploadedFilesPage {
     fn render(&self, state: &CompileState) -> String {
         let mut ctx = get_template_file("file_list").unwrap();
-        let lines = ctx.lines().map(|line| {
-            let line = line.trim();
-            if line.starts_with("<%= entries %>") {
-                return line.replace("<%= entries %>", &self.render_entries());
-            }
-            line.to_string()
-        });
-        ctx = lines.collect::<Vec<String>>().join(" ");
+        ctx = ctx.replace("<%= entries %>", &self.render_entries());
         render_includes(ctx, state, None)
     }
 }

@@ -4,6 +4,7 @@ use link_page::LinkPage;
 use markdown::parsers::{GlobalBacklinks, ParsedPages, TagMapping, TemplattedPage};
 use tag_index_page::TagIndex;
 use tasks::CompileState;
+use directories::ProjectDirs;
 
 use crate::{tag_page::TagPage, wiki_page::WikiPage};
 
@@ -129,7 +130,7 @@ pub fn write_backlinks(map: GlobalBacklinks, state: CompileState) {
 
 #[inline]
 pub fn get_template_file(requested_file: &str) -> Result<String, io::Error> {
-    let file_path = format!("templates/{}.html", requested_file);
+    let file_path = get_template_location(requested_file);
     if let Ok(filestring) = fs::read_to_string(&file_path) {
         Ok(filestring)
     } else {
@@ -139,4 +140,17 @@ pub fn get_template_file(requested_file: &str) -> Result<String, io::Error> {
             format!("Could not find {}", requested_file),
         ))
     }
+}
+
+#[cfg(debug_assertions)]
+fn get_template_location(requested_file: &str) -> String {
+    format!("templates/{}.html", requested_file)
+}
+
+#[cfg(not(debug_assertions))]
+fn get_template_location(requested_file: &str) -> String {
+    let project_dir = ProjectDirs::from("", "", "tendril").unwrap();
+    let mut data_dir = project_dir.data_dir().to_owned();
+    data_dir.push(format!("templates/{}.html", requested_file));
+    data_dir.to_string_lossy().into()
 }
