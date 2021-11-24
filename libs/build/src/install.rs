@@ -8,6 +8,7 @@ pub fn install() {
     let template_dir = data_dir.join("templates");
     fs::create_dir_all(&static_dir).unwrap();
     fs::create_dir_all(&template_dir).unwrap();
+    fs::File::create(data_dir.join("note_cache")).unwrap();
     let version = env!("CARGO_PKG_VERSION");
     for entry in fs::read_dir("./static").unwrap() {
         let entry = entry.unwrap();
