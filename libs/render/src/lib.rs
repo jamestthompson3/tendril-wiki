@@ -1,10 +1,10 @@
 use std::{fs, io};
 
+use directories::ProjectDirs;
 use link_page::LinkPage;
 use markdown::parsers::{GlobalBacklinks, ParsedPages, TagMapping, TemplattedPage};
 use tag_index_page::TagIndex;
 use tasks::CompileState;
-use directories::ProjectDirs;
 
 use crate::{tag_page::TagPage, wiki_page::WikiPage};
 
@@ -93,6 +93,26 @@ fn process_included_file(
             CompileState::Static => String::with_capacity(0),
         },
         "styles" => get_template_file("styles").unwrap(),
+        "meta" => {
+            let templatefile = get_template_file("meta").unwrap();
+            let page = page.unwrap();
+            let icon_path = match &page.metadata.get("icon") {
+                Some(icon) => format!("/files/{}", icon),
+                None => String::from("static/favicon.ico"),
+            };
+            let desc: String;
+            if page.raw_md.len() >= 100 {
+                let mut shortened_desc = page.raw_md[..97].to_string();
+                shortened_desc.push_str("...");
+                desc = shortened_desc;
+            } else {
+                desc = page.raw_md.clone();
+            }
+            templatefile
+                .replace("<%= title %>", &page.title)
+                .replace("<%= desc %>", &desc)
+                .replace("<%= icon %>", &icon_path)
+        }
         "footer" => get_template_file("footer").unwrap(),
         _ => String::with_capacity(0),
     }
