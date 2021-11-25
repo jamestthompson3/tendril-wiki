@@ -31,6 +31,17 @@
 
   replaceLinkTo();
 
+  function replaceOGMeta() {
+    const metas = document.querySelectorAll("meta");
+    for (const meta of metas) {
+      if (meta.attributes.property?.value === "og:url") {
+        meta.attributes.content.value = window.location;
+      }
+    }
+  }
+
+  replaceOGMeta();
+
   function edit() {
     const editElement = document.getElementById("edit");
     if (editElement) {
