@@ -9,7 +9,7 @@
     0 2px 10px 0 rgba(34, 36, 38, 0.15);
   --rad: 6px;
   --text-color: #000;
-  --table-border-color: #666;
+  --table-border-color: transparent;
 }
 
 @media (prefers-color-scheme: dark) {

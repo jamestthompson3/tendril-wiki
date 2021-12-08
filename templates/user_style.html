@@ -14,10 +14,67 @@
     <link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon" />
     <link rel="icon" href="/static/favicon.ico"" type="image/x-icon" />
     <title>Edit User Styles</title>
+    <style>
+      table {
+        margin: auto;
+        width: 80%;
+      }
+    </style>
   </head>
   <body>
     <%= include "nav" %>
     <div class="content-container">
+      <h4>Available global variables</h4>
+      <table>
+        <thead>
+          <tr>
+            <td>Variable</td>
+            <td>Description</td>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>--primary</td>
+            <td>primary color</td>
+          </tr>
+          <tr>
+            <td>--primary-variant</td>
+            <td>slight variant on primary color</td>
+          </tr>
+          <tr>
+            <td>--variant-muted</td>
+            <td>primary-variant at 50% opacity</td>
+          </tr>
+          <tr>
+            <td>--accent</td>
+            <td>accent color</td>
+          </tr>
+          <tr>
+            <td>--bg</td>
+            <td>background color for main wiki text</td>
+          </tr>
+          <tr>
+            <td>--bg-darker darker</td>
+            <td>background for page</td>
+          </tr>
+          <tr>
+            <td>--shadow</td>
+            <td>box shadow for main wiki text</td>
+          </tr>
+          <tr>
+            <td>--rad</td>
+            <td>border radius</td>
+          </tr>
+          <tr>
+            <td>--text-color</td>
+            <td>color for text</td>
+          </tr>
+          <tr>
+            <td>--table-border-color</td>
+            <td>color for the borders on tables</td>
+          </tr>
+        </tbody>
+      </table>
       <form
         class="editor visible"
         method="post"
@@ -26,7 +83,9 @@
       >
         <button type="submit">Save</button>
         <label for="body">Styles</label>
-        <textarea id="body" name="body"><%= body %></textarea>
+        <textarea id="body" name="body">
+          <%= body %>
+        </textarea>
       </form>
     </div>
     <%= include "footer" %>
