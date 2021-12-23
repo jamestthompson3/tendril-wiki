@@ -10,7 +10,7 @@ edition = "2018"
 threadpool = "1.8.1"
 markdown = { path = "../markdown" }
 persistance = { path = "../persistance" }
-render = { path = "../render" }
+render = { path = "../render"}
 tasks = { path = "../tasks" }
 num_cpus = "1.13.0"
 toml = "0.5.8"

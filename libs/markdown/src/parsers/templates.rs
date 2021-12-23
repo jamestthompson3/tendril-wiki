@@ -20,3 +20,4 @@ pub struct ParsedTemplate {
 pub type TagMapping = Arc<Mutex<BTreeMap<String, Vec<String>>>>;
 pub type GlobalBacklinks = Arc<Mutex<BTreeMap<String, Vec<String>>>>;
 pub type ParsedPages = Arc<Mutex<Vec<TemplattedPage>>>;
+pub type PageTitles = Arc<Mutex<Vec<String>>>;

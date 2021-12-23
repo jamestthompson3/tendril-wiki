@@ -18,7 +18,7 @@ pub async fn server(config: General, ref_builder: RefBuilder) {
         media_location: media_location.clone(),
     };
     let wiki_router = WikiPageRouter {
-        reference_builder: ref_builder,
+        reference_builder: ref_builder.clone(),
         wiki_location: wiki_location.clone(),
     };
     let static_files_router = StaticFileRouter {
@@ -27,6 +27,7 @@ pub async fn server(config: General, ref_builder: RefBuilder) {
     let api_router = APIRouter {
         wiki_location,
         media_location,
+        reference_builder: ref_builder,
     };
     // Order matters!!
     let routes = static_files_router

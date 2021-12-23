@@ -17,7 +17,9 @@ thiserror = "1.0.24"
 base64 = "0.13.0"
 bytes = "1.0.1"
 jsonwebtoken = "7.2.0"
-serde = {version = "1.0", features = ["derive"] }
+serde = "1.0.125"
+serde_derive = "1.0.125"
+serde_json = "1.0.73"
 chrono = "0.4.19"
 logging = { path = "../logging" }
 futures = "0.3.15"

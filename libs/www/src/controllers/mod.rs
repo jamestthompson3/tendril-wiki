@@ -4,6 +4,7 @@ use render::{
     search_results_context_page::SearchResultsContextPage, search_results_page::SearchResultsPage,
     uploaded_files_page::UploadedFilesPage, Render,
 };
+use serde_derive::{Deserialize, Serialize};
 use std::{collections::HashMap, fs::read_dir, time::Instant};
 use tasks::{context_search, search, CompileState};
 use tokio::{fs::read_to_string, spawn};
@@ -27,6 +28,12 @@ use crate::{
     handlers::filters::AuthError,
     services::{create_jwt, MONTH},
 };
+
+#[derive(Debug, Serialize, Deserialize)]
+struct ContentGrammar {
+    tags: Vec<String>,
+    titles: Vec<String>,
+}
 
 pub async fn file(
     form: multipart::FormData,
@@ -54,6 +61,19 @@ pub async fn file(
             Err(warp::reject::reject())
         }
     }
+}
+
+pub async fn content_grammar(refs: RefBuilder) -> Result<impl Reply, Rejection> {
+    let tags = refs.tags();
+    let tags = tags.lock().unwrap();
+    let tag_keys = tags.keys().map(|k| k.to_owned()).collect::<Vec<String>>();
+    let titles = refs.titles();
+    let titles = titles.lock().unwrap();
+    let grammar = ContentGrammar {
+        tags: tag_keys,
+        titles: titles.to_vec(),
+    };
+    Ok(warp::reply::json(&grammar))
 }
 
 pub async fn image(

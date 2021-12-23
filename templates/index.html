@@ -91,24 +91,26 @@
 
       importTracery();
 
-      function buildGrammar() {
+      async function buildGrammar() {
+        const grammarRequest = await fetch("/grammar");
+        const payload = await grammarRequest.json();
+        const { tags, titles } = payload;
         const grammar = {
           origin: [
-            "#title# is and example of #tag# because of the following:\n\n #line#",
+            "#title# #connector# #tag# because of the following: #line#",
           ],
-          title: [
-            "Symbol processing and reality building",
-            "conscious consumption",
-            "technology and human progress",
-            "symbolism",
+          connector: [
+            "is an example of",
+            "is the antithesis of",
+            "enables",
+            "nullifies",
+            "counfounds",
+            "augments",
+            "includes",
+            "excludes",
           ],
-          tag: [
-            "Reality Building",
-            "abstraction",
-            "the way we think",
-            "the way we learn",
-            "quandires of collectivism",
-          ],
+          title: titles,
+          tag: tags,
           line: ["line 1", "line 2", "line3"],
         };
         const g = tracery.createGrammar(grammar);
