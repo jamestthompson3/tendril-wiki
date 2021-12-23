@@ -98,20 +98,24 @@
         const grammar = {
           origin: [
             "#title# #connector# #tag# because of the following: #line#",
+            "How does #title# remind you of #tag#?",
+            "How might #title# and #title# be connected?",
+            "If #line# is universally true, does that change how we view #tag#?",
+            "If your goal is to save humanity, how can you do this via #tag#?",
           ],
           connector: [
             "is an example of",
             "is the antithesis of",
             "enables",
             "nullifies",
-            "counfounds",
+            "confounds",
             "augments",
             "includes",
             "excludes",
           ],
           title: titles,
           tag: tags,
-          line: ["line 1", "line 2", "line3"],
+          line: ["example sentence", "note snippet", "line3"],
         };
         const g = tracery.createGrammar(grammar);
         for (let i = 0; i < 5; i++) {
