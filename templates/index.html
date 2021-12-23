@@ -27,6 +27,7 @@
     <link rel="manifest" href="/static/manifest.json" />
 
     <title><%= user %>'s notebook</title>
+    <script src="https://unpkg.com/jquery@3.6.0/dist/jquery.js"></script>
   </head>
   <body>
     <%= include "nav" %>
@@ -51,6 +52,8 @@
             </ol>
           </ul>
         </div>
+        <h2>Prompts</h2>
+        <div id="prompt-container"></div>
       </div>
     </div>
     <%= include "footer" %>
@@ -65,6 +68,58 @@
       }
 
       registerSW();
+      var tracery;
+      function importTracery() {
+        const tag = document.createElement("script");
+        tag.type = "text\/javascript";
+        tag.defer = true;
+        tag.onload = waitForBootstrap;
+        tag.src = "/static/vendors/tracery.js";
+        document.currentScript.parentNode.insertBefore(
+          tag,
+          document.currentScript
+        );
+      }
+
+      function waitForBootstrap() {
+        if (!tracery) {
+          setTimeout(waitForBootstrap, 100);
+        } else {
+          buildGrammar();
+        }
+      }
+
+      importTracery();
+
+      function buildGrammar() {
+        const grammar = {
+          origin: [
+            "#title# is and example of #tag# because of the following:\n\n #line#",
+          ],
+          title: [
+            "Symbol processing and reality building",
+            "conscious consumption",
+            "technology and human progress",
+            "symbolism",
+          ],
+          tag: [
+            "Reality Building",
+            "abstraction",
+            "the way we think",
+            "the way we learn",
+            "quandires of collectivism",
+          ],
+          line: ["line 1", "line 2", "line3"],
+        };
+        const g = tracery.createGrammar(grammar);
+        for (let i = 0; i < 5; i++) {
+          const prompt = g.flatten("#origin#");
+          const promptContainer = document.getElementById("prompt-container");
+          const promptString = document.createElement("p");
+          promptString.textContent = prompt;
+          promptContainer.appendChild(promptString);
+        }
+      }
     </script>
   </body>
 </html>
