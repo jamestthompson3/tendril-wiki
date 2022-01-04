@@ -1,6 +1,6 @@
 use build::{
     config::read_config, get_config_location, get_data_dir_location, install, pages::Builder,
-    RefBuilder,
+    update, RefBuilder,
 };
 use std::{path::PathBuf, process::exit, time::Instant};
 use tasks::{normalize_wiki_location, sync};
@@ -16,6 +16,7 @@ async fn main() {
             "-h" | "--help" => return print_help(),
             "-b" | "--build" => build_all = true,
             "-i" | "--init" => return install(),
+            "-u" | "--update" => return update(),
             _ => {
                 if arg.starts_with('-') {
                     eprintln!("unknown option: {}", arg);
@@ -62,7 +63,9 @@ fn print_help() {
         -b, --build                  Build all pages as HTML and output to ./public
         -v, --version                Print version.
         -h, --help                   Show this message.
-        ",
+        -u, --update                 Update the installation by copying over any new files or updating config.toml.
+
+",
     );
 }
 
