@@ -37,7 +37,7 @@ async fn main() {
         println!("Built static site in: {}ms", now.elapsed().as_millis());
     } else {
         if config.sync.use_git {
-            sync(&location, config.sync.sync_interval, config.sync.branch);
+            sync(&location, config.sync.sync_interval, config.sync.branch).await;
         }
         let mut ref_builder = RefBuilder::new();
         ref_builder.build(&location);
