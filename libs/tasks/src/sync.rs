@@ -72,7 +72,7 @@ impl Git {
         }
     }
     fn pull(&self, branch: &str) {
-        let output = self.git_cmd(&["pull", "origin", branch]);
+        let output = self.git_cmd(&["pull", "--rebase", "origin", branch]);
         if !output.status.success() {
             panic!("Could not pull remote changes!");
         }
