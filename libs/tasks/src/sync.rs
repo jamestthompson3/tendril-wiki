@@ -98,3 +98,11 @@ pub async fn sync(wiki_location: &str, sync_interval: u8, branch: String) {
     let git = Git::new(wiki_location.to_owned());
     spawn(async move { git.sync(sync_interval, branch).await });
 }
+
+pub fn git_update(wiki_location: &str, branch: String) {
+    let git = Git::new(wiki_location.to_owned());
+    git.add();
+    git.commit();
+    git.push(&branch);
+    println!("\x1b[38;5;47mchanges synced\x1b[0m");
+}

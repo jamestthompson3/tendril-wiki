@@ -167,6 +167,8 @@ pub fn read(
     }
 }
 
+/// Returns the PathBuf if an entry exists, returns an error if the file isn't found or it couldn't
+/// parse the location.
 pub fn get_file_path(wiki_location: &str, requested_file: &str) -> Result<PathBuf, ReadPageError> {
     let mut file_location = String::from(wiki_location);
     if let Ok(mut file) = decode(requested_file) {

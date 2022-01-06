@@ -1,17 +1,18 @@
 use build::{
-    config::read_config, get_config_location, get_data_dir_location, install, pages::Builder,
-    update, RefBuilder,
+    config::read_config, create_journal_entry, get_config_location, get_data_dir_location, install,
+    pages::Builder, update, RefBuilder,
 };
 use std::{path::PathBuf, process::exit, time::Instant};
-use tasks::{normalize_wiki_location, sync};
+use tasks::{git_update, normalize_wiki_location, sync};
 use www::server;
 
 #[tokio::main]
 async fn main() {
     let args = std::env::args().skip(1).collect::<Vec<String>>();
     let mut build_all = false;
-    for arg in args.iter() {
-        match arg.as_ref() {
+    if !args.is_empty() {
+        let arg = args[0].as_str();
+        match arg {
             "-v" | "--version" => return print_version(),
             "-h" | "--help" => return print_help(),
             "-b" | "--build" => build_all = true,
@@ -21,6 +22,13 @@ async fn main() {
                 if arg.starts_with('-') {
                     eprintln!("unknown option: {}", arg);
                     exit(1);
+                }
+                if !arg.is_empty() {
+                    let config = read_config();
+                    let location = normalize_wiki_location(&config.general.wiki_location);
+                    create_journal_entry(location.clone(), args.join(" ")).unwrap();
+                    git_update(&location, config.sync.branch);
+                    exit(0);
                 }
             }
         }
