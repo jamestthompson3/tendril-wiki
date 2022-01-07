@@ -15,7 +15,7 @@ use logging::log;
 
 use futures::TryStreamExt;
 
-use build::{get_config_location, get_data_dir_location, RefBuilder};
+use build::{get_config_location, get_data_dir_location, RefBuilder, create_journal_entry};
 use warp::{
     http::{header, HeaderValue, Response, StatusCode},
     hyper::{body::Bytes, Uri},
@@ -111,6 +111,24 @@ pub async fn edit(
             .unwrap();
             log(format!("[Edit]: {:?}", now.elapsed()));
             Ok(warp::redirect(redir_uri.parse::<Uri>().unwrap()))
+        }
+        Err(e) => {
+            eprintln!("{}", e);
+            Ok(warp::redirect(Uri::from_static("/error")))
+        }
+    }
+}
+
+pub async fn append(
+    form_body: HashMap<String, String>,
+    wiki_location: String,
+) -> Result<impl Reply, Rejection> {
+    let now = Instant::now();
+    let parsed_data = form_body.get("body").unwrap();
+    match create_journal_entry(wiki_location, parsed_data.to_string()) {
+        Ok(()) => {
+            log(format!("[quick-add]: {:?}", now.elapsed()));
+            Ok(warp::redirect("/".parse::<Uri>().unwrap()))
         }
         Err(e) => {
             eprintln!("{}", e);

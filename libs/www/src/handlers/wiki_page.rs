@@ -6,7 +6,7 @@ use tasks::CompileState;
 use warp::{filters::BoxedFilter, Filter, Reply};
 
 use crate::{
-    controllers::{delete, edit},
+    controllers::{delete, edit, append},
     handlers::sinks::{render_file, render_nested_file},
 };
 
@@ -26,6 +26,7 @@ impl WikiPageRouter {
         self.get_nested()
             .or(self.delete())
             .or(self.edit())
+            .or(self.quick_add())
             .or(self.new_page())
             .or(self.tag_page())
             .or(self.tag_index())
@@ -125,6 +126,20 @@ impl WikiPageRouter {
                         .and(with_refs(self.reference_builder.clone()))
                         .and(warp::query::<HashMap<String, String>>())
                         .and_then(edit),
+                ),
+            )
+            .boxed()
+    }
+
+    fn quick_add(&self) -> BoxedFilter<(impl Reply,)> {
+        warp::post()
+            .and(with_auth())
+            .and(
+                warp::path("quick-add").and(
+                    warp::body::content_length_limit(MAX_BODY_SIZE)
+                        .and(warp::body::form())
+                        .and(with_location(self.wiki_location.clone()))
+                        .and_then(append),
                 ),
             )
             .boxed()

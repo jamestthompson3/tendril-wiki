@@ -27,6 +27,25 @@
     <link rel="manifest" href="/static/manifest.json" />
 
     <title><%= user %>'s notebook</title>
+    <style>
+      .editor input[type="text"] {
+        margin: 0.5rem 0rem;
+        width: 85%;
+      }
+      .editor label {
+        margin: 0px;
+      }
+      .editor button.submit {
+        margin: 2rem 0rem;
+        width: 10%;
+      }
+      .editor > div {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+      }
+    </style>
   </head>
   <body>
     <%= include "nav" %>
@@ -34,6 +53,26 @@
       <div class="content">
         <h1 class="title"><%= user %>'s notebook</h1>
         <div>
+          <h2>Daily Log <a href="<%= today %>">(view)</a></h2>
+
+          <form
+            class="editor visible"
+            method="post"
+            action="/quick-add"
+            target="_parent"
+          >
+            <label for="quick-add" class="hidden">add a quick thought</label>
+            <div>
+              <input
+                id="quick-add"
+                required="true"
+                type="text"
+                placeholder="jot something down"
+                name="body"
+              />
+              <button type="submit" class="submit">Save</button>
+            </div>
+          </form>
           <h2>Recently Edited</h2>
           <ul class="mru">
             <%= mru %>
