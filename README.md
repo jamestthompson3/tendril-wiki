@@ -32,7 +32,23 @@ After bootstrapping the wiki, you can run `tendril` to start the webserver.
 
 You can also build a static site by runing `tendril -b`.
 
+### Updating your installation
+
+You can make sure that you copy over any new template or config files after each update by running `tendril -u` after downloading the latest release or building from source.
+
 
 ### Customization
 
 You can find your configuration and your custom CSS files in the config directory. The location of this directory depends on your platform and will be printed out when you run `tendril --version`.
+
+You can also set a per-note favicon by uploading the image you wish to use as a favicon and then adding the "icon" field to the notes metadata:
+
+```md
+---
+title: magic and computers
+icon: potion.svg
+tags: [emergence, technology]
+---
+```
+
+This will look for the `potion.svg` file uploaded by you and set it as the favicon for the `magic and computers` note.
