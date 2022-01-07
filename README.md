@@ -14,7 +14,7 @@
 
 ### From source
 
-This requires you to have the Rust toolchain installed. You can install this by cloning the repo, and running `cargo install --path .`. Then run `tendril -i` to bring up the interactive bootstrapper.
+This requires you to have the Rust toolchain installed. You can install this by cloning the repo, and running `cargo install --path .` from inside the `bin` directory. Then run `tendril -i` to bring up the interactive bootstrapper.
 
 ### From latest release
 
