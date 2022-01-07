@@ -2,13 +2,16 @@
 
 [![Build And Test](https://github.com/jamestthompson3/platform/actions/workflows/rust.yml/badge.svg)](https://github.com/jamestthompson3/platform/actions/workflows/rust.yml)
 
-![Tag Page](assets/screenshot1.png)
-![Note](assets/screenshot2.png)
+![Landing Page](assets/home_page.png)
 
 ### Nice features
+
 - Works without JavaScript
 - Self hosted, files can be composed easily with other tools since they are plaintext
 - Both light and dark themes
+
+![Tag Page](assets/screenshot1.png)
+![Note](assets/screenshot2.png)
 
 ## Installation
 
@@ -36,6 +39,19 @@ You can also build a static site by runing `tendril -b`.
 
 You can make sure that you copy over any new template or config files after each update by running `tendril -u` after downloading the latest release or building from source.
 
+### Interstitial Journaling
+
+You can use Tendril Wiki for interstitial journaling both through the command line or through the web interface! From
+the command line, you can call `tendril`, followed by the line you want to add to the daily log:
+
+```bash
+tendril "I'm working on adding features I want for my workflow in Tendril Wiki"
+```
+
+This will append the line to the daily log entry, or create the entry if it does not exist. It's important to note that
+you will need to properly escape quotes from you shell if you choose to update the daily log via the CLI. After
+processing the entry, Tendril Wiki will also automatically update the git repo if you've chosen to use the git sync
+feature in your config file.
 
 ### Customization
 
