@@ -1,9 +1,11 @@
 use build::{
-    config::read_config, create_journal_entry, get_config_location, get_data_dir_location, install,
-    pages::Builder, update, RefBuilder,
+    build_tags_and_links, config::read_config, create_journal_entry, delete_from_global_store,
+    get_config_location, get_data_dir_location, install, pages::Builder, update,
+    update_global_store, RefHub, RefHubRx, RefHubTx,
 };
 use std::{path::PathBuf, process::exit, time::Instant};
 use tasks::{git_update, normalize_wiki_location, sync};
+use tokio::sync::mpsc;
 use www::server;
 
 #[tokio::main]
@@ -47,12 +49,59 @@ async fn main() {
         builder.compile_all();
         println!("Built static site in: {}ms", now.elapsed().as_millis());
     } else {
+        let ref_hub = RefHub::new();
+        let (tx, mut rx): (RefHubTx, RefHubRx) = mpsc::channel(50);
+        let watcher_tags = ref_hub.tags();
+        let watcher_links = ref_hub.links();
+
         if config.sync.use_git {
-            sync(&location, config.sync.sync_interval, config.sync.branch).await;
+            sync(
+                &location,
+                config.sync.sync_interval,
+                config.sync.branch.clone(),
+                tx.clone(),
+            )
+            .await;
         }
-        let mut ref_builder = RefBuilder::new();
-        ref_builder.build(&location);
-        server(config.general, ref_builder).await;
+        tokio::spawn(async move {
+            while let Some((cmd, file)) = rx.recv().await {
+                match cmd.as_ref() {
+                    "rebuild" => {
+                        build_tags_and_links(
+                            &location,
+                            watcher_tags.clone(),
+                            watcher_links.clone(),
+                        )
+                        .await;
+                    }
+                    "update" => {
+                        update_global_store(
+                            &file,
+                            &location,
+                            watcher_links.clone(),
+                            watcher_tags.clone(),
+                        );
+                    }
+                    "delete" => {
+                        // TODO: figure out why making this async causes the tokio::spawn call to
+                        // give compiler errors.
+                        delete_from_global_store(
+                            &file,
+                            &location,
+                            watcher_links.clone(),
+                            watcher_tags.clone(),
+                        );
+                    }
+                    _ => {}
+                }
+            }
+        });
+        tx.send(("rebuild".into(), "".into())).await.unwrap();
+        server(
+            config.general,
+            (ref_hub.tags(), ref_hub.links(), tx.clone()),
+        )
+        .await
     }
 }
 

@@ -12,3 +12,4 @@ render = { path = "../render" }
 urlencoding = "1.1.1"
 thiserror = "1.0.24"
 chrono = "0.4.19"
+directories = "3.0.1"

@@ -1,23 +1,23 @@
 use std::{collections::HashMap, sync::Arc};
 
-use build::RefBuilder;
 use render::{new_page::NewPage, Render};
 use tasks::CompileState;
 use warp::{filters::BoxedFilter, Filter, Reply};
 
 use crate::{
-    controllers::{delete, edit, append},
+    controllers::{append, delete, edit},
     handlers::sinks::{render_file, render_nested_file},
+    RefHubParts,
 };
 
 use super::{
-    filters::{with_auth, with_location, with_refs},
+    filters::{with_auth, with_links, with_location, with_sender, with_tag_links, with_tags},
     sinks::{render_backlink_index, render_tag_page, render_tags},
     MAX_BODY_SIZE,
 };
 
 pub struct WikiPageRouter {
-    pub reference_builder: RefBuilder,
+    pub parts: RefHubParts,
     pub wiki_location: Arc<String>,
 }
 
@@ -36,19 +36,21 @@ impl WikiPageRouter {
     }
 
     fn tag_index(&self) -> BoxedFilter<(impl Reply,)> {
+        let (tags, _, _) = &self.parts;
         warp::get()
             .and(with_auth())
             .and(warp::path::path("tags"))
-            .and(with_refs(self.reference_builder.clone()))
+            .and(with_tags(tags.to_owned()))
             .and_then(render_tags)
             .boxed()
     }
 
     fn tag_page(&self) -> BoxedFilter<(impl Reply,)> {
+        let (tags, _, _) = &self.parts;
         warp::get()
             .and(with_auth())
             .and(warp::path::path("tags"))
-            .and(with_refs(self.reference_builder.clone()))
+            .and(with_tags(tags.to_owned()))
             .and(warp::path::param())
             .and(with_location(self.wiki_location.clone()))
             .and_then(render_tag_page)
@@ -56,19 +58,21 @@ impl WikiPageRouter {
     }
 
     fn backlink_index(&self) -> BoxedFilter<(impl Reply,)> {
+        let (_, links, _) = &self.parts;
         warp::get()
             .and(with_auth())
             .and(warp::path("links"))
-            .and(with_refs(self.reference_builder.clone()))
+            .and(with_links(links.to_owned()))
             .and_then(render_backlink_index)
             .boxed()
     }
 
     fn get(&self) -> BoxedFilter<(impl Reply,)> {
+        let (tags, links, _) = &self.parts;
         warp::get()
             .and(with_auth())
             .and(warp::path::param())
-            .and(with_refs(self.reference_builder.clone()))
+            .and(with_tag_links(tags.to_owned(), links.to_owned()))
             .and(with_location(self.wiki_location.clone()))
             .and(warp::query::<HashMap<String, String>>())
             .and_then(render_file)
@@ -76,21 +80,22 @@ impl WikiPageRouter {
     }
 
     fn get_nested(&self) -> BoxedFilter<(impl Reply,)> {
+        let (tags, links, _) = &self.parts;
         warp::get()
             .and(with_auth())
             .and(warp::path!(String / String))
-            .and(with_refs(self.reference_builder.clone()))
+            .and(with_tag_links(tags.to_owned(), links.to_owned()))
             .and(with_location(self.wiki_location.clone()))
             .and_then(render_nested_file)
             .boxed()
     }
 
     fn delete(&self) -> BoxedFilter<(impl Reply,)> {
+        let (_, _, sender) = &self.parts;
         warp::post()
             .and(with_auth())
             .and(warp::path("delete"))
-            .and(with_refs(self.reference_builder.clone()))
-            .and(with_location(self.wiki_location.clone()))
+            .and(with_sender(sender.to_owned()))
             .and(warp::body::content_length_limit(MAX_BODY_SIZE))
             .and(warp::body::form())
             .and_then(delete)
@@ -116,6 +121,7 @@ impl WikiPageRouter {
     }
 
     fn edit(&self) -> BoxedFilter<(impl Reply,)> {
+        let (_, _, sender) = &self.parts;
         warp::post()
             .and(with_auth())
             .and(
@@ -123,7 +129,7 @@ impl WikiPageRouter {
                     warp::body::content_length_limit(MAX_BODY_SIZE)
                         .and(warp::body::form())
                         .and(with_location(self.wiki_location.clone()))
-                        .and(with_refs(self.reference_builder.clone()))
+                        .and(with_sender(sender.to_owned()))
                         .and(warp::query::<HashMap<String, String>>())
                         .and_then(edit),
                 ),
@@ -132,6 +138,7 @@ impl WikiPageRouter {
     }
 
     fn quick_add(&self) -> BoxedFilter<(impl Reply,)> {
+        let (_, _, sender) = &self.parts;
         warp::post()
             .and(with_auth())
             .and(
@@ -139,6 +146,7 @@ impl WikiPageRouter {
                     warp::body::content_length_limit(MAX_BODY_SIZE)
                         .and(warp::body::form())
                         .and(with_location(self.wiki_location.clone()))
+                        .and(with_sender(sender.to_owned()))
                         .and_then(append),
                 ),
             )

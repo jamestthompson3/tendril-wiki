@@ -4,7 +4,7 @@ use std::{
     time::Duration,
 };
 
-use tokio::task::spawn;
+use tokio::{task::spawn, sync::mpsc::Sender};
 use tokio::time::sleep;
 
 struct Git {
@@ -78,7 +78,7 @@ impl Git {
         }
     }
     // Note: this will fall apart if there are merge conflicts!
-    async fn sync(&self, sync_interval: u8, branch: String) {
+    async fn sync(&self, sync_interval: u8, branch: String, sender: Sender<(String, String)>) {
         loop {
             self.pull(&branch);
             let changed_file_count = self.status();
@@ -89,14 +89,15 @@ impl Git {
                 self.commit();
                 self.push(&branch);
             }
+            sender.send(("rebuild".into(), String::new())).await.unwrap();
             sleep(Duration::from_secs(sync_interval.into())).await
         }
     }
 }
 
-pub async fn sync(wiki_location: &str, sync_interval: u8, branch: String) {
+pub async fn sync(wiki_location: &str, sync_interval: u8, branch: String, sender: Sender<(String, String)>) {
     let git = Git::new(wiki_location.to_owned());
-    spawn(async move { git.sync(sync_interval, branch).await });
+    spawn(async move { git.sync(sync_interval, branch, sender).await });
 }
 
 pub fn git_update(wiki_location: &str, branch: String) {

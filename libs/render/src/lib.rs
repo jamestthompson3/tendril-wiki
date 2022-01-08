@@ -1,8 +1,12 @@
-use std::{fs, io};
+use std::{
+    collections::BTreeMap,
+    fs, io,
+    sync::{Arc, Mutex},
+};
 
 use directories::ProjectDirs;
 use link_page::LinkPage;
-use markdown::parsers::{GlobalBacklinks, ParsedPages, TagMapping, TemplattedPage};
+use markdown::parsers::{ParsedPages, TemplattedPage};
 use tag_index_page::TagIndex;
 use tasks::CompileState;
 
@@ -22,6 +26,9 @@ pub mod tag_index_page;
 pub mod tag_page;
 pub mod uploaded_files_page;
 pub mod wiki_page;
+
+pub type TagMapping = Arc<Mutex<BTreeMap<String, Vec<String>>>>;
+pub type GlobalBacklinks = Arc<Mutex<BTreeMap<String, Vec<String>>>>;
 
 pub trait Render {
     fn render(&self, state: &CompileState) -> String;

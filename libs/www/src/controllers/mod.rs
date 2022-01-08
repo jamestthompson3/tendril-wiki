@@ -1,4 +1,5 @@
 use bytes::BufMut;
+use chrono::Local;
 use persistance::fs::{write, write_media};
 use render::{
     search_results_context_page::SearchResultsContextPage, search_results_page::SearchResultsPage,
@@ -6,7 +7,6 @@ use render::{
 };
 use std::{collections::HashMap, fs::read_dir, time::Instant};
 use tasks::{context_search, search, CompileState};
-use tokio::{fs::read_to_string, spawn};
 use urlencoding::encode;
 
 use markdown::parsers::EditPageData;
@@ -15,7 +15,7 @@ use logging::log;
 
 use futures::TryStreamExt;
 
-use build::{get_config_location, get_data_dir_location, RefBuilder, create_journal_entry};
+use build::{create_journal_entry, get_config_location, RefHubTx};
 use warp::{
     http::{header, HeaderValue, Response, StatusCode},
     hyper::{body::Bytes, Uri},
@@ -69,7 +69,7 @@ pub async fn image(
 pub async fn edit(
     form_body: HashMap<String, String>,
     wiki_location: String,
-    mut builder: RefBuilder,
+    sender: RefHubTx,
     query_params: HashMap<String, String>,
 ) -> Result<impl Reply, Rejection> {
     let parsed_data = EditPageData::from(form_body);
@@ -81,34 +81,10 @@ pub async fn edit(
     }
     let now = Instant::now();
     let page_title = parsed_data.title.clone();
-    match write(&wiki_location, parsed_data, builder.links()) {
+    let update_msg = format!("{}~~{}", parsed_data.old_title, page_title);
+    match write(&wiki_location, parsed_data) {
         Ok(()) => {
-            builder.build(&wiki_location);
-            spawn(async {
-                let mut data_dir = get_data_dir_location();
-                data_dir.push("note_cache");
-                match read_to_string(&data_dir).await {
-                    Ok(content) => {
-                        println!("--- {}", content);
-                        let mut lines = content
-                            .lines()
-                            .filter(|&line| line != page_title)
-                            .map(|l| l.to_string())
-                            .collect::<Vec<String>>();
-                        println!(">> {:?}", lines);
-                        if lines.len() >= 5 {
-                            lines.pop();
-                        }
-                        lines.insert(0, page_title);
-                        tokio::fs::write(data_dir, lines.join("\n")).await.unwrap();
-                    }
-                    Err(_) => {
-                        tokio::fs::write(data_dir, page_title).await.unwrap();
-                    }
-                }
-            })
-            .await
-            .unwrap();
+            sender.send(("update".into(), update_msg)).await.unwrap();
             log(format!("[Edit]: {:?}", now.elapsed()));
             Ok(warp::redirect(redir_uri.parse::<Uri>().unwrap()))
         }
@@ -122,11 +98,15 @@ pub async fn edit(
 pub async fn append(
     form_body: HashMap<String, String>,
     wiki_location: String,
+    sender: RefHubTx,
 ) -> Result<impl Reply, Rejection> {
     let now = Instant::now();
+    let today = Local::now();
+    let daily_file = today.format("%Y-%m-%d").to_string();
     let parsed_data = form_body.get("body").unwrap();
     match create_journal_entry(wiki_location, parsed_data.to_string()) {
         Ok(()) => {
+            sender.send(("update".into(), format!("~~{}", daily_file))).await.unwrap();
             log(format!("[quick-add]: {:?}", now.elapsed()));
             Ok(warp::redirect("/".parse::<Uri>().unwrap()))
         }
@@ -172,24 +152,15 @@ pub async fn list_files(wiki_location: String) -> Result<impl Reply, Rejection> 
 }
 
 pub async fn delete(
-    mut builder: RefBuilder,
-    wiki_location: String,
+    sender: RefHubTx,
     form_body: HashMap<String, String>,
 ) -> Result<impl Reply, Rejection> {
     let title = form_body.get("title").unwrap();
     let now = Instant::now();
-    match persistance::fs::delete(&wiki_location, title) {
-        Ok(()) => {
-            builder.build(&wiki_location);
-            println!("[Delete] {}: {:?}", title, now.elapsed());
+    sender.send(("delete".into(), title.into())).await.unwrap();
+    println!("[Delete] {}: {:?}", title, now.elapsed());
 
-            Ok(warp::redirect(Uri::from_static("/")))
-        }
-        Err(e) => {
-            eprint!("{}", e);
-            Ok(warp::redirect(Uri::from_static("/error")))
-        }
-    }
+    Ok(warp::redirect(Uri::from_static("/")))
 }
 
 pub async fn update_styles(form_body: HashMap<String, String>) -> Result<impl Reply, Rejection> {

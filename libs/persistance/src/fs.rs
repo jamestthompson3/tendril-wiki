@@ -1,14 +1,12 @@
 use std::{fs, io, path::PathBuf};
 
 use chrono::Local;
+use directories::ProjectDirs;
 use markdown::{
-    parsers::{
-        parse_meta, path_to_data_structure, EditPageData, GlobalBacklinks, NoteMeta, ParsedPages,
-        TagMapping,
-    },
+    parsers::{parse_meta, path_to_data_structure, EditPageData, NoteMeta, ParsedPages},
     processors::{tags::TagsArray, to_template},
 };
-use render::{index_page::IndexPage, wiki_page::WikiPage, Render};
+use render::{index_page::IndexPage, wiki_page::WikiPage, GlobalBacklinks, Render, TagMapping};
 use tasks::{path_to_reader, CompileState};
 use urlencoding::decode;
 
@@ -41,11 +39,7 @@ pub fn write_media(file_location: &str, bytes: &[u8]) -> Result<(), io::Error> {
     Ok(())
 }
 
-pub fn write(
-    wiki_location: &str,
-    data: EditPageData,
-    backlinks: GlobalBacklinks,
-) -> Result<(), WriteWikiError> {
+pub fn write(wiki_location: &str, data: EditPageData) -> Result<(), WriteWikiError> {
     let mut file_location = String::from(wiki_location);
     let mut title_location: String;
     if data.old_title != data.title && !data.old_title.is_empty() {
@@ -93,20 +87,6 @@ pub fn write(
 
     let final_note: String = note_meta.into();
     if data.old_title != data.title && !data.old_title.is_empty() {
-        // Relink all pages that reference this page
-        let links = backlinks.lock().unwrap();
-        let linked_pages = links.get(&data.old_title);
-        if let Some(linked_pages) = linked_pages {
-            for page in linked_pages {
-                let mut wiki_loc = String::from(wiki_location);
-                let mut page = page.clone();
-                page.push_str(".md");
-                wiki_loc.push_str(&page);
-                let raw_page = fs::read_to_string(&wiki_loc).unwrap();
-                let relinked_page = raw_page.replace(&data.old_title, &data.title);
-                fs::write(wiki_loc, relinked_page).unwrap();
-            }
-        }
         let new_location = file_location.replace(&data.old_title, &data.title);
         // Rename the file to the new title
         match fs::rename(&file_location, &new_location) {
@@ -205,4 +185,20 @@ pub fn write_entries(pages: &ParsedPages, backlinks: &GlobalBacklinks, state: Co
 pub fn write_index_page(user: String, state: CompileState) {
     let ctx = IndexPage { user };
     fs::write("public/index.html", ctx.render(&state)).unwrap();
+}
+
+#[inline]
+pub fn read_note_cache() -> String {
+    let project_dir = ProjectDirs::from("", "", "tendril").unwrap();
+    let mut data_dir = project_dir.data_dir().to_owned();
+    data_dir.push("note_cache");
+    std::fs::read_to_string(&data_dir).unwrap()
+}
+
+#[inline]
+pub fn write_note_cache(cache: String) {
+    let project_dir = ProjectDirs::from("", "", "tendril").unwrap();
+    let mut data_dir = project_dir.data_dir().to_owned();
+    data_dir.push("note_cache");
+    std::fs::write(data_dir, cache).unwrap();
 }

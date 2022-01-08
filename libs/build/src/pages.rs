@@ -1,10 +1,8 @@
-use markdown::parsers::{path_to_data_structure, GlobalBacklinks, ParsedPages, TagMapping};
+use markdown::parsers::{path_to_data_structure, ParsedPages};
 
-use markdown::processors::{
-    to_template, update_backlinks, update_tag_map, update_templatted_pages,
-};
+use markdown::processors::{to_template, update_templatted_pages};
 use persistance::fs::{write_entries, write_index_page};
-use render::{write_backlinks, write_tag_index, write_tag_pages};
+use render::{write_backlinks, write_tag_index, write_tag_pages, GlobalBacklinks, TagMapping};
 use tasks::CompileState;
 use threadpool::ThreadPool;
 
@@ -15,7 +13,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use crate::{get_config_location, read_config};
+use crate::{get_config_location, build_global_store, read_config};
 
 /// ## TODO:
 /// figure out how to encapsulate parse_entries and process_file better
@@ -77,8 +75,7 @@ impl Default for Builder {
 fn process_file(path: PathBuf, tags: TagMapping, backlinks: GlobalBacklinks, pages: ParsedPages) {
     let note = path_to_data_structure(&path).unwrap();
     let templatted = to_template(&note);
-    update_tag_map(&templatted.page.title, &templatted.page.tags, tags);
-    update_backlinks(&templatted.page.title, &templatted.outlinks, backlinks);
+    build_global_store(&templatted.page.title, &templatted.outlinks, backlinks, tags, &templatted.page.tags);
     update_templatted_pages(templatted.page, pages);
 }
 

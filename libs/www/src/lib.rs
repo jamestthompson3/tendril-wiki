@@ -1,5 +1,5 @@
-use ::build::{config::General, RefBuilder};
-use build::get_data_dir_location;
+use ::build::{config::General, get_data_dir_location, RefHubTx};
+use render::{GlobalBacklinks, TagMapping};
 use std::{path::PathBuf, sync::Arc};
 use tasks::normalize_wiki_location;
 use warp::Filter;
@@ -10,7 +10,9 @@ pub mod services;
 
 use crate::handlers::*;
 
-pub async fn server(config: General, ref_builder: RefBuilder) {
+pub(crate) type RefHubParts = (TagMapping, GlobalBacklinks, RefHubTx);
+
+pub async fn server(config: General, parts: RefHubParts) {
     let wiki_location = Arc::new(config.wiki_location);
     let media_location = Arc::new(normalize_wiki_location(&config.media_location));
     let static_page_router = StaticPageRouter {
@@ -18,7 +20,7 @@ pub async fn server(config: General, ref_builder: RefBuilder) {
         media_location: media_location.clone(),
     };
     let wiki_router = WikiPageRouter {
-        reference_builder: ref_builder,
+        parts,
         wiki_location: wiki_location.clone(),
     };
     let static_files_router = StaticFileRouter {

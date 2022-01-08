@@ -1,5 +1,5 @@
 use std::{
-    collections::{BTreeMap, HashMap},
+    collections::HashMap,
     sync::{Arc, Mutex},
 };
 
@@ -17,6 +17,4 @@ pub struct ParsedTemplate {
     pub page: TemplattedPage,
 }
 
-pub type TagMapping = Arc<Mutex<BTreeMap<String, Vec<String>>>>;
-pub type GlobalBacklinks = Arc<Mutex<BTreeMap<String, Vec<String>>>>;
 pub type ParsedPages = Arc<Mutex<Vec<TemplattedPage>>>;

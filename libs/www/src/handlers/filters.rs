@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
-use ::build::RefBuilder;
-use build::read_config;
+use build::{read_config, RefHubTx};
 use jsonwebtoken::{Algorithm, DecodingKey, Validation};
+use render::{GlobalBacklinks, TagMapping};
 use serde::{Deserialize, Serialize};
 use tasks::normalize_wiki_location;
 use thiserror::Error;
@@ -46,10 +46,30 @@ pub fn with_user(
     warp::any().map(move || user.clone())
 }
 
-pub fn with_refs(
-    refs: RefBuilder,
-) -> impl Filter<Extract = (RefBuilder,), Error = std::convert::Infallible> + Clone {
-    warp::any().map(move || refs.clone())
+pub fn with_sender(
+    sender: RefHubTx,
+) -> impl Filter<Extract = (RefHubTx,), Error = std::convert::Infallible> + Clone {
+    warp::any().map(move || sender.clone())
+}
+
+pub fn with_tag_links(
+    tags: TagMapping,
+    links: GlobalBacklinks,
+) -> impl Filter<Extract = ((TagMapping, GlobalBacklinks),), Error = std::convert::Infallible> + Clone
+{
+    warp::any().map(move || (tags.clone(), links.clone()))
+}
+
+pub fn with_tags(
+    tags: TagMapping,
+) -> impl Filter<Extract = (TagMapping,), Error = std::convert::Infallible> + Clone {
+    warp::any().map(move || tags.clone())
+}
+
+pub fn with_links(
+    links: GlobalBacklinks,
+) -> impl Filter<Extract = (GlobalBacklinks,), Error = std::convert::Infallible> + Clone {
+    warp::any().map(move || links.clone())
 }
 
 pub fn with_auth() -> impl Filter<Extract = (), Error = Rejection> + Clone {

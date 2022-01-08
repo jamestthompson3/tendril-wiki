@@ -1,34 +1,31 @@
 use persistance::fs::{get_file_path, read, ReadPageError};
 use render::{
-    link_page::LinkPage, new_page::NewPage, tag_index_page::TagIndex, wiki_page::WikiPage, Render,
+    link_page::LinkPage, new_page::NewPage, tag_index_page::TagIndex, wiki_page::WikiPage,
+    GlobalBacklinks, Render, TagMapping,
 };
 use std::{collections::HashMap, time::Instant};
 use tasks::CompileState;
 
-use build::RefBuilder;
 use logging::log;
-use markdown::{
-    parsers::{path_to_data_structure, GlobalBacklinks, TagMapping},
-    processors::to_template,
-};
+use markdown::{parsers::path_to_data_structure, processors::to_template};
 
 use urlencoding::decode;
 
 pub async fn render_file(
     path: String,
-    refs: RefBuilder,
+    reflinks: (TagMapping, GlobalBacklinks),
     wiki_location: String,
     query_params: HashMap<String, String>,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    let links = refs.links();
-    let tags = refs.tags();
+    let (tags, links) = reflinks;
     render_from_path(&wiki_location, path, tags, links, query_params)
 }
 
-pub async fn render_backlink_index(refs: RefBuilder) -> Result<impl warp::Reply, warp::Rejection> {
+pub async fn render_backlink_index(
+    links: GlobalBacklinks,
+) -> Result<impl warp::Reply, warp::Rejection> {
     let now = Instant::now();
-    let ref_links = refs.links();
-    let links = ref_links.lock().unwrap();
+    let links = links.lock().unwrap();
     let ctx = LinkPage {
         links: links.clone(),
     };
@@ -36,23 +33,21 @@ pub async fn render_backlink_index(refs: RefBuilder) -> Result<impl warp::Reply,
     Ok(warp::reply::html(ctx.render(&CompileState::Dynamic)))
 }
 
-pub async fn render_tags(refs: RefBuilder) -> Result<impl warp::Reply, warp::Rejection> {
+pub async fn render_tags(tags: TagMapping) -> Result<impl warp::Reply, warp::Rejection> {
     let now = Instant::now();
-    let ref_tags = refs.tags();
-    let tags = ref_tags.lock().unwrap();
+    let tags = tags.lock().unwrap();
     let ctx = TagIndex { tags: tags.clone() };
     log(format!("[TagIndex] render: {:?}", now.elapsed()));
     Ok(warp::reply::html(ctx.render(&CompileState::Dynamic)))
 }
 
 pub async fn render_tag_page(
-    refs: RefBuilder,
+    tags: TagMapping,
     param: String,
     location: String,
 ) -> Result<impl warp::Reply, warp::Rejection> {
     let now = Instant::now();
-    let ref_tags = refs.tags();
-    let tags = ref_tags.lock().unwrap();
+    let tags = tags.lock().unwrap();
     // I don't know why warp doesn't decode the sub path here...
     let sub_path_decoded = decode(&param).unwrap();
     // FIXME: This re-inventing the logic found in ingestors/fs.rs is a good
@@ -94,13 +89,12 @@ pub async fn render_tag_page(
 pub async fn render_nested_file(
     mut main_path: String,
     sub_path: String,
-    refs: RefBuilder,
+    reflinks: (TagMapping, GlobalBacklinks),
     wiki_location: String,
 ) -> Result<impl warp::Reply, warp::Rejection> {
     // I don't know why warp doesn't decode the sub path here...
     let sub_path_decoded = decode(&sub_path).unwrap();
-    let links = refs.links();
-    let tags = refs.tags();
+    let (tags, links) = reflinks;
     main_path.push_str(sub_path_decoded.as_str());
     let page = read(&wiki_location, main_path, tags, links).map_err(|_| warp::reject())?;
     Ok(warp::reply::html(page))
