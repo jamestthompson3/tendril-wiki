@@ -9,6 +9,7 @@
 - Works without JavaScript
 - Self hosted, files can be composed easily with other tools since they are plaintext
 - Both light and dark themes
+- Can build your notebook as a static site
 
 ![Tag Page](assets/screenshot1.png)
 ![Note](assets/screenshot2.png)
@@ -30,6 +31,11 @@ Before starting, you'll need to run `tendril -i` to bootstrap your wiki. An impo
 ### Running the wiki
 
 After bootstrapping the wiki, you can run `tendril` to start the webserver.
+
+You can also run tendril wiki as a service on your operating system. Inside the `services`
+directory, you'll find template files for both Linux and MacOS (PRs for Windows support are welcome
+:^) ). This will allow to configure tendril wiki to automatically start when you log into your
+computer.
 
 ### Building a static site
 

@@ -11,7 +11,7 @@
     <true/>
     <key>ProgramArguments</key>
     <array>
-        <string>*** YOUR PATH TO TENDRIL (most likeley just tendril if you've added it to your $PATH) ***</string>
+        <string>*** YOUR PATH TO TENDRIL (most likely just `tendril` if you've added it to your $PATH) ***</string>
     </array>
     <key>StandardOutPath</key>
     <string>/tmp/tendril.log</string>

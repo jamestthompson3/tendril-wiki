@@ -1,0 +1,15 @@
+[Unit]
+Description=tendril-wiki
+Documentation=https://github.com/jamestthompson3/tendril-wiki
+After=network.target
+
+[Service]
+Type=simple
+User=*** YOUR USER HERE ***
+ExecStart=*** YOUR TENDRIL WIKI EXEC CMD HERE (most likely just `tendril` if you've added it to your $PATH) ***
+WorkingDirectory=*** YOUR WORKING DIR HERE ***
+Restart=on-failure
+
+
+[Install]
+WantedBy=multi-user.target
