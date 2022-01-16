@@ -1,4 +1,6 @@
-use pulldown_cmark::{html, Event, Options, Parser};
+use std::ops::RangeBounds;
+
+use pulldown_cmark::{html, CowStr, Event, Options, Parser};
 use urlencoding::encode;
 
 #[derive(Copy, Clone, PartialEq, Debug)]
@@ -108,6 +110,10 @@ pub fn to_html(md: &str) -> Html {
                 _ => {
                     // TODO: custom url schemas?
                     if text.starts_with("http") {
+                        if text.contains("youtube") || text.contains("youtu.be") {
+                            return Event::Html(transform_youtube_url(text));
+                        }
+
                         return Event::Html(format!(r#"<a href="{}">{}</a>"#, text, text).into());
                     }
                     Event::Text(text)
@@ -135,6 +141,29 @@ pub fn format_links(link: &str) -> String {
     }
 }
 
+const FMT_STRING: &str = r#"<iframe title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen"#;
+
+fn transform_youtube_url(link: CowStr) -> CowStr {
+    if link.contains("watch?v=") {
+        let mut formatted_link = link.replace("watch?v=", "embed/");
+        let extra_params_start = formatted_link.find('&');
+        if extra_params_start.is_some() {
+            formatted_link = formatted_link.replacen('&', "?", 1);
+        }
+        return format_yt_url(formatted_link).into();
+    }
+    // Case of video linked with timestamp
+    if !link.contains("embed") && link.contains(".be") {
+        let formatted_link = link.replace(".be/", "be.com/embed/");
+        return format_yt_url(formatted_link).into();
+    }
+    format_yt_url(link.to_string()).into()
+}
+
+fn format_yt_url(src: String) -> String {
+    format!(r#"{} src="{}"></iframe>"#, FMT_STRING, src)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -156,5 +185,12 @@ mod tests {
         let parsed = to_html(test_string);
         assert_eq!(parsed.outlinks, test_html.outlinks);
         assert_eq!(parsed.body, test_html.body);
+    }
+
+    #[test]
+    fn transforms_youtube_urls_to_embedable() {
+        let link = CowStr::from("https://youtube.com/watch?v=giEnkiRHJ9Y");
+        let final_string = r#"<iframe title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen src="https://youtube.com/embed/giEnkiRHJ9Y"></iframe>"#;
+        assert!(CowStr::from(final_string).to_string() == transform_youtube_url(link).to_string());
     }
 }
