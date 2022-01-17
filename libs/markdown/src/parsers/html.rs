@@ -113,6 +113,9 @@ pub fn to_html(md: &str) -> Html {
                         if text.contains("youtube") || text.contains("youtu.be") {
                             return Event::Html(transform_youtube_url(text));
                         }
+                        if text.contains("codesandbox.io") {
+                            return Event::Html(transform_cs_url(text));
+                        }
 
                         return Event::Html(format!(r#"<a href="{}">{}</a>"#, text, text).into());
                     }
@@ -141,7 +144,16 @@ pub fn format_links(link: &str) -> String {
     }
 }
 
-const FMT_STRING: &str = r#"<iframe title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen"#;
+const YT_FMT_STRING: &str = r#"<iframe title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen"#;
+const CS_FMT_STRING: &str = r#"<iframe frameborder="0" title="Code Sandbox" allow="accelerometer; ambient-light-sensor;
+    camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr;
+    xr-spatial-tracking" sandbox="allow-forms allow-modals allow-popups allow-presentation
+    allow-same-origin allow-scripts""#;
+
+fn transform_cs_url(link: CowStr) -> CowStr {
+    let link = link.replace(".io/s", ".io/embed");
+    format!(r#"{} src="{}"></iframe>"#, CS_FMT_STRING, link).into()
+}
 
 fn transform_youtube_url(link: CowStr) -> CowStr {
     if link.contains("watch?v=") {
@@ -161,7 +173,7 @@ fn transform_youtube_url(link: CowStr) -> CowStr {
 }
 
 fn format_yt_url(src: String) -> String {
-    format!(r#"{} src="{}"></iframe>"#, FMT_STRING, src)
+    format!(r#"{} src="{}"></iframe>"#, YT_FMT_STRING, src)
 }
 
 #[cfg(test)]
