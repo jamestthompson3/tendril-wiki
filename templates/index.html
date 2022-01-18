@@ -18,12 +18,12 @@
     <!-- APPLE STUFF -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="<%= user %>'s notebook" />
-    <link rel="apple-touch-icon" href="/static/icon.png" />
-    <meta rel="apple-touch-startup-image" href="/static/icon.png" />
+    <link rel="apple-touch-icon" href="/static/icon_192x192.png" />
+    <meta rel="apple-touch-startup-image" href="/static/icon_192x192.png" />
     <meta name="apple-moble-web-app-status-bar-style" content="black" />
     <!-- PWA Stuff -->
     <meta name="mobile-web-app-capable" content="yes" />
-    <link rel="shortcut icon" href="/static/icon.png" />
+    <link rel="shortcut icon" href="/static/icon_192x192.png" />
     <link rel="manifest" href="/static/manifest.json" />
 
     <title><%= user %>'s notebook</title>
@@ -97,7 +97,7 @@
       function registerSW() {
         if (location.hostname === "localhost") return;
         if ("serviceWorker" in navigator) {
-          navigator.serviceWorker.register("/static/sw.js").catch((e) => {
+                navigator.serviceWorker.register("/static/sw.js", {scope: "/"}).catch((e) => {
             console.log("Registration fail: ", e);
           });
         }

@@ -18,7 +18,9 @@ impl StaticFileRouter {
         let (config_dir, _) = get_config_location();
         let user_stylesheet = config_dir.join("userstyles.css");
         warp::path("static")
-            .and(warp::fs::dir(get_static_dir()))
+            .and(warp::fs::dir(get_static_dir()).map(|res: warp::fs::File| {
+                warp::reply::with_header(res, "service-worker-allowed", "/")
+            }))
             .or(warp::path("config").and(warp::fs::file(user_stylesheet)))
             .boxed()
     }

@@ -18,7 +18,7 @@ self.addEventListener("activate", activateServiceWorker);
 async function activateServiceWorker(event) {
   await deleteOldCaches();
   await installCachedFiles();
-  event.waitUntil(clients.claim()); // make the current sw the active sw in all cached pages
+  await clients.claim(); // make the current sw the active sw in all cached pages
 }
 
 async function installCachedFiles() {

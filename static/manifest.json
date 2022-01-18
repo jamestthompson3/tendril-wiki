@@ -1,15 +1,23 @@
 {
   "short_name": "Tendril Wiki",
-  "name": "Notebook for exploration",
+  "name": "Tendril Wiki: Notebook for exploration",
+  "description": "Connect your thoughts, track your work, embrace the cybernetic experience.",
   "icons": [
     {
-      "src": "static/icon.png",
+      "src": "icon_192x192.png",
       "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon_512x512.png",
+      "sizes": "512x512",
       "type": "image/png"
     }
   ],
+  "orientation": "portrait",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "theme_color": "#58FF56",
-  "background_color": "#10410F"
+  "theme_color": "#000000",
+  "background_color": "#FFFFFF"
 }
