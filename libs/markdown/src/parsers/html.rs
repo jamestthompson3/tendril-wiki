@@ -1,5 +1,3 @@
-use std::ops::RangeBounds;
-
 use pulldown_cmark::{html, CowStr, Event, Options, Parser};
 use urlencoding::encode;
 
@@ -110,11 +108,23 @@ pub fn to_html(md: &str) -> Html {
                 _ => {
                     // TODO: custom url schemas?
                     if text.starts_with("http") {
-                        if text.contains("youtube") || text.contains("youtu.be") {
+                        if text.contains("youtube.com") || text.contains("youtu.be") {
                             return Event::Html(transform_youtube_url(text));
                         }
                         if text.contains("codesandbox.io") {
                             return Event::Html(transform_cs_url(text));
+                        }
+                        if text.contains("codepen.io") {
+                            return Event::Html(transform_cp_url(text));
+                        }
+                        if text.ends_with(".mp3") {
+                            return Event::Html(transform_audio_url(text));
+                        }
+                        if text.contains("vimeo.com") {
+                            return Event::Html(transform_vimeo_url(text));
+                        }
+                        if text.contains("spotify.com") {
+                            return Event::Html(transform_spotify_url(text));
                         }
 
                         return Event::Html(format!(r#"<a href="{}">{}</a>"#, text, text).into());
@@ -133,6 +143,10 @@ pub fn to_html(md: &str) -> Html {
     }
 }
 
+fn transform_audio_url(text: CowStr) -> CowStr {
+    format!(r#"<audio src="{}" controls></audio>"#, text).into()
+}
+
 pub fn format_links(link: &str) -> String {
     let proto_prefixes = link.split(':').collect::<Vec<&str>>();
     match proto_prefixes[0] {
@@ -144,15 +158,31 @@ pub fn format_links(link: &str) -> String {
     }
 }
 
-const YT_FMT_STRING: &str = r#"<iframe title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen"#;
+const MEDIA_FMT_STRING: &str = r#"<iframe title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen"#;
 const CS_FMT_STRING: &str = r#"<iframe frameborder="0" title="Code Sandbox" allow="accelerometer; ambient-light-sensor;
     camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr;
     xr-spatial-tracking" sandbox="allow-forms allow-modals allow-popups allow-presentation
     allow-same-origin allow-scripts""#;
+const CP_FMT_STRING: &str = r#"<iframe frameborder="0" title="CodePen" scrolling="no" allowtransparency="true" allowfullscreen="true" loading="lazy""#;
 
 fn transform_cs_url(link: CowStr) -> CowStr {
     let link = link.replace(".io/s", ".io/embed");
     format!(r#"{} src="{}"></iframe>"#, CS_FMT_STRING, link).into()
+}
+fn transform_cp_url(text: CowStr) -> CowStr {
+    if !text.contains("/embed/") {
+        let link = text.replace("/pen/", "/embed/");
+        return format!(r#"{} src="{}"></iframe>"#, CP_FMT_STRING, link).into();
+    }
+    return format!(r#"{} src="{}"></iframe>"#, CP_FMT_STRING, text).into();
+}
+
+fn transform_spotify_url(text: CowStr) -> CowStr {
+    if !text.contains(".com/embed") {
+        let link = text.replace(".com/track", ".com/embed/track");
+        return format!(r#"{} src="{}"></iframe>"#, MEDIA_FMT_STRING, link).into();
+    }
+    return format!(r#"{} src="{}"></iframe>"#, MEDIA_FMT_STRING, text).into();
 }
 
 fn transform_youtube_url(link: CowStr) -> CowStr {
@@ -173,9 +203,16 @@ fn transform_youtube_url(link: CowStr) -> CowStr {
 }
 
 fn format_yt_url(src: String) -> String {
-    format!(r#"{} src="{}"></iframe>"#, YT_FMT_STRING, src)
+    format!(r#"{} src="{}"></iframe>"#, MEDIA_FMT_STRING, src)
 }
 
+fn transform_vimeo_url(text: CowStr) -> CowStr {
+    if !text.contains("player.vimeo.com") {
+        let link = text.replace("vimeo.com", "player.vimeo.com/video");
+        return format!(r#"{} src="{}"></iframe>"#, MEDIA_FMT_STRING, link).into();
+    }
+    return format!(r#"{} src="{}"></iframe>"#, MEDIA_FMT_STRING, text).into();
+}
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -202,7 +239,29 @@ mod tests {
     #[test]
     fn transforms_youtube_urls_to_embedable() {
         let link = CowStr::from("https://youtube.com/watch?v=giEnkiRHJ9Y");
-        let final_string = r#"<iframe title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen src="https://youtube.com/embed/giEnkiRHJ9Y"></iframe>"#;
+        let final_string = r#"<iframe title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen src="https://youtube.com/embed/giEnkiRHJ9Y"></iframe>"#;
         assert!(CowStr::from(final_string).to_string() == transform_youtube_url(link).to_string());
+    }
+
+    #[test]
+    fn transforms_vimeo_urls_to_embedable() {
+        let link = CowStr::from("https://vimeo.com/665036978#t=20s");
+        let final_string = r#"<iframe title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen src="https://player.vimeo.com/video/665036978#t=20s"></iframe>"#;
+        assert!(CowStr::from(final_string).to_string() == transform_vimeo_url(link).to_string());
+    }
+    #[test]
+    fn transforms_spotify_urls_to_embedable() {
+        let link = CowStr::from(
+            "https://open.spotify.com/track/3YD9EehnGOf88rGSZFrnHg?si=8c669e6880f54c88",
+        );
+        let final_string = r#"<iframe title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen src="https://open.spotify.com/embed/track/3YD9EehnGOf88rGSZFrnHg?si=8c669e6880f54c88"></iframe>"#;
+        assert!(CowStr::from(final_string).to_string() == transform_spotify_url(link).to_string());
+    }
+
+    #[test]
+    fn transforms_codepen_urls_to_embedable() {
+        let link = CowStr::from("https://codepen.io/P1N2O/pen/pyBNzX");
+        let final_string = r#"<iframe frameborder="0" title="CodePen" scrolling="no" allowtransparency="true" allowfullscreen="true" loading="lazy" src="https://codepen.io/P1N2O/embed/pyBNzX"></iframe>"#;
+        assert!(CowStr::from(final_string).to_string() == transform_cp_url(link).to_string());
     }
 }
