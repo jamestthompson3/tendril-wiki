@@ -8,6 +8,7 @@ edition = "2018"
 
 [dependencies]
 argon2 = "0.1"
+directories = "3.0.1"
 rand_core = { version = "0.6", features = ["std"] }
 threadpool = "1.8.1"
 tokio = { version = "1.15.0", features = ["rt", "time"] }

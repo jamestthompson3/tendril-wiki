@@ -8,7 +8,7 @@ use std::{
 use directories::ProjectDirs;
 use rpassword::read_password_from_tty;
 use serde_derive::{Deserialize, Serialize};
-use tasks::hash_password;
+use tasks::{hash_password, parse_location};
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Sync {
@@ -52,7 +52,7 @@ pub fn write_config() {
     if !file.exists() {
         fs::create_dir_all(&dir).unwrap();
         let mut default_conf: Config =
-            toml::from_str(&fs::read_to_string("./config/config.toml").unwrap()).unwrap();
+            toml::from_str(&fs::read_to_string("config/config.toml").unwrap()).unwrap();
         default_conf.general.user = get_user();
         default_conf.general.version = env!("CARGO_PKG_VERSION").into();
         fs::write(&file, toml::to_string(&default_conf).unwrap()).unwrap();
@@ -68,11 +68,11 @@ pub fn write_config_interactive() {
     stdout().flush().unwrap();
     stdin.read_line(&mut username).unwrap();
     let mut location = String::new();
-    print!("Enter wiki location (~/wiki/) >");
+    print!("Enter wiki location (~/wiki/) > ");
     stdout().flush().unwrap();
     stdin.read_line(&mut location).unwrap();
     let mut media_location = String::new();
-    print!("Enter location for uploaded media (~/wiki_media/) >");
+    print!("Enter location for uploaded media (~/wiki_media/) > ");
     stdout().flush().unwrap();
     stdin.read_line(&mut media_location).unwrap();
     let mut should_sync = String::new();
@@ -100,20 +100,18 @@ pub fn write_config_interactive() {
         }
         _ => {}
     }
-    let parsed_location: String;
+    let parsed_location: PathBuf;
     if location == "\n" {
-        parsed_location = "~/wiki/".into();
+        parsed_location = parse_location("~/wiki/".into());
     } else {
-        parsed_location = location.strip_suffix('\n').unwrap_or(&location).to_owned();
+        parsed_location = parse_location(location.strip_suffix('\n').unwrap_or(&location));
     }
-    let parsed_media_location: String;
+    let parsed_media_location: PathBuf;
     if media_location == "\n" {
-        parsed_media_location = "~/wiki_media/".into();
+        parsed_media_location = parse_location("~/wiki_media/".into());
     } else {
-        parsed_media_location = media_location
-            .strip_suffix('\n')
-            .unwrap_or(&location)
-            .to_owned();
+        parsed_media_location =
+            parse_location(media_location.strip_suffix('\n').unwrap_or(&location));
     }
     let branch: String;
     if git_branch == "\n" {
@@ -135,19 +133,17 @@ pub fn write_config_interactive() {
     if !file.exists() {
         fs::create_dir_all(&dir).unwrap();
         let mut default_conf: Config =
-            toml::from_str(&fs::read_to_string("./config/config.toml").unwrap()).unwrap();
+            toml::from_str(&fs::read_to_string("config/config.toml").unwrap()).unwrap();
         default_conf.general.user = user;
+        default_conf.general.wiki_location = parsed_location.to_string_lossy().into();
+        default_conf.general.media_location = parsed_media_location.to_string_lossy().into();
         // Create the wiki and media paths if they don't already exist
-        let parsed_wiki_path = PathBuf::from(&parsed_location);
-        let parsed_media_path = PathBuf::from(&parsed_media_location);
-        if !parsed_wiki_path.exists() {
-            fs::create_dir_all(parsed_wiki_path).unwrap();
+        if !parsed_location.exists() {
+            fs::create_dir_all(parsed_location).unwrap();
         }
-        if !parsed_media_path.exists() {
-            fs::create_dir_all(parsed_media_path).unwrap();
+        if !parsed_media_location.exists() {
+            fs::create_dir_all(parsed_media_location).unwrap();
         }
-        default_conf.general.wiki_location = parsed_location;
-        default_conf.general.media_location = parsed_media_location;
         default_conf.sync.use_git = enable_sync;
         default_conf.sync.branch = branch;
         if let Some(password) = password {
