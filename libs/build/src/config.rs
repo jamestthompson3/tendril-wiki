@@ -3,6 +3,7 @@ use std::{
     fs,
     io::{stdin, stdout, Write},
     path::PathBuf,
+    process::exit,
 };
 
 use directories::ProjectDirs;
@@ -130,7 +131,7 @@ pub fn write_config_interactive() {
     }
 
     let (mut dir, file) = get_config_location();
-    if !file.exists() {
+    if !parsed_location.exists() {
         fs::create_dir_all(&dir).unwrap();
         let mut default_conf: Config =
             toml::from_str(&fs::read_to_string("config/config.toml").unwrap()).unwrap();
@@ -138,9 +139,7 @@ pub fn write_config_interactive() {
         default_conf.general.wiki_location = parsed_location.to_string_lossy().into();
         default_conf.general.media_location = parsed_media_location.to_string_lossy().into();
         // Create the wiki and media paths if they don't already exist
-        if !parsed_location.exists() {
-            fs::create_dir_all(parsed_location).unwrap();
-        }
+        fs::create_dir_all(parsed_location).unwrap();
         if !parsed_media_location.exists() {
             fs::create_dir_all(parsed_media_location).unwrap();
         }
@@ -153,6 +152,9 @@ pub fn write_config_interactive() {
         fs::write(&file, toml::to_string(&default_conf).unwrap()).unwrap();
         dir.push("userstyles.css");
         fs::copy("./config/userstyles.css", dir).unwrap();
+    } else {
+        println!("\nWiki location already exists, exiting...");
+        exit(0);
     }
 }
 
