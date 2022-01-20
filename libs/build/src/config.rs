@@ -3,13 +3,14 @@ use std::{
     fs,
     io::{stdin, stdout, Write},
     path::PathBuf,
-    process::exit,
 };
 
 use directories::ProjectDirs;
 use rpassword::read_password_from_tty;
 use serde_derive::{Deserialize, Serialize};
-use tasks::{hash_password, parse_location};
+use tasks::parse_location;
+
+pub type ConfigOptions = (PathBuf, PathBuf, bool, String, String, Option<String>);
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Sync {
@@ -48,21 +49,7 @@ pub fn get_data_dir_location() -> PathBuf {
     data_dir.to_owned()
 }
 
-pub fn write_config() {
-    let (mut dir, file) = get_config_location();
-    if !file.exists() {
-        fs::create_dir_all(&dir).unwrap();
-        let mut default_conf: Config =
-            toml::from_str(&fs::read_to_string("config/config.toml").unwrap()).unwrap();
-        default_conf.general.user = get_user();
-        default_conf.general.version = env!("CARGO_PKG_VERSION").into();
-        fs::write(&file, toml::to_string(&default_conf).unwrap()).unwrap();
-        dir.push("userstyles.css");
-        fs::copy("./config/userstyles.css", dir).unwrap();
-    }
-}
-
-pub fn write_config_interactive() {
+pub fn gen_config_interactive() -> ConfigOptions {
     let mut username = String::new();
     let stdin = stdin();
     print!("Enter username ({}):  ", get_user());
@@ -103,13 +90,13 @@ pub fn write_config_interactive() {
     }
     let parsed_location: PathBuf;
     if location == "\n" {
-        parsed_location = parse_location("~/wiki/".into());
+        parsed_location = parse_location("~/wiki/");
     } else {
         parsed_location = parse_location(location.strip_suffix('\n').unwrap_or(&location));
     }
     let parsed_media_location: PathBuf;
     if media_location == "\n" {
-        parsed_media_location = parse_location("~/wiki_media/".into());
+        parsed_media_location = parse_location("~/wiki_media/");
     } else {
         parsed_media_location =
             parse_location(media_location.strip_suffix('\n').unwrap_or(&location));
@@ -129,33 +116,14 @@ pub fn write_config_interactive() {
     } else {
         user = username.strip_suffix('\n').unwrap_or(&username).to_owned();
     }
-
-    let (mut dir, file) = get_config_location();
-    if !parsed_location.exists() {
-        fs::create_dir_all(&dir).unwrap();
-        let mut default_conf: Config =
-            toml::from_str(&fs::read_to_string("config/config.toml").unwrap()).unwrap();
-        default_conf.general.user = user;
-        default_conf.general.wiki_location = parsed_location.to_string_lossy().into();
-        default_conf.general.media_location = parsed_media_location.to_string_lossy().into();
-        // Create the wiki and media paths if they don't already exist
-        fs::create_dir_all(parsed_location).unwrap();
-        if !parsed_media_location.exists() {
-            fs::create_dir_all(parsed_media_location).unwrap();
-        }
-        default_conf.sync.use_git = enable_sync;
-        default_conf.sync.branch = branch;
-        if let Some(password) = password {
-            let pass = hash_password(password.as_bytes());
-            default_conf.general.pass = pass;
-        }
-        fs::write(&file, toml::to_string(&default_conf).unwrap()).unwrap();
-        dir.push("userstyles.css");
-        fs::copy("./config/userstyles.css", dir).unwrap();
-    } else {
-        println!("\nWiki location already exists, exiting...");
-        exit(0);
-    }
+    (
+        parsed_location,
+        parsed_media_location,
+        enable_sync,
+        branch,
+        user,
+        password,
+    )
 }
 
 pub fn read_config() -> Config {

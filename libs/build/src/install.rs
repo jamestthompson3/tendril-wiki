@@ -1,6 +1,10 @@
-use std::fs;
+use std::{fs, process::exit};
 
-use crate::{get_data_dir_location, write_config_interactive};
+use tasks::hash_password;
+
+use crate::{
+    gen_config_interactive, get_config_location, get_data_dir_location, Config, ConfigOptions,
+};
 
 fn prep_files() {
     let data_dir = get_data_dir_location();
@@ -23,7 +27,17 @@ fn prep_files() {
             fs::write(entry.path(), f).unwrap();
         }
         let path = entry.path();
-        fs::copy(&path, &static_dir.join(&entry.file_name())).unwrap();
+        if entry.metadata().unwrap().is_dir() {
+            let dir_loc = static_dir.join(&entry.file_name());
+            fs::create_dir_all(&dir_loc).unwrap();
+            for entry in fs::read_dir(&dir_loc).unwrap() {
+                let entry = entry.unwrap();
+                let path = entry.path();
+                fs::copy(&path, &dir_loc.join(&entry.file_name())).unwrap();
+            }
+        } else {
+            fs::copy(&path, &static_dir.join(&entry.file_name())).unwrap();
+        }
     }
     for entry in fs::read_dir("./templates").unwrap() {
         let entry = entry.unwrap();
@@ -34,11 +48,41 @@ fn prep_files() {
 
 pub fn install() {
     prep_files();
-    write_config_interactive();
+    let options = gen_config_interactive();
+    bootstrap_initial_files(options);
 }
 
 pub fn update() {
     prep_files();
     println!("Files updated!");
+}
 
+fn bootstrap_initial_files(options: ConfigOptions) {
+    let (parsed_location, parsed_media_location, enable_sync, branch, user, password) = options;
+    let (mut dir, file) = get_config_location();
+    if !file.exists() {
+        fs::create_dir_all(&dir).unwrap();
+        let mut default_conf: Config =
+            toml::from_str(&fs::read_to_string("config/config.toml").unwrap()).unwrap();
+        default_conf.general.user = user;
+        default_conf.general.wiki_location = parsed_location.to_string_lossy().into();
+        default_conf.general.media_location = parsed_media_location.to_string_lossy().into();
+        // Create the wiki and media paths if they don't already exist
+        fs::create_dir_all(parsed_location).unwrap();
+        if !parsed_media_location.exists() {
+            fs::create_dir_all(parsed_media_location).unwrap();
+        }
+        default_conf.sync.use_git = enable_sync;
+        default_conf.sync.branch = branch;
+        if let Some(password) = password {
+            let pass = hash_password(password.as_bytes());
+            default_conf.general.pass = pass;
+        }
+        fs::write(&file, toml::to_string(&default_conf).unwrap()).unwrap();
+        dir.push("userstyles.css");
+        fs::copy("./config/userstyles.css", dir).unwrap();
+    } else {
+        println!("\nWiki location already exists, exiting...");
+        exit(0);
+    }
 }
