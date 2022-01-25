@@ -42,13 +42,14 @@ impl<'a> WikiPage<'a> {
             metadata_html.push_str(&format!("<dt><strong>{}:</strong></dt>", key));
             // TODO: Add "created" date here as well
             // TODO: Modify dates to be compliant with DT parsing
-            if key == "modified" {
+            if key == "modified" || key == "created" {
                 if let Ok(val) = value.parse::<DateTime<FixedOffset>>() {
                     let val = val.format("%Y-%m-%d %H:%M").to_string();
                     metadata_html.push_str(&format!("\n<dd>{}</dd>", val));
                 } else {
                     metadata_html.push_str(&format!("\n<dd>{}</dd>", value));
                 }
+                continue;
             }
             if value.starts_with("http") {
                 match key.as_str() {
