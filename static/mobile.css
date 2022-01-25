@@ -6,10 +6,20 @@ body {
 h2 {
   font-size: 1.2rem;
 }
+h1,
+h2,
+h3,
+h4 {
+  padding: 1rem;
+}
 
 .content-container {
   width: unset;
   padding: 0.25rem;
+}
+
+.content-body p {
+  padding: 1rem;
 }
 
 .navigation {

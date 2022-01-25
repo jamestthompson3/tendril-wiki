@@ -45,6 +45,20 @@
         align-items: center;
         justify-content: space-between;
       }
+
+      form.editor div {
+        height: auto;
+      }
+      @media (max-width: 900px) {
+        .editor input[type="text"] {
+          width: 100%;
+        }
+
+        .editor button.submit {
+          width: 80%;
+          margin: 2rem auto;
+        }
+      }
     </style>
   </head>
   <body>
@@ -66,6 +80,7 @@
               <input
                 id="quick-add"
                 required="true"
+                autocomplete="off"
                 type="text"
                 placeholder="jot something down"
                 name="body"

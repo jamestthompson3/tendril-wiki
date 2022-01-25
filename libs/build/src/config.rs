@@ -10,7 +10,7 @@ use rpassword::read_password_from_tty;
 use serde_derive::{Deserialize, Serialize};
 use tasks::parse_location;
 
-pub type ConfigOptions = (PathBuf, PathBuf, bool, String, String, Option<String>);
+pub type ConfigOptions = (PathBuf, PathBuf, bool, Option<String>, String, Option<String>);
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Sync {
@@ -49,38 +49,41 @@ pub fn get_data_dir_location() -> PathBuf {
     data_dir.to_owned()
 }
 
-pub fn gen_config_interactive() -> ConfigOptions {
-    let mut username = String::new();
+fn prompt(f: Box<dyn Fn()>) -> String {
+    let mut response = String::new();
     let stdin = stdin();
-    print!("Enter username ({}):  ", get_user());
+    f();
     stdout().flush().unwrap();
-    stdin.read_line(&mut username).unwrap();
-    let mut location = String::new();
-    print!("Enter wiki location (~/wiki/) > ");
-    stdout().flush().unwrap();
-    stdin.read_line(&mut location).unwrap();
-    let mut media_location = String::new();
-    print!("Enter location for uploaded media (~/wiki_media/) > ");
-    stdout().flush().unwrap();
-    stdin.read_line(&mut media_location).unwrap();
-    let mut should_sync = String::new();
+    stdin.read_line(&mut response).unwrap();
+    response
+}
+
+pub fn gen_config_interactive() -> ConfigOptions {
+    let username = prompt(Box::new(|| {
+        print!("Enter username ({}):  ", get_user());
+    }));
+    let location = prompt(Box::new(|| {
+        print!("Enter wiki location (~/wiki/) > ");
+    }));
+    let media_location = prompt(Box::new(|| {
+        print!("Enter location for uploaded media (~/wiki_media/) > ");
+    }));
+    let should_sync = prompt(Box::new(|| {
+        print!("Use git to sync wiki updates (y\\n)? ");
+    }));
     let mut enable_sync = true;
-    print!("Use git to sync wiki updates (y\\n)? ");
-    stdout().flush().unwrap();
-    stdin.read_line(&mut should_sync).unwrap();
-    let mut git_branch = String::new();
+    let mut git_branch: Option<String> = None;
     match should_sync.as_str().strip_suffix('\n').unwrap() {
         "y" | "t" | "true" | "yes" => {
-            print!("Name of branch to sync to (main): ");
-            stdout().flush().unwrap();
-            stdin.read_line(&mut git_branch).unwrap();
+            git_branch = Some(prompt(Box::new(|| {
+                print!("Name of branch to sync to (main): ");
+            })));
         }
         _ => enable_sync = false,
     }
-    let mut use_password = String::new();
-    print!("Use password to protect wiki (y\\n)? ");
-    stdout().flush().unwrap();
-    stdin.read_line(&mut use_password).unwrap();
+    let use_password = prompt(Box::new(|| {
+        print!("Use password to protect wiki (y\\n)? ");
+    }));
     let mut password: Option<String> = None;
     match use_password.as_str().strip_suffix('\n').unwrap() {
         "true" | "y" | "t" | "yes" | "\n" => {
@@ -101,14 +104,16 @@ pub fn gen_config_interactive() -> ConfigOptions {
         parsed_media_location =
             parse_location(media_location.strip_suffix('\n').unwrap_or(&location));
     }
-    let branch: String;
+    let mut branch: Option<String> = None;
+    if let Some(git_branch) = git_branch {
     if git_branch == "\n" {
-        branch = "main".into();
+        branch = Some("main".into());
     } else {
-        branch = git_branch
+        branch = Some(git_branch
             .strip_suffix('\n')
             .unwrap_or(&git_branch)
-            .to_owned();
+            .to_owned());
+    }
     }
     let user: String;
     if username == "\n" {

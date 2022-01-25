@@ -1,13 +1,13 @@
 pub mod password;
 pub mod search;
 pub mod sync;
+use directories::UserDirs;
 use std::{
     fs::File,
     io::{BufRead, BufReader},
     path::{Path, PathBuf, MAIN_SEPARATOR},
     process::exit,
 };
-use directories::UserDirs;
 
 pub use self::password::*;
 pub use self::search::*;
@@ -19,7 +19,6 @@ pub fn parse_location(location: &str) -> PathBuf {
         if let Some(dirs) = UserDirs::new() {
             let home_dir: String = dirs.home_dir().to_string_lossy().into();
             loc = location.replace('~', &home_dir);
-            return PathBuf::from(loc);
         } else {
             loc = location.replace('~', &std::env::var("HOME").unwrap());
         }

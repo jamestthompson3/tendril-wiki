@@ -73,7 +73,7 @@ fn bootstrap_initial_files(options: ConfigOptions) {
             fs::create_dir_all(parsed_media_location).unwrap();
         }
         default_conf.sync.use_git = enable_sync;
-        default_conf.sync.branch = branch;
+        default_conf.sync.branch = branch.unwrap_or_else(|| "".to_string());
         if let Some(password) = password {
             let pass = hash_password(password.as_bytes());
             default_conf.general.pass = pass;
