@@ -1,3 +1,4 @@
+use chrono::{DateTime, FixedOffset};
 use markdown::parsers::{format_links, TemplattedPage};
 use tasks::CompileState;
 
@@ -41,9 +42,14 @@ impl<'a> WikiPage<'a> {
             metadata_html.push_str(&format!("<dt><strong>{}:</strong></dt>", key));
             // TODO: Add "created" date here as well
             // TODO: Modify dates to be compliant with DT parsing
-            // if key == "modified" {
-            //     val = value.parse::<DateTime<FixedOffset>>().unwrap().format("%Y-%m-%d %H:%M").to_string();
-            //   }
+            if key == "modified" {
+                if let Ok(val) = value.parse::<DateTime<FixedOffset>>() {
+                    let val = val.format("%Y-%m-%d %H:%M").to_string();
+                    metadata_html.push_str(&format!("\n<dd>{}</dd>", val));
+                } else {
+                    metadata_html.push_str(&format!("\n<dd>{}</dd>", value));
+                }
+            }
             if value.starts_with("http") {
                 match key.as_str() {
                     "cover" => {
@@ -77,7 +83,7 @@ impl<'a> Render for WikiPage<'a> {
         let tag_string = page
             .tags
             .iter()
-            .map(|t| format!("<li><a href=\"/tags/{}\">#{}</a></li>", t, t))
+            .map(|t| format!("<li><a href=\"{}\">#{}</a></li>", t, t))
             .collect::<Vec<String>>()
             .join("\n");
         let mut ctx = get_template_file("main").unwrap();
@@ -87,6 +93,6 @@ impl<'a> Render for WikiPage<'a> {
             .replace("<%= tags %>", &tag_string)
             .replace("<%= links %>", &self.render_page_backlinks(&backlinks))
             .replace("<%= metadata %>", &self.render_page_metadata());
-        render_includes(ctx, state, Some(&self.page))
+        render_includes(ctx, state, Some(self.page))
     }
 }

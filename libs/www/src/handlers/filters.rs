@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use build::{read_config, RefHubTx};
 use jsonwebtoken::{Algorithm, DecodingKey, Validation};
-use render::{GlobalBacklinks, TagMapping};
+use render::GlobalBacklinks;
 use serde::{Deserialize, Serialize};
 use tasks::normalize_wiki_location;
 use thiserror::Error;
@@ -50,20 +50,6 @@ pub fn with_sender(
     sender: RefHubTx,
 ) -> impl Filter<Extract = (RefHubTx,), Error = std::convert::Infallible> + Clone {
     warp::any().map(move || sender.clone())
-}
-
-pub fn with_tag_links(
-    tags: TagMapping,
-    links: GlobalBacklinks,
-) -> impl Filter<Extract = ((TagMapping, GlobalBacklinks),), Error = std::convert::Infallible> + Clone
-{
-    warp::any().map(move || (tags.clone(), links.clone()))
-}
-
-pub fn with_tags(
-    tags: TagMapping,
-) -> impl Filter<Extract = (TagMapping,), Error = std::convert::Infallible> + Clone {
-    warp::any().map(move || tags.clone())
 }
 
 pub fn with_links(

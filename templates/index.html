@@ -80,9 +80,6 @@
           <h2>Quick Actions</h2>
           <ul>
             <ol>
-              <a href="/tags">Browse tagged topics</a>
-            </ol>
-            <ol>
               <a href="/links">View content index</a>
             </ol>
             <ol>
@@ -97,9 +94,11 @@
       function registerSW() {
         if (location.hostname === "localhost") return;
         if ("serviceWorker" in navigator) {
-                navigator.serviceWorker.register("/static/sw.js", {scope: "/"}).catch((e) => {
-            console.log("Registration fail: ", e);
-          });
+          navigator.serviceWorker
+            .register("/static/sw.js", { scope: "/" })
+            .catch((e) => {
+              console.log("Registration fail: ", e);
+            });
         }
       }
 

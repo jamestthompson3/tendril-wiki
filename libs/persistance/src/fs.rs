@@ -6,7 +6,7 @@ use markdown::{
     parsers::{parse_meta, path_to_data_structure, EditPageData, NoteMeta, ParsedPages},
     processors::{tags::TagsArray, to_template},
 };
-use render::{index_page::IndexPage, wiki_page::WikiPage, GlobalBacklinks, Render, TagMapping};
+use render::{index_page::IndexPage, wiki_page::WikiPage, GlobalBacklinks, Render};
 use tasks::{path_to_reader, CompileState};
 use urlencoding::decode;
 
@@ -132,7 +132,6 @@ pub fn delete(wiki_location: &str, requested_file: &str) -> Result<(), io::Error
 pub fn read(
     wiki_location: &str,
     requested_file: String,
-    _tags: TagMapping,
     backlinks: GlobalBacklinks,
 ) -> Result<String, ReadPageError> {
     let file_path = get_file_path(wiki_location, &requested_file)?;

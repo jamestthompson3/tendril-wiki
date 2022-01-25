@@ -11,8 +11,8 @@ use crate::{
 };
 
 use super::{
-    filters::{with_auth, with_links, with_location, with_sender, with_tag_links, with_tags},
-    sinks::{render_backlink_index, render_tag_page, render_tags},
+    filters::{with_auth, with_links, with_location, with_sender},
+    sinks::render_backlink_index,
     MAX_BODY_SIZE,
 };
 
@@ -28,37 +28,13 @@ impl WikiPageRouter {
             .or(self.edit())
             .or(self.quick_add())
             .or(self.new_page())
-            .or(self.tag_page())
-            .or(self.tag_index())
             .or(self.backlink_index())
             .or(self.get())
             .boxed()
     }
 
-    fn tag_index(&self) -> BoxedFilter<(impl Reply,)> {
-        let (tags, _, _) = &self.parts;
-        warp::get()
-            .and(with_auth())
-            .and(warp::path::path("tags"))
-            .and(with_tags(tags.to_owned()))
-            .and_then(render_tags)
-            .boxed()
-    }
-
-    fn tag_page(&self) -> BoxedFilter<(impl Reply,)> {
-        let (tags, _, _) = &self.parts;
-        warp::get()
-            .and(with_auth())
-            .and(warp::path::path("tags"))
-            .and(with_tags(tags.to_owned()))
-            .and(warp::path::param())
-            .and(with_location(self.wiki_location.clone()))
-            .and_then(render_tag_page)
-            .boxed()
-    }
-
     fn backlink_index(&self) -> BoxedFilter<(impl Reply,)> {
-        let (_, links, _) = &self.parts;
+        let (links, _) = &self.parts;
         warp::get()
             .and(with_auth())
             .and(warp::path("links"))
@@ -68,11 +44,11 @@ impl WikiPageRouter {
     }
 
     fn get(&self) -> BoxedFilter<(impl Reply,)> {
-        let (tags, links, _) = &self.parts;
+        let (links, _) = &self.parts;
         warp::get()
             .and(with_auth())
             .and(warp::path::param())
-            .and(with_tag_links(tags.to_owned(), links.to_owned()))
+            .and(with_links(links.to_owned()))
             .and(with_location(self.wiki_location.clone()))
             .and(warp::query::<HashMap<String, String>>())
             .and_then(render_file)
@@ -80,18 +56,18 @@ impl WikiPageRouter {
     }
 
     fn get_nested(&self) -> BoxedFilter<(impl Reply,)> {
-        let (tags, links, _) = &self.parts;
+        let (links, _) = &self.parts;
         warp::get()
             .and(with_auth())
             .and(warp::path!(String / String))
-            .and(with_tag_links(tags.to_owned(), links.to_owned()))
+            .and(with_links(links.to_owned()))
             .and(with_location(self.wiki_location.clone()))
             .and_then(render_nested_file)
             .boxed()
     }
 
     fn delete(&self) -> BoxedFilter<(impl Reply,)> {
-        let (_, _, sender) = &self.parts;
+        let (_,  sender) = &self.parts;
         warp::post()
             .and(with_auth())
             .and(warp::path("delete"))
@@ -121,7 +97,7 @@ impl WikiPageRouter {
     }
 
     fn edit(&self) -> BoxedFilter<(impl Reply,)> {
-        let (_, _, sender) = &self.parts;
+        let (_,  sender) = &self.parts;
         warp::post()
             .and(with_auth())
             .and(
@@ -138,7 +114,7 @@ impl WikiPageRouter {
     }
 
     fn quick_add(&self) -> BoxedFilter<(impl Reply,)> {
-        let (_, _, sender) = &self.parts;
+        let (_,  sender) = &self.parts;
         warp::post()
             .and(with_auth())
             .and(

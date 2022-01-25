@@ -9,7 +9,7 @@ use async_recursion::async_recursion;
 use futures::{stream, StreamExt};
 use markdown::{parsers::path_to_data_structure, processors::to_template};
 use persistance::fs::{get_file_path, read_note_cache, write_note_cache};
-use render::{GlobalBacklinks, TagMapping};
+use render::GlobalBacklinks;
 use tokio::sync::mpsc::{Receiver, Sender};
 
 pub type RefHubTx = Sender<(String, String)>;
@@ -17,19 +17,14 @@ pub type RefHubRx = Receiver<(String, String)>;
 
 #[derive(Debug)]
 pub struct RefHub {
-    pub tag_map: TagMapping,
     pub backlinks: GlobalBacklinks,
 }
 
 impl RefHub {
     pub fn new() -> Self {
         RefHub {
-            tag_map: Arc::new(Mutex::new(BTreeMap::new())),
             backlinks: Arc::new(Mutex::new(BTreeMap::new())),
         }
-    }
-    pub fn tags(&self) -> TagMapping {
-        Arc::clone(&self.tag_map)
     }
     pub fn links(&self) -> GlobalBacklinks {
         Arc::clone(&self.backlinks)
@@ -44,35 +39,33 @@ impl Default for RefHub {
 
 // TODO: Reduce these duplicated functions, think of a better abstraction
 #[async_recursion]
-pub async fn parse_entries(entrypoint: PathBuf, tag_map: TagMapping, backlinks: GlobalBacklinks) {
+pub async fn parse_entries(entrypoint: PathBuf, backlinks: GlobalBacklinks) {
     let entries = read_dir(entrypoint).unwrap();
     let pipeline = stream::iter(entries).for_each(|entry| async {
-        let tags = Arc::clone(&tag_map);
         let links = Arc::clone(&backlinks);
         let entry = entry.unwrap();
         if entry.file_type().unwrap().is_file()
             && entry.file_name().to_str().unwrap().ends_with(".md")
         {
-            tokio::spawn(async move { process_file(entry.path(), tags, links) })
+            tokio::spawn(async move { process_file(entry.path(), links) })
                 .await
                 .unwrap();
         } else if entry.file_type().unwrap().is_dir()
             && !entry.path().to_str().unwrap().contains(".git")
         {
-            parse_entries(entry.path(), tags, links).await;
+            parse_entries(entry.path(), links).await;
         }
     });
     pipeline.await;
 }
 
-fn process_file(path: PathBuf, tags: TagMapping, backlinks: GlobalBacklinks) {
+fn process_file(path: PathBuf, backlinks: GlobalBacklinks) {
     let note = path_to_data_structure(&path).unwrap();
     let templatted = to_template(&note);
     build_global_store(
         &templatted.page.title,
         &templatted.outlinks,
         backlinks,
-        tags,
         &templatted.page.tags,
     );
 }
@@ -91,7 +84,6 @@ pub fn build_global_store(
     title: &str,
     outlinks: &[String],
     backlinks: GlobalBacklinks,
-    tag_map: TagMapping,
     tags: &[String],
 ) {
     let mut global_backlinks = backlinks.lock().unwrap();
@@ -106,29 +98,26 @@ pub fn build_global_store(
         }
     }
 
-    let mut tag_map = tag_map.lock().unwrap();
     for tag in tags.iter() {
-        match tag_map.get_mut(&tag.to_string()) {
+        match global_backlinks.get_mut(&tag.to_string()) {
             Some(tags) => {
                 tags.push(title.to_owned());
             }
             None => {
-                tag_map.insert(tag.to_string(), vec![title.to_owned()]);
+                global_backlinks.insert(tag.to_string(), vec![title.to_owned()]);
             }
         }
     }
 }
 
-pub async fn build_tags_and_links(wiki_location: &str, tags: TagMapping, links: GlobalBacklinks) {
-    tags.lock().unwrap().clear();
+pub async fn build_tags_and_links(wiki_location: &str, links: GlobalBacklinks) {
     links.lock().unwrap().clear();
-    parse_entries(PathBuf::from(wiki_location), tags.clone(), links.clone()).await;
+    parse_entries(PathBuf::from(wiki_location), links.clone()).await;
 }
 
-pub fn update_global_store(title: &str, location: &str, links: GlobalBacklinks, tags: TagMapping) {
+pub fn update_global_store(title: &str, location: &str, links: GlobalBacklinks) {
     if let [old_title, current_title] = title.split("~~").collect::<Vec<&str>>()[..] {
         let mut links = links.lock().unwrap();
-        let mut tags = tags.lock().unwrap();
         // _should_ always be Ok(path)...
         if let Ok(path) = get_file_path(location, current_title) {
             let note = path_to_data_structure(&path).unwrap();
@@ -148,7 +137,7 @@ pub fn update_global_store(title: &str, location: &str, links: GlobalBacklinks, 
                 }
             }
             for tag in templatted.page.tags {
-                match tags.get_mut(&tag) {
+                match links.get_mut(&tag) {
                     Some(exists) => {
                         if exists.contains(&String::from(current_title)) {
                             continue;
@@ -157,7 +146,7 @@ pub fn update_global_store(title: &str, location: &str, links: GlobalBacklinks, 
                         }
                     }
                     None => {
-                        tags.insert(tag, vec![current_title.into()]);
+                        links.insert(tag, vec![current_title.into()]);
                     }
                 }
             }
@@ -183,14 +172,8 @@ pub fn update_global_store(title: &str, location: &str, links: GlobalBacklinks, 
     }
 }
 
-pub fn delete_from_global_store(
-    title: &str,
-    location: &str,
-    links: GlobalBacklinks,
-    tags: TagMapping,
-) {
+pub fn delete_from_global_store(title: &str, location: &str, links: GlobalBacklinks) {
     let mut links = links.lock().unwrap();
-    let mut tags = tags.lock().unwrap();
     if let Ok(path) = get_file_path(location, title) {
         let note = path_to_data_structure(&path).unwrap();
         let templatted = to_template(&note);
@@ -207,14 +190,14 @@ pub fn delete_from_global_store(
             }
         }
         for tag in templatted.page.tags {
-            if let Some(exists) = tags.get(&tag) {
+            if let Some(exists) = links.get(&tag) {
                 if exists.contains(&String::from(title)) {
                     let filtered = exists
                         .iter()
                         .filter(|&note| note != title)
                         .map(|n| n.to_owned())
                         .collect::<Vec<String>>();
-                    tags.insert(tag, filtered);
+                    links.insert(tag, filtered);
                 }
             }
         }
@@ -225,6 +208,7 @@ pub fn delete_from_global_store(
     persistance::fs::delete(location, title).unwrap();
 }
 
+// TODO: Handle renaming tags.
 fn rename_in_global_store(
     current_title: &str,
     old_title: &str,

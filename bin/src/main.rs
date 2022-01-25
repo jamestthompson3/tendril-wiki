@@ -51,7 +51,6 @@ async fn main() {
     } else {
         let ref_hub = RefHub::new();
         let (tx, mut rx): (RefHubTx, RefHubRx) = mpsc::channel(50);
-        let watcher_tags = ref_hub.tags();
         let watcher_links = ref_hub.links();
 
         if config.sync.use_git {
@@ -67,41 +66,22 @@ async fn main() {
             while let Some((cmd, file)) = rx.recv().await {
                 match cmd.as_ref() {
                     "rebuild" => {
-                        build_tags_and_links(
-                            &location,
-                            watcher_tags.clone(),
-                            watcher_links.clone(),
-                        )
-                        .await;
+                        build_tags_and_links(&location, watcher_links.clone()).await;
                     }
                     "update" => {
-                        update_global_store(
-                            &file,
-                            &location,
-                            watcher_links.clone(),
-                            watcher_tags.clone(),
-                        );
+                        update_global_store(&file, &location, watcher_links.clone());
                     }
                     "delete" => {
                         // TODO: figure out why making this async causes the tokio::spawn call to
                         // give compiler errors.
-                        delete_from_global_store(
-                            &file,
-                            &location,
-                            watcher_links.clone(),
-                            watcher_tags.clone(),
-                        );
+                        delete_from_global_store(&file, &location, watcher_links.clone());
                     }
                     _ => {}
                 }
             }
         });
         tx.send(("rebuild".into(), "".into())).await.unwrap();
-        server(
-            config.general,
-            (ref_hub.tags(), ref_hub.links(), tx.clone()),
-        )
-        .await
+        server(config.general, (ref_hub.links(), tx.clone())).await
     }
 }
 

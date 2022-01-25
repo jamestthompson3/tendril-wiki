@@ -2,7 +2,7 @@ use markdown::parsers::{path_to_data_structure, ParsedPages};
 
 use markdown::processors::{to_template, update_templatted_pages};
 use persistance::fs::{write_entries, write_index_page};
-use render::{write_backlinks, write_tag_index, write_tag_pages, GlobalBacklinks, TagMapping};
+use render::{write_backlinks, GlobalBacklinks};
 use tasks::CompileState;
 use threadpool::ThreadPool;
 
@@ -13,7 +13,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use crate::{get_config_location, build_global_store, read_config};
+use crate::{build_global_store, get_config_location, read_config};
 
 /// ## TODO:
 /// figure out how to encapsulate parse_entries and process_file better
@@ -26,24 +26,19 @@ use crate::{get_config_location, build_global_store, read_config};
 pub struct Builder {
     pub backlinks: GlobalBacklinks,
     pub pages: ParsedPages,
-    pub tag_map: TagMapping,
 }
 
 impl Builder {
     pub fn new() -> Self {
         Builder {
-            tag_map: Arc::new(Mutex::new(BTreeMap::new())),
             backlinks: Arc::new(Mutex::new(BTreeMap::new())),
             pages: Arc::new(Mutex::new(Vec::new())),
         }
     }
     pub fn compile_all(&self) {
-        let map = Arc::clone(&self.tag_map);
         let links = Arc::clone(&self.backlinks);
         let pages = Arc::clone(&self.pages);
         write_entries(&pages, &self.backlinks, CompileState::Static);
-        write_tag_pages(map, &pages, CompileState::Static);
-        write_tag_index(Arc::clone(&self.tag_map), CompileState::Static);
         write_backlinks(links, CompileState::Static);
         write_index_page(read_config().general.user, CompileState::Static);
         let mut config_dir = get_config_location().0;
@@ -59,10 +54,9 @@ impl Builder {
             fs::create_dir_all("./public/tags").unwrap();
             fs::create_dir_all("./public/links").unwrap();
         }
-        let map = Arc::clone(&self.tag_map);
         let links = Arc::clone(&self.backlinks);
         let pages = Arc::clone(&self.pages);
-        parse_entries(PathBuf::from(wiki_location), map, links, pages);
+        parse_entries(PathBuf::from(wiki_location), links, pages);
     }
 }
 
@@ -72,22 +66,21 @@ impl Default for Builder {
     }
 }
 
-fn process_file(path: PathBuf, tags: TagMapping, backlinks: GlobalBacklinks, pages: ParsedPages) {
+fn process_file(path: PathBuf, backlinks: GlobalBacklinks, pages: ParsedPages) {
     let note = path_to_data_structure(&path).unwrap();
     let templatted = to_template(&note);
-    build_global_store(&templatted.page.title, &templatted.outlinks, backlinks, tags, &templatted.page.tags);
+    build_global_store(
+        &templatted.page.title,
+        &templatted.outlinks,
+        backlinks,
+        &templatted.page.tags,
+    );
     update_templatted_pages(templatted.page, pages);
 }
 
-fn parse_entries(
-    entrypoint: PathBuf,
-    tag_map: TagMapping,
-    backlinks: GlobalBacklinks,
-    rendered_pages: ParsedPages,
-) {
+fn parse_entries(entrypoint: PathBuf, backlinks: GlobalBacklinks, rendered_pages: ParsedPages) {
     let pool = ThreadPool::new(num_cpus::get());
     for entry in read_dir(entrypoint).unwrap() {
-        let tags = Arc::clone(&tag_map);
         let links = Arc::clone(&backlinks);
         let pages = Arc::clone(&rendered_pages);
         let entry = entry.unwrap();
@@ -95,12 +88,12 @@ fn parse_entries(
             && entry.file_name().to_str().unwrap().ends_with(".md")
         {
             pool.execute(move || {
-                process_file(entry.path(), tags, links, pages);
+                process_file(entry.path(), links, pages);
             });
         } else if entry.file_type().unwrap().is_dir()
             && !entry.path().to_str().unwrap().contains(".git")
         {
-            parse_entries(entry.path(), tags, links, pages);
+            parse_entries(entry.path(), links, pages);
         }
     }
     pool.join();
