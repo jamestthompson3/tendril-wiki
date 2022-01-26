@@ -17,17 +17,7 @@
   <body>
     <div class="content-container">
       <h1 class="title">Search</h1>
-      <form class="search-form" method="post" action="search" target="_parent">
-        <div class="search">
-          <label for="term">Search</label>
-          <input name="term" id="term" type="text" value="" />
-          <div class="search context">
-            <label for="context">context search</label>
-            <input type="checkbox" id="context" name="context" />
-          </div>
-          <button type="submit" class="submit">Search</button>
-        </div>
-      </form>
+      <%= include "search_form" %>
     </div>
     <%= include "footer" %>
     <script defer="true" src="/static/searchPage.js"></script>

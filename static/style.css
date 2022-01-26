@@ -444,3 +444,10 @@ button.submit {
 
   align-self: stretch;
 }
+
+mark {
+  background-color: var(--accent);
+  padding: 2px;
+  border-radius: var(--rad);
+  box-shadow: var(--shadow);
+}

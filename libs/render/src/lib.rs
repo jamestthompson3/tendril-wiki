@@ -18,7 +18,6 @@ pub mod link_page;
 pub mod login_page;
 pub mod new_page;
 pub mod search_page;
-pub mod search_results_context_page;
 pub mod search_results_page;
 pub mod styles_page;
 pub mod uploaded_files_page;
@@ -91,6 +90,7 @@ fn process_included_file(
                 .replace("<%= icon %>", &icon_path)
         }
         "footer" => get_template_file("footer").unwrap(),
+        "search_form" => get_template_file("search_form").unwrap(),
         _ => String::with_capacity(0),
     }
 }
