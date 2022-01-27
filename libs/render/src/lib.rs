@@ -17,7 +17,6 @@ pub mod index_page;
 pub mod link_page;
 pub mod login_page;
 pub mod new_page;
-pub mod search_page;
 pub mod search_results_page;
 pub mod styles_page;
 pub mod uploaded_files_page;

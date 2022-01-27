@@ -2,6 +2,7 @@ use std::{collections::HashMap, fs::read_dir};
 
 use crate::{normalize_wiki_location, path_to_reader};
 use futures::{stream, StreamExt};
+use tokio::task;
 
 pub type SearchResult = HashMap<String, Vec<String>>;
 
@@ -20,7 +21,7 @@ pub async fn context_search(term: &str, wiki_location: &str) -> Result<Vec<Searc
             if entry.file_type().unwrap().is_file() && name.ends_with(".md") {
                 let term = term.to_owned();
                 let name = String::from(name);
-                let join = tokio::spawn(async move {
+                let join = task::spawn(async move {
                     let mut result: SearchResult = HashMap::new();
                     let lines = path_to_reader::<_>(&entry.path());
                     let name = name.strip_suffix(".md").unwrap();
@@ -33,6 +34,7 @@ pub async fn context_search(term: &str, wiki_location: &str) -> Result<Vec<Searc
                             .match_indices(&term)
                             .collect::<Vec<(usize, &str)>>();
                         if !matches.is_empty() {
+                            // TODO: Solve weird highlight issues on same line matches
                             for (pointer, (idx, t)) in matches.into_iter().enumerate() {
                                 let current_pos = idx + (pointer * t.len()) + pointer;
                                 line.insert_str(current_pos, "<mark>");

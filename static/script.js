@@ -50,6 +50,14 @@
     }
   }
 
+  function search() {
+    const searchElement = document.getElementById("term");
+    if (searchElement) {
+      searchElement.focus();
+      searchElement.scrollIntoView();
+    }
+  }
+
   function jump(location) {
     const url = new URL(`/${location}`, window.location.origin);
     window.location.href = url;
@@ -81,7 +89,8 @@
         edit();
         break;
       case "/":
-        jump("search");
+        search();
+        e.preventDefault();
         break;
       case "n":
         jump("new");
