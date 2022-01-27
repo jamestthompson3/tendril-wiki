@@ -6,9 +6,6 @@ use tokio::task;
 
 pub type SearchResult = HashMap<String, Vec<String>>;
 
-// length of <mark> string
-const TAG_LENGTH: usize = 6;
-
 // Search for text within wiki pages
 pub async fn context_search(term: &str, wiki_location: &str) -> Result<Vec<SearchResult>, String> {
     let location = normalize_wiki_location(wiki_location);
@@ -29,20 +26,9 @@ pub async fn context_search(term: &str, wiki_location: &str) -> Result<Vec<Searc
                         result.insert(name.to_string(), vec![String::with_capacity(0)]);
                     }
                     for mut line in lines.unwrap() {
-                        let read_line = line.clone().to_lowercase();
-                        let matches = read_line
-                            .match_indices(&term)
-                            .collect::<Vec<(usize, &str)>>();
-                        if !matches.is_empty() {
-                            // TODO: Solve weird highlight issues on same line matches
-                            for (pointer, (idx, t)) in matches.into_iter().enumerate() {
-                                let current_pos = idx + (pointer * t.len()) + pointer;
-                                line.insert_str(current_pos, "<mark>");
-                                line.insert_str(
-                                    current_pos + TAG_LENGTH + t.len() + pointer,
-                                    "</mark>",
-                                );
-                            }
+                        let matches = line.to_lowercase().find(&term);
+                        if matches.is_some() {
+                            line = line.replace(&term, &format!("<mark>{}</mark>", term));
                             if let Some(entry) = result.get_mut(name) {
                                 entry.push(line);
                             } else {
