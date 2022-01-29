@@ -59,7 +59,7 @@ const CLOSE_TAG_LENGTH: usize = 7;
 fn search_lines(mut line: String, term: &str, result: &mut SearchResult, name: &str) {
     let readline = line.clone().to_lowercase();
     let matches = readline
-        .match_indices(&term)
+        .match_indices(&term.trim().to_lowercase())
         .collect::<Vec<(usize, &str)>>();
     if !matches.is_empty() {
         for (pointer, (idx, t)) in matches.into_iter().enumerate() {
@@ -84,6 +84,28 @@ mod tests {
     fn returns_a_single_match() {
         let line = String::from("Tests are helpful!");
         let term = "help";
+        let mut result: SearchResult = HashMap::new();
+        let name = "test_file";
+        search_lines(line, term, &mut result, name);
+        let inserted_match = result.get(name).unwrap();
+        assert_eq!(inserted_match, &vec!["Tests are <mark>help</mark>ful!"]);
+    }
+
+    #[test]
+    fn returns_a_single_match_trailing_spaces() {
+        let line = String::from("Tests are helpful!");
+        let term = " help ";
+        let mut result: SearchResult = HashMap::new();
+        let name = "test_file";
+        search_lines(line, term, &mut result, name);
+        let inserted_match = result.get(name).unwrap();
+        assert_eq!(inserted_match, &vec!["Tests are <mark>help</mark>ful!"]);
+    }
+
+    #[test]
+    fn returns_a_single_match_trailing_spaces_case_insensitive() {
+        let line = String::from("Tests are helpful!");
+        let term = " Help ";
         let mut result: SearchResult = HashMap::new();
         let name = "test_file";
         search_lines(line, term, &mut result, name);
