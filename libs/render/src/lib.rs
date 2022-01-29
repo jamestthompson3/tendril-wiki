@@ -30,6 +30,7 @@ pub trait Render {
 
 pub fn parse_includes(include_str: &str) -> String {
     let included_file = include_str
+        .trim()
         .strip_prefix("<%= include \"")
         .unwrap()
         .strip_suffix("\" %>")
@@ -96,8 +97,7 @@ fn process_included_file(
 
 pub fn render_includes(ctx: String, state: &CompileState, page: Option<&TemplattedPage>) -> String {
     let lines = ctx.lines().map(|line| {
-        let line = line.trim();
-        if line.starts_with("<%=") {
+        if line.contains("<%= include") {
             process_included_file(parse_includes(line), page, state)
         } else {
             line.to_string()

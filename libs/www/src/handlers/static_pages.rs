@@ -64,6 +64,7 @@ impl StaticPageRouter {
                 let (path, _) = get_config_location();
                 let style_location = path.join("userstyles.css");
                 let body = fs::read_to_string(style_location).unwrap();
+                let body = body.replace("\n", "\r\n");
                 let ctx = StylesPage { body };
                 warp::reply::html(ctx.render(&CompileState::Dynamic))
             }))
