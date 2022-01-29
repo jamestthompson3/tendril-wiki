@@ -2,11 +2,10 @@ use bytes::BufMut;
 use chrono::Local;
 use persistance::fs::{write, write_media};
 use render::{
-    search_results_context_page::SearchResultsContextPage, search_results_page::SearchResultsPage,
-    uploaded_files_page::UploadedFilesPage, Render,
+    search_results_page::SearchResultsPage, uploaded_files_page::UploadedFilesPage, Render,
 };
 use std::{collections::HashMap, fs::read_dir, time::Instant};
-use tasks::{context_search, search, CompileState};
+use tasks::{context_search, CompileState};
 use urlencoding::encode;
 
 use markdown::parsers::EditPageData;
@@ -106,7 +105,10 @@ pub async fn append(
     let parsed_data = form_body.get("body").unwrap();
     match create_journal_entry(wiki_location, parsed_data.to_string()) {
         Ok(()) => {
-            sender.send(("update".into(), format!("~~{}", daily_file))).await.unwrap();
+            sender
+                .send(("update".into(), format!("~~{}", daily_file)))
+                .await
+                .unwrap();
             log(format!("[quick-add]: {:?}", now.elapsed()));
             Ok(warp::redirect("/".parse::<Uri>().unwrap()))
         }
@@ -122,20 +124,11 @@ pub async fn note_search(
     wiki_location: String,
 ) -> Result<impl Reply, Rejection> {
     let term = form_body.get("term").unwrap();
-    let include_context = form_body.get("context");
-    match include_context {
-        Some(_) => {
-            let found_pages = context_search(term, &wiki_location).unwrap();
-            // TODO: Maybe not a separate page here?
-            let ctx = SearchResultsContextPage { pages: found_pages };
-            Ok(warp::reply::html(ctx.render(&CompileState::Dynamic)))
-        }
-        None => {
-            let found_pages = search(term, &wiki_location);
-            let ctx = SearchResultsPage { pages: found_pages };
-            Ok(warp::reply::html(ctx.render(&CompileState::Dynamic)))
-        }
-    }
+    let now = Instant::now();
+    let found_pages = context_search(term, &wiki_location).await.unwrap();
+    println!("Search took: {:?}", now.elapsed());
+    let ctx = SearchResultsPage { pages: found_pages };
+    Ok(warp::reply::html(ctx.render(&CompileState::Dynamic)))
 }
 
 pub async fn list_files(wiki_location: String) -> Result<impl Reply, Rejection> {

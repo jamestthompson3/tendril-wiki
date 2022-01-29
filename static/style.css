@@ -195,8 +195,7 @@ form.editor div {
   margin: auto;
 }
 
-.editor button,
-.search button {
+.editor button {
   height: auto;
   text-align: center;
   align-self: flex-end;
@@ -315,15 +314,31 @@ h6 {
 
 /** Navigation **/
 .navigation {
-  width: 60%;
-  margin: auto;
+  width: calc(60% + 2rem);
+  margin: 1rem auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+#mobile-nav ~ label {
+  display: none;
+}
+
+#mobile-nav {
+  display: none;
+}
+
+.navigation form {
+  flex: 1 1 auto;
 }
 
 .navigation ul {
   display: flex;
   padding: 0rem;
   margin: 0rem;
-  justify-content: flex-end;
+  justify-content: space-between;
   list-style: none;
 }
 
@@ -348,25 +363,22 @@ details {
 .search {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-end;
 }
 .search.context {
   display: flex;
   align-items: center;
   flex-direction: row;
 }
-.search > input[type="checkbox"] {
-  margin-left: 0.5rem;
-}
 .search > input[type="text"] {
-  width: 50%;
-  margin: 0.5rem auto;
   color: var(--text-color);
   background-color: var(--bg);
   border-radius: var(--rad);
   padding: 0.25rem;
-  border: 1px solid var(--primary-variant);
+  border: 0.5px solid var(--primary-variant);
   font-weight: bold;
+  width: 80%;
+  height: 25px;
 }
 
 /** File Uploader **/
@@ -443,4 +455,11 @@ button.submit {
   margin: 2rem auto;
 
   align-self: stretch;
+}
+
+mark {
+  background-color: var(--accent);
+  padding: 2px;
+  border-radius: var(--rad);
+  box-shadow: var(--shadow);
 }

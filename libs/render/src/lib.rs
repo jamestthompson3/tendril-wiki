@@ -17,8 +17,6 @@ pub mod index_page;
 pub mod link_page;
 pub mod login_page;
 pub mod new_page;
-pub mod search_page;
-pub mod search_results_context_page;
 pub mod search_results_page;
 pub mod styles_page;
 pub mod uploaded_files_page;
@@ -32,6 +30,7 @@ pub trait Render {
 
 pub fn parse_includes(include_str: &str) -> String {
     let included_file = include_str
+        .trim()
         .strip_prefix("<%= include \"")
         .unwrap()
         .strip_suffix("\" %>")
@@ -91,14 +90,14 @@ fn process_included_file(
                 .replace("<%= icon %>", &icon_path)
         }
         "footer" => get_template_file("footer").unwrap(),
+        "search_form" => get_template_file("search_form").unwrap(),
         _ => String::with_capacity(0),
     }
 }
 
 pub fn render_includes(ctx: String, state: &CompileState, page: Option<&TemplattedPage>) -> String {
     let lines = ctx.lines().map(|line| {
-        let line = line.trim();
-        if line.starts_with("<%=") {
+        if line.contains("<%= include") {
             process_included_file(parse_includes(line), page, state)
         } else {
             line.to_string()

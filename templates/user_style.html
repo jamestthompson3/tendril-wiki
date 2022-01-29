@@ -54,8 +54,8 @@
             <td>background color for main wiki text</td>
           </tr>
           <tr>
-            <td>--bg-darker darker</td>
-            <td>background for page</td>
+            <td>--bg-darker</td>
+            <td>darker background for page</td>
           </tr>
           <tr>
             <td>--shadow</td>
@@ -83,9 +83,7 @@
       >
         <button type="submit">Save</button>
         <label for="body">Styles</label>
-        <textarea id="body" name="body">
-          <%= body %>
-        </textarea>
+        <textarea id="body" name="body"><%= body %></textarea>
       </form>
     </div>
     <%= include "footer" %>

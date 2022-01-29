@@ -3,7 +3,7 @@ use std::{fs, sync::Arc};
 use build::get_config_location;
 use render::{
     file_upload_page::FileUploader, help_page::HelpPage, index_page::IndexPage,
-    search_page::SearchPage, styles_page::StylesPage, Render,
+    styles_page::StylesPage, Render,
 };
 use tasks::CompileState;
 use warp::{filters::BoxedFilter, Filter, Reply};
@@ -20,21 +20,9 @@ pub struct StaticPageRouter {
 impl StaticPageRouter {
     pub fn routes(&self) -> BoxedFilter<(impl Reply,)> {
         self.file_list()
-            .or(self.search())
             .or(self.upload())
             .or(self.help())
             .or(self.styles())
-            .boxed()
-    }
-
-    fn search(&self) -> BoxedFilter<(impl Reply,)> {
-        warp::get()
-            .and(with_auth())
-            .and(warp::path("search"))
-            .map(|| {
-                let ctx = SearchPage {};
-                warp::reply::html(ctx.render(&CompileState::Dynamic))
-            })
             .boxed()
     }
 
@@ -76,6 +64,7 @@ impl StaticPageRouter {
                 let (path, _) = get_config_location();
                 let style_location = path.join("userstyles.css");
                 let body = fs::read_to_string(style_location).unwrap();
+                let body = body.replace("\n", "\r\n");
                 let ctx = StylesPage { body };
                 warp::reply::html(ctx.render(&CompileState::Dynamic))
             }))
