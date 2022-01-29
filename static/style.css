@@ -322,6 +322,14 @@ h6 {
   flex-wrap: wrap;
 }
 
+#mobile-nav ~ label {
+  display: none;
+}
+
+#mobile-nav {
+  display: none;
+}
+
 .navigation form {
   flex: 1 1 auto;
 }

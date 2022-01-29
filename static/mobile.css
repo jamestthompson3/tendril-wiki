@@ -26,6 +26,30 @@ h4 {
   width: unset;
 }
 
+.navigation nav {
+  width: 100%;
+  display: none;
+}
+
+#mobile-nav:checked ~ nav {
+  display: block;
+}
+
+#mobile-nav ~ label {
+  padding: 0.5rem;
+  display: block;
+}
+
+#mobile-nav ~ label:before {
+  font-size: 2rem;
+  content: "Δ";
+}
+
+#mobile-nav:checked ~ label:before {
+  content: "∇";
+  font-size: 2rem;
+}
+
 .navigation ul {
   flex-wrap: wrap;
   justify-content: space-evenly;
@@ -33,11 +57,13 @@ h4 {
 }
 
 .navigation ul > li {
-  margin: 0.5rem 0rem;
+  padding: 0.5rem;
+  text-align: center;
 }
 
 .search {
   align-items: center;
+  margin: 0.5rem auto;
 }
 
 .footer {
