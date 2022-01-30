@@ -81,6 +81,7 @@ impl<'a> Render for WikiPage<'a> {
             None => Vec::new(),
         };
         backlinks.dedup();
+        backlinks.sort_unstable();
         let tag_string = page
             .tags
             .iter()
