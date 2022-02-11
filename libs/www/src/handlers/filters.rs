@@ -74,6 +74,9 @@ pub async fn check_auth(token: Option<String>) -> AuthResult<()> {
         return Err(warp::reject::custom(AuthError::AuthNotPresent));
     }
     let token = token.unwrap();
+    if token.is_empty() {
+        return Err(warp::reject::custom(AuthError::AuthNotPresent));
+    }
     jsonwebtoken::decode::<Claims>(
         &token,
         &DecodingKey::from_secret(config.general.pass.as_bytes()),

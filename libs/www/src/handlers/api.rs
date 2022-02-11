@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use warp::{Filter, Rejection, Reply};
 
-use crate::controllers::{authorize, file, image, note_search, update_styles};
+use crate::controllers::{authorize, file, image, note_search, update_styles, unauthorize};
 
 use super::{
     filters::{with_auth, with_location},
@@ -17,6 +17,7 @@ pub struct APIRouter {
 impl APIRouter {
     pub fn routes(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
         self.login()
+            .or(self.logout())
             .or(self.styles())
             .or(self.img())
             .or(self.files())
@@ -57,6 +58,9 @@ impl APIRouter {
                 .and(warp::body::form())
                 .and_then(authorize),
         )
+    }
+    fn logout(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+        warp::get().and(warp::path("logout")).and_then(unauthorize)
     }
     fn styles(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
         warp::path("styles").and(

@@ -1,5 +1,5 @@
 use bytes::BufMut;
-use chrono::Local;
+use chrono::prelude::*;
 use persistance::fs::{write, write_media};
 use render::{
     search_results_page::SearchResultsPage, uploaded_files_page::UploadedFilesPage, Render,
@@ -193,4 +193,15 @@ pub async fn authorize(form_body: HashMap<String, String>) -> Result<impl Reply,
                 .body("ok"))
         }
     }
+}
+
+pub async fn unauthorize() -> Result<impl Reply, Rejection> {
+    Ok(Response::builder()
+        .status(StatusCode::MOVED_PERMANENTLY)
+        .header(header::LOCATION, HeaderValue::from_static("/"))
+        .header(
+            header::SET_COOKIE,
+            "token=; Secure; HttpOnly; Max-Age=0; Path=/",
+        )
+        .body("ok"))
 }
