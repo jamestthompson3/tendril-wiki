@@ -10,6 +10,12 @@ impl LoginPage {
     }
 }
 
+impl Default for LoginPage {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Render for LoginPage {
     fn render(&self, state: &CompileState) -> String {
         let ctx = get_template_file("login").unwrap();

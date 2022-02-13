@@ -114,6 +114,7 @@ impl From<String> for NoteMeta {
     }
 }
 
+#[allow(clippy::from_over_into)]
 impl Into<String> for NoteMeta {
     fn into(self) -> String {
         let mut formatted_string = String::from("---\n");

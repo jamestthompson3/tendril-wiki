@@ -17,13 +17,13 @@ pub fn create_journal_entry(mut location: String, entry: String) -> Result<(), s
 ---
 title: {}
 tags: [daily notes]
-created: {}
+created: {:?}
 ---
-[{}] {}
+[{:?}] {}
     "#,
             daily_file,
-            now.to_string(),
-            now.format("%H:%M").to_string(),
+            now,
+            now.format("%H:%M"),
             entry
         );
         location.push_str(&daily_file);

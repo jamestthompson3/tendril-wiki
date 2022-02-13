@@ -10,6 +10,12 @@ impl HelpPage {
     }
 }
 
+impl Default for HelpPage {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Render for HelpPage {
     fn render(&self, state: &CompileState) -> String {
         let ctx = get_template_file("help").unwrap();

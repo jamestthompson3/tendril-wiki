@@ -4,6 +4,12 @@ use crate::{get_template_file, render_includes, Render};
 
 pub struct FileUploader {}
 
+impl Default for FileUploader {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl FileUploader {
     pub fn new() -> Self {
         FileUploader {}

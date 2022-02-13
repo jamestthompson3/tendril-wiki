@@ -91,10 +91,9 @@ fn print_version() {
 
 fn print_help() {
     println!(
-        "\nConfig file found at {}\nInstall files found at {}\n",
-        format!("\x1b[38;5;47m{:#?}\x1b[0m", get_config_location().0),
-        format!("\x1b[38;5;37m{:#?}\x1b[0m", get_data_dir_location())
-    );
+        "\nConfig file found at \x1b[38;5;47m{:#?}\x1b[0m\nInstall files found at \x1b[38;5;37m{:#?}\x1b[0m\n",
+        get_config_location().0,
+        get_data_dir_location());
     print!(
         "Usage: tendril [options]
         Options:
