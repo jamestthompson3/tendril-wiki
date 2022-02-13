@@ -1,7 +1,8 @@
 use build::{
     build_tags_and_links, config::read_config, create_journal_entry, delete_from_global_store,
-    get_config_location, get_data_dir_location, install, pages::Builder, update,
-    update_global_store, RefHub, RefHubRx, RefHubTx,
+    get_config_location, get_data_dir_location, install, pages::Builder, purge_file,
+    rename_in_global_store, update, update_global_store, update_mru_cache, RefHub, RefHubRx,
+    RefHubTx,
 };
 use std::{path::PathBuf, process::exit, time::Instant};
 use tasks::{git_update, normalize_wiki_location, sync};
@@ -69,12 +70,27 @@ async fn main() {
                         build_tags_and_links(&location, watcher_links.clone()).await;
                     }
                     "update" => {
-                        update_global_store(&file, &location, watcher_links.clone());
+                        if let [old_title, current_title] =
+                            file.split("~~").collect::<Vec<&str>>()[..]
+                        {
+                            update_global_store(current_title, &location, watcher_links.clone());
+
+                            if !old_title.is_empty() && old_title != current_title {
+                                rename_in_global_store(
+                                    current_title,
+                                    old_title,
+                                    &location,
+                                    watcher_links.clone(),
+                                );
+                                update_mru_cache(old_title, current_title);
+                            }
+                        }
                     }
                     "delete" => {
                         // TODO: figure out why making this async causes the tokio::spawn call to
                         // give compiler errors.
                         delete_from_global_store(&file, &location, watcher_links.clone());
+                        purge_file(&location, &file)
                     }
                     _ => {}
                 }

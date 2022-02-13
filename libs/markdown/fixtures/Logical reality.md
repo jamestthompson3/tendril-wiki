@@ -1,0 +1,8 @@
+---
+created: 20201123105644661
+modified: 20201123202524363
+tags: [Article]
+title: Logical reality
+---
+
+Some placeholder text. [[wiki page]]
