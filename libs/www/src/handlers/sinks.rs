@@ -1,8 +1,5 @@
 use persistance::fs::{read, ReadPageError};
-use render::{
-    link_page::LinkPage, new_page::NewPage,
-    GlobalBacklinks, Render
-};
+use render::{link_page::LinkPage, new_page::NewPage, GlobalBacklinks, Render};
 use std::{collections::HashMap, time::Instant};
 use tasks::CompileState;
 

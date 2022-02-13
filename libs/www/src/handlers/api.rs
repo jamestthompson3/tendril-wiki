@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use warp::{Filter, Rejection, Reply};
 
-use crate::controllers::{authorize, file, image, note_search, update_styles, unauthorize};
+use crate::controllers::{authorize, file, image, note_search, unauthorize, update_styles};
 
 use super::{
     filters::{with_auth, with_location},

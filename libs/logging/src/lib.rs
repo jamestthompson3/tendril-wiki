@@ -13,7 +13,7 @@ pub fn pink(msg: &str) {
 
 // #[cfg(debug_assertions)]
 // #[cfg(feature = "logging")]
-pub fn log(snippet:String) {
+pub fn log(snippet: String) {
     println!("{}", snippet);
 }
 

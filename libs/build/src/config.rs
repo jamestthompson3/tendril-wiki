@@ -10,7 +10,14 @@ use rpassword::read_password_from_tty;
 use serde_derive::{Deserialize, Serialize};
 use tasks::parse_location;
 
-pub type ConfigOptions = (PathBuf, PathBuf, bool, Option<String>, String, Option<String>);
+pub type ConfigOptions = (
+    PathBuf,
+    PathBuf,
+    bool,
+    Option<String>,
+    String,
+    Option<String>,
+);
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Sync {
@@ -106,14 +113,16 @@ pub fn gen_config_interactive() -> ConfigOptions {
     }
     let mut branch: Option<String> = None;
     if let Some(git_branch) = git_branch {
-    if git_branch == "\n" {
-        branch = Some("main".into());
-    } else {
-        branch = Some(git_branch
-            .strip_suffix('\n')
-            .unwrap_or(&git_branch)
-            .to_owned());
-    }
+        if git_branch == "\n" {
+            branch = Some("main".into());
+        } else {
+            branch = Some(
+                git_branch
+                    .strip_suffix('\n')
+                    .unwrap_or(&git_branch)
+                    .to_owned(),
+            );
+        }
     }
     let user: String;
     if username == "\n" {

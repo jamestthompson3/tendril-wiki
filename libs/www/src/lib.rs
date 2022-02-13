@@ -1,7 +1,7 @@
-use ::build::{config::General,  RefHubTx};
+use ::build::{config::General, RefHubTx};
 
 #[cfg(not(debug_assertions))]
-use ::build:: get_data_dir_location;
+use ::build::get_data_dir_location;
 
 use render::GlobalBacklinks;
 use std::{path::PathBuf, sync::Arc};

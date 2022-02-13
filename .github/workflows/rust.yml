@@ -20,6 +20,7 @@ jobs:
             nextest-platform: linux
         rust-version: [stable]
     steps:
+      - uses: actions/checkout@v2
       - name: Install latest nextest release
         # The following line is required for Windows compatibility
         shell: bash

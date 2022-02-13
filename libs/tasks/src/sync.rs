@@ -4,8 +4,8 @@ use std::{
     time::Duration,
 };
 
-use tokio::{task::spawn, sync::mpsc::Sender};
 use tokio::time::sleep;
+use tokio::{sync::mpsc::Sender, task::spawn};
 
 struct Git {
     repo_location: String,
@@ -89,13 +89,21 @@ impl Git {
                 self.commit();
                 self.push(&branch);
             }
-            sender.send(("rebuild".into(), String::new())).await.unwrap();
+            sender
+                .send(("rebuild".into(), String::new()))
+                .await
+                .unwrap();
             sleep(Duration::from_secs(sync_interval.into())).await
         }
     }
 }
 
-pub async fn sync(wiki_location: &str, sync_interval: u8, branch: String, sender: Sender<(String, String)>) {
+pub async fn sync(
+    wiki_location: &str,
+    sync_interval: u8,
+    branch: String,
+    sender: Sender<(String, String)>,
+) {
     let git = Git::new(wiki_location.to_owned());
     spawn(async move { git.sync(sync_interval, branch, sender).await });
 }

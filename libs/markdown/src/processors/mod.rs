@@ -1,6 +1,4 @@
-use crate::parsers::{
-    to_html, NoteMeta, ParsedPages, ParsedTemplate, TemplattedPage,
-};
+use crate::parsers::{to_html, NoteMeta, ParsedPages, ParsedTemplate, TemplattedPage};
 
 pub mod tags;
 

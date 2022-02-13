@@ -67,7 +67,7 @@ impl WikiPageRouter {
     }
 
     fn delete(&self) -> BoxedFilter<(impl Reply,)> {
-        let (_,  sender) = &self.parts;
+        let (_, sender) = &self.parts;
         warp::post()
             .and(with_auth())
             .and(warp::path("delete"))
@@ -97,7 +97,7 @@ impl WikiPageRouter {
     }
 
     fn edit(&self) -> BoxedFilter<(impl Reply,)> {
-        let (_,  sender) = &self.parts;
+        let (_, sender) = &self.parts;
         warp::post()
             .and(with_auth())
             .and(
@@ -114,7 +114,7 @@ impl WikiPageRouter {
     }
 
     fn quick_add(&self) -> BoxedFilter<(impl Reply,)> {
-        let (_,  sender) = &self.parts;
+        let (_, sender) = &self.parts;
         warp::post()
             .and(with_auth())
             .and(
