@@ -2,19 +2,30 @@ name: Build And Test
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
   build:
-
-    runs-on: ubuntu-latest
-
+    name: Run tests
+    runs-on: ${{ matrix.os.runs-on }}
+    strategy:
+      matrix:
+        os:
+          - runs-on: ubuntu-latest
+            nextest-platform: linux
+        rust-version: [stable]
     steps:
-    - uses: actions/checkout@v2
-    - name: Run tests
-      run: cargo test --verbose
+      - name: Install latest nextest release
+        # The following line is required for Windows compatibility
+        shell: bash
+        run: |
+          curl -LsSf https://get.nexte.st/latest/${{ matrix.os.nextest-platform }} | \
+            tar zxf - -C ${CARGO_HOME:-~/.cargo}/bin
+      - name: Test with latest nextest release
+        run: |
+          cargo nextest run
