@@ -181,16 +181,19 @@ pub async fn authorize(form_body: HashMap<String, String>) -> Result<impl Reply,
             .body("ok")),
         Err(e) => {
             let status: StatusCode;
+            let body: &str;
             if let AuthError::JWTDecodeError = e {
                 status = StatusCode::BAD_REQUEST;
+                body = "Could not process request";
             } else {
                 status = StatusCode::FORBIDDEN;
+                body = "Invalid username or password";
             }
             // Response::builder().body("Bad creds".into())
             Ok(Response::builder()
                 .status(status)
                 .header(header::LOCATION, HeaderValue::from_static("/"))
-                .body("ok"))
+                .body(body))
         }
     }
 }
