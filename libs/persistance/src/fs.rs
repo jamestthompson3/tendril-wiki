@@ -1,6 +1,6 @@
 use std::{fs, io, path::PathBuf};
 
-use chrono::Local;
+use chrono::{DateTime, FixedOffset, Local};
 use directories::ProjectDirs;
 use markdown::{
     parsers::{parse_meta, path_to_data_structure, EditPageData, NoteMeta, ParsedPages},
@@ -34,6 +34,8 @@ pub enum ReadPageError {
     Unknown,
 }
 
+const DT_FORMAT: &str = "%Y%m%d%H%M%S";
+
 pub fn write_media(file_location: &str, bytes: &[u8]) -> Result<(), io::Error> {
     fs::write(file_location, bytes)?;
     Ok(())
@@ -53,9 +55,9 @@ pub fn write(wiki_location: &str, data: EditPageData) -> Result<(), WriteWikiErr
     // In the case that we're creating a new file
     if !PathBuf::from(&file_location).exists() {
         let mut note_meta = NoteMeta::from(data);
-        note_meta
-            .metadata
-            .insert("created".into(), Local::now().to_string());
+        let now = Local::now().format(DT_FORMAT).to_string();
+        note_meta.metadata.insert("created".into(), now.clone());
+        note_meta.metadata.insert("id".into(), now);
         let note: String = note_meta.into();
         return match fs::write(file_location, note) {
             Ok(()) => Ok(()),
@@ -71,14 +73,30 @@ pub fn write(wiki_location: &str, data: EditPageData) -> Result<(), WriteWikiErr
     // FIXME: relying on the metadata title attribute when making the template when
     // the path is used everywhere else isn't great...
     note_meta.metadata = data.metadata;
+    let now = Local::now().format(DT_FORMAT).to_string();
     note_meta
         .metadata
         .insert("title".into(), data.title.clone());
     // Update last edited time
-    note_meta
-        .metadata
-        .insert("modified".into(), Local::now().to_string());
+    note_meta.metadata.insert("modified".into(), now.clone());
 
+    let created = note_meta.metadata.get("created");
+
+    if created.is_none() {
+        note_meta.metadata.insert("created".into(), now.clone());
+        note_meta.metadata.insert("id".into(), now);
+    }
+    if note_meta.metadata.get("id").is_none() {
+        let created_time = note_meta.metadata.get("created").unwrap().to_owned();
+        note_meta.metadata.insert(
+            "id".into(),
+            created_time
+                .parse::<DateTime<FixedOffset>>()
+                .unwrap()
+                .format(DT_FORMAT)
+                .to_string(),
+        );
+    }
     let updated_tags: TagsArray = data.tags.into();
 
     note_meta
