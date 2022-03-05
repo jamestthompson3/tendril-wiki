@@ -27,6 +27,10 @@ pub async fn server(config: General, parts: RefHubParts) {
         parts,
         wiki_location: wiki_location.clone(),
     };
+
+    let task_router = TaskPageRouter {
+        wiki_location: wiki_location.clone(),
+    };
     let static_files_router = StaticFileRouter {
         media_location: media_location.clone(),
     };
@@ -39,6 +43,7 @@ pub async fn server(config: General, parts: RefHubParts) {
         .routes()
         .or(static_page_router.routes())
         .or(api_router.routes())
+        .or(task_router.routes())
         .or(wiki_router.routes())
         .or(static_page_router.index())
         .recover(handle_rejection);

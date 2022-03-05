@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en-US" prefix="og:http://ogp.me/ns#">
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    <%= include "styles" %>
+    <meta property="og:title" content="Todo List" />
+    <meta property="og:type" content="website" />
+    <link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon" />
+    <link rel="icon" href="/static/favicon.ico"" type="image/x-icon" />
+    <title>Tasks</title>
+    <style>
+      table {
+        margin: auto;
+        width: 80%;
+      }
+    </style>
+  </head>
+  <body>
+    <%= include "nav" %>
+    <div class="content-container">
+      <h4>Current Tasks</h4>
+      <table>
+        <thead>
+          <tr>
+            <td>Status</td>
+            <td>Created</td>
+            <td>Priority</td>
+            <td>Content</td>
+            <td>Project</td>
+            <td>Context</td>
+            <td>Metadata</td>
+          </tr>
+        </thead>
+        <tbody>
+          <%= tasks %>
+        </tbody>
+      </table>
+    </div>
+  </body>
+</html>

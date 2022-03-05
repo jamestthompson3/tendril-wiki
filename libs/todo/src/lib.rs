@@ -19,13 +19,13 @@ lazy_static! {
 
 #[derive(Debug, PartialEq)]
 pub struct Task {
-    priority: Option<String>,
-    project: Vec<String>,
-    context: Vec<String>,
-    body: String,
-    completed: (bool, Option<String>),
-    created: Option<String>,
-    metadata: HashMap<String, String>,
+    pub priority: Option<String>,
+    pub project: Vec<String>,
+    pub context: Vec<String>,
+    pub body: String,
+    pub completed: (bool, Option<String>),
+    pub created: Option<String>,
+    pub metadata: HashMap<String, String>,
 }
 
 impl From<&str> for Task {

@@ -21,6 +21,7 @@ pub mod login_page;
 pub mod new_page;
 pub mod search_results_page;
 pub mod styles_page;
+pub mod tasks_page;
 pub mod uploaded_files_page;
 pub mod wiki_page;
 
