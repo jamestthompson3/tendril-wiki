@@ -1,4 +1,5 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, str::FromStr};
+use thiserror::Error;
 
 use regex::Regex;
 #[macro_use]
@@ -9,12 +10,20 @@ extern crate lazy_static;
 
 lazy_static! {
     static ref PRIO_RGX: Regex = Regex::new(r"\([[:upper:]]\)\s").unwrap();
-    static ref PROJ_RGX: Regex = Regex::new(r"\+\S+").unwrap();
-    static ref CTX_RGX: Regex = Regex::new(r"@\S+").unwrap();
+    static ref PROJ_RGX: Regex = Regex::new(r"(^\+|\s\+)\S+").unwrap();
+    static ref CTX_RGX: Regex = Regex::new(r"(^@|\s@)\S+").unwrap();
     static ref META_RGX: Regex = Regex::new(r"\S+:\S+").unwrap();
-    static ref CREATE_RGX: Regex = Regex::new(r"^(\([[:upper:]]\)\s)?(\d{4}-\d{2}-\d{2})").unwrap();
+    // NOTE: This would be easier if the regex crate supported look behinds
+    static ref CREATE_RGX: Regex = Regex::new(r"(?:^\([[:upper:]]\)\s)(\d{4}-\d{2}-\d{2})|(^\d{4}-\d{2}-\d{2})").unwrap();
+    static ref DATE_RGX: Regex = Regex::new(r"^\d{4}-\d{2}-\d{2}").unwrap();
     static ref DONE_RGX: Regex =
         Regex::new(r"^x\s\d{4}-\d{2}-\d{2}\s(\([[:upper:]]\)|\d{4}-\d{2}-\d{2})?").unwrap();
+}
+
+#[derive(Error, Debug)]
+pub enum TaskParseErr {
+    #[error("Could not parse &str")]
+    StrParseFail,
 }
 
 #[derive(Debug, PartialEq)]
@@ -28,15 +37,16 @@ pub struct Task {
     pub metadata: HashMap<String, String>,
 }
 
-impl From<&str> for Task {
-    fn from(s: &str) -> Task {
+impl FromStr for Task {
+    type Err = TaskParseErr;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         let completed = parse_completed(s);
         let project = parse_project(s);
         let context = parse_context(s);
         let priority = parse_priority(s);
         let metadata = parse_meta(s);
         let created = parse_created(s);
-        Task {
+        Ok(Task {
             completed,
             created,
             project,
@@ -44,7 +54,94 @@ impl From<&str> for Task {
             context,
             metadata,
             body: s.into(),
+        })
+    }
+}
+
+impl Task {
+    pub fn to_html(&self) -> String {
+        let mut html = String::new();
+        let status = self.format_status();
+        let priority = self
+            .priority
+            .to_owned()
+            .unwrap_or_else(|| String::with_capacity(0));
+        let created = self
+            .created
+            .to_owned()
+            .unwrap_or_else(|| String::with_capacity(0));
+        let metadata = self.format_metadata();
+        let body = self.format_body();
+        let table_html = format!(
+            r#"<tr><td tabindex="-1">{}</td><td tabindex="-1">{}</td><td tabindex="-1">{}</td><td tabindex="-1">{}</td><td tabindex="-1">{}</td></tr>"#,
+            status, priority, created, body, metadata
+        );
+        html.push_str(&table_html);
+        html
+    }
+
+    fn format_body(&self) -> String {
+        let mut formatted = self.body.clone();
+        if let Some(prio) = &self.priority {
+            formatted = formatted.replace(&format!("({})", prio), "");
         }
+        let is_complete = &self.completed.0;
+        if *is_complete {
+            formatted = formatted.strip_prefix("x ").unwrap().into();
+            let completion_date = &self.completed.1.as_ref();
+            if completion_date.is_some() {
+                let completion_date = completion_date.unwrap();
+                formatted = formatted.replace(completion_date, "");
+            }
+        }
+        if let Some(created) = &self.created {
+            formatted = formatted.replace(created, "");
+        }
+        for p in &self.project {
+            let project_fmt = self.format_contextual_data(p, '+');
+            formatted = formatted.replace(p, &project_fmt);
+        }
+
+        for c in &self.context {
+            let ctx_fmt = self.format_contextual_data(c, '@');
+            formatted = formatted.replace(c, &ctx_fmt);
+        }
+        formatted
+    }
+
+    fn format_status(&self) -> String {
+        let (done, date) = &self.completed;
+        if let true = done {
+            if date.is_some() {
+                format!("✅ {}", date.as_ref().unwrap())
+            } else {
+                "✅".into()
+            }
+        } else {
+            String::with_capacity(0)
+        }
+    }
+    fn format_contextual_data(&self, context: &str, prefix: char) -> String {
+        let css_class = match prefix {
+            '+' => "project",
+            '@' => "context",
+            _ => panic!("Invalid prefix: {}", prefix),
+        };
+        format!(
+            r#"<a href="{}" target="_blank" class="{}">{}</a>"#,
+            context.strip_prefix(prefix).unwrap(),
+            css_class,
+            context
+        )
+    }
+    fn format_metadata(&self) -> String {
+        self.metadata
+            .iter()
+            .fold(String::new(), |mut formatted_str, (key, value)| {
+                let ctx_string = format!("<strong>{}:</strong> {}", key, value);
+                formatted_str.push_str(&ctx_string);
+                formatted_str
+            })
     }
 }
 
@@ -61,12 +158,41 @@ fn parse_completed(s: &str) -> (bool, Option<String>) {
 }
 
 fn parse_created(s: &str) -> Option<String> {
+    if s.starts_with("x ") {
+        let mut sliced = s.replace("x ", "");
+        if DATE_RGX.is_match_at(&sliced, 0) {
+            let (_, completed_removed) = sliced.split_at_mut(11);
+            capture_created(completed_removed)
+        } else {
+            capture_created(&sliced)
+        }
+    } else {
+        capture_created(s)
+    }
+}
+
+fn capture_created(s: &str) -> Option<String> {
     let created_found = CREATE_RGX.captures(s);
     if let Some(found) = created_found {
-        let found = found.get(2).unwrap();
-        let created = found.as_str();
-        let created = created.trim();
-        Some(String::from(created))
+        // we don't know which capture group caught the date, so let's check both one and two
+        if let Some(cap_group) = found.get(1) {
+            if DATE_RGX.is_match(cap_group.as_str()) {
+                let created = cap_group.as_str();
+                let created = created.trim();
+                return Some(String::from(created));
+            }
+        }
+        if let Some(cap_group) = found.get(2) {
+            if DATE_RGX.is_match(cap_group.as_str()) {
+                let created = cap_group.as_str();
+                let created = created.trim();
+                Some(String::from(created))
+            } else {
+                None
+            }
+        } else {
+            None
+        }
     } else {
         None
     }
@@ -91,10 +217,7 @@ fn parse_priority(s: &str) -> Option<String> {
 fn parse_project(s: &str) -> Vec<String> {
     PROJ_RGX
         .find_iter(s)
-        .map(|m| {
-            let found = m.as_str();
-            found.strip_prefix('+').unwrap()
-        })
+        .map(|m| m.as_str().trim())
         .map(|s| s.into())
         .collect()
 }
@@ -102,10 +225,7 @@ fn parse_project(s: &str) -> Vec<String> {
 fn parse_context(s: &str) -> Vec<String> {
     CTX_RGX
         .find_iter(s)
-        .map(|m| {
-            let found = m.as_str();
-            found.strip_prefix('@').unwrap()
-        })
+        .map(|m| m.as_str().trim())
         .map(|s| s.into())
         .collect()
 }
@@ -177,21 +297,29 @@ mod tests {
         let test_line = "2011-03-03 Call Mom";
         let parsed = parse_created(test_line);
         assert_eq!(Some(String::from("2011-03-03")), parsed);
+
+        let test_line = "x (A) 2011-03-03 Call Mom";
+        let parsed = parse_created(test_line);
+        assert_eq!(Some(String::from("2011-03-03")), parsed);
+
+        let test_line = "x 2011-03-04 (A) 2011-03-03 Call Mom";
+        let parsed = parse_created(test_line);
+        assert_eq!(Some(String::from("2011-03-03")), parsed);
     }
 
     #[test]
     fn parses_project() {
         let test_line = "+wiki update tags";
         let parsed = parse_project(test_line);
-        assert_eq!(parsed, vec!["wiki"]);
+        assert_eq!(parsed, vec!["+wiki"]);
 
         let multi_project_tags = "+wiki +update +tags";
         let parsed = parse_project(multi_project_tags);
-        assert_eq!(parsed, vec!["wiki", "update", "tags"]);
+        assert_eq!(parsed, vec!["+wiki", "+update", "+tags"]);
 
         let middle_ctx = "wiki update tags +pkb";
         let parsed = parse_project(middle_ctx);
-        assert_eq!(parsed, vec!["pkb"]);
+        assert_eq!(parsed, vec!["+pkb"]);
 
         let no_proj = "wiki update tags pkb";
         let parsed = parse_project(no_proj);
@@ -200,23 +328,33 @@ mod tests {
 
         let middle_ctx = "+wiki-update +tags_pkb";
         let parsed = parse_project(middle_ctx);
-        assert_eq!(parsed, vec!["wiki-update", "tags_pkb"]);
+        assert_eq!(parsed, vec!["+wiki-update", "+tags_pkb"]);
+
+        let middle_ctx = "Learn how to add 2+2";
+        let parsed = parse_project(middle_ctx);
+        assert_eq!(parsed, empty_vec);
     }
     #[test]
     fn parses_context() {
         let test_line = "integrate todos into @tendril-wiki";
         let parsed = parse_context(test_line);
-        assert_eq!(parsed, vec!["tendril-wiki"]);
+        assert_eq!(parsed, vec!["@tendril-wiki"]);
 
         let test_line = "integrate todos into @wiki";
         let parsed = parse_context(test_line);
-        assert_eq!(parsed, vec!["wiki"]);
+        assert_eq!(parsed, vec!["@wiki"]);
 
+        // FIXME
         let test_line = "@wiki_page todos need work";
         let parsed = parse_context(test_line);
-        assert_eq!(parsed, vec!["wiki_page"]);
+        assert_eq!(parsed, vec!["@wiki_page"]);
 
         let test_line = "integrate todos into wiki_page";
+        let parsed = parse_context(test_line);
+        let empty_vec: Vec<String> = Vec::new();
+        assert_eq!(parsed, empty_vec);
+
+        let test_line = "Email SoAndSo at soandso@example.com";
         let parsed = parse_context(test_line);
         let empty_vec: Vec<String> = Vec::new();
         assert_eq!(parsed, empty_vec);
@@ -236,7 +374,7 @@ mod tests {
     #[test]
     fn parses_full_task() {
         let test_line = "reticulate splines due:2022-03-14";
-        let task = Task::from(test_line);
+        let task = Task::from_str(test_line).unwrap();
         let expected_task = Task {
             completed: (false, None),
             project: Vec::new(),
@@ -249,11 +387,11 @@ mod tests {
         assert_eq!(task, expected_task);
 
         let test_line = "x implement todos +tendril-wiki";
-        let task = Task::from(test_line);
+        let task = Task::from_str(test_line).unwrap();
         let expected_task = Task {
             completed: (true, None),
             created: None,
-            project: vec!["tendril-wiki".into()],
+            project: vec!["+tendril-wiki".into()],
             context: Vec::new(),
             priority: None,
             metadata: HashMap::new(),
@@ -262,12 +400,12 @@ mod tests {
         assert_eq!(task, expected_task);
 
         let test_line = "(A) implement todo viewer +tendril-wiki @ui-ux";
-        let task = Task::from(test_line);
+        let task = Task::from_str(test_line).unwrap();
         let expected_task = Task {
             completed: (false, None),
             created: None,
-            project: vec!["tendril-wiki".into()],
-            context: vec!["ui-ux".into()],
+            project: vec!["+tendril-wiki".into()],
+            context: vec!["@ui-ux".into()],
             priority: Some("A".into()),
             metadata: HashMap::new(),
             body: test_line.into(),
@@ -275,12 +413,12 @@ mod tests {
         assert_eq!(task, expected_task);
 
         let test_line = "(A) implement todo viewer +tendril-wiki @ui-ux due:2022-04-01";
-        let task = Task::from(test_line);
+        let task = Task::from_str(test_line).unwrap();
         let expected_task = Task {
             completed: (false, None),
             created: None,
-            project: vec!["tendril-wiki".into()],
-            context: vec!["ui-ux".into()],
+            project: vec!["+tendril-wiki".into()],
+            context: vec!["@ui-ux".into()],
             priority: Some("A".into()),
             metadata: HashMap::from([("due".into(), "2022-04-01".into())]),
             body: test_line.into(),
