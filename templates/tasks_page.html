@@ -23,15 +23,13 @@
     <%= include "nav" %>
     <div class="content-container">
       <h4>Current Tasks</h4>
-      <table>
+      <table role="grid">
         <thead>
           <tr>
             <td>Status</td>
-            <td>Created</td>
             <td>Priority</td>
+            <td>Created</td>
             <td>Content</td>
-            <td>Project</td>
-            <td>Context</td>
             <td>Metadata</td>
           </tr>
         </thead>
@@ -40,5 +38,6 @@
         </tbody>
       </table>
     </div>
+    <%= include "footer" %>
   </body>
 </html>

@@ -2,12 +2,13 @@ use bytes::BufMut;
 use chrono::prelude::*;
 use persistance::fs::{write, write_media};
 use render::{
-    search_results_page::SearchResultsPage, uploaded_files_page::UploadedFilesPage, Render, tasks_page::TasksPage,
+    search_results_page::SearchResultsPage, tasks_page::TasksPage,
+    uploaded_files_page::UploadedFilesPage, Render,
 };
+use std::{collections::HashMap, fs::read_dir, str::FromStr, time::Instant};
+use tasks::context_search;
 use todo::Task;
 use tokio::fs;
-use std::{collections::HashMap, fs::read_dir, time::Instant};
-use tasks::context_search;
 use urlencoding::encode;
 
 use markdown::parsers::EditPageData;
@@ -212,14 +213,18 @@ pub async fn unauthorize() -> Result<impl Reply, Rejection> {
 }
 
 pub async fn get_tasks(wiki_location: String) -> Result<impl Reply, Rejection> {
-    let todo_file = fs::read_to_string(wiki_location + "todo.txt").await.unwrap();
-    let tasks = todo_file.lines().map(|l| Task::from(l)).collect::<Vec<Task>>();
+    let todo_file = fs::read_to_string(wiki_location + "todo.txt")
+        .await
+        .unwrap();
+    let tasks = todo_file
+        .lines()
+        .map(|l| Task::from_str(l).unwrap())
+        .collect::<Vec<Task>>();
     let ctx = TasksPage { tasks };
-    Ok(warp::reply::html(ctx.render(&CompileState::Dynamic)))
+    Ok(warp::reply::html(ctx.render()))
 }
 
 pub async fn edit_tasks(form_body: HashMap<String, String>) -> Result<impl Reply, Rejection> {
-
     Ok(warp::reply::with_status("ok", StatusCode::OK))
 }
 
