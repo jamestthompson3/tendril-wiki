@@ -14,7 +14,7 @@ impl IndexPage {
     fn render_mru(&self, recent: String) -> String {
         recent
             .lines()
-            .map(|l| format!("<ol><a href=\"{}\">{}</a></ol>", l, l))
+            .map(|l| format!("<li><a href=\"{}\">{}</a></li>", l, l))
             .collect::<Vec<String>>()
             .join("")
     }

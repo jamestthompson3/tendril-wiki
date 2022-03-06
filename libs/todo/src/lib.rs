@@ -20,6 +20,19 @@ lazy_static! {
         Regex::new(r"^x\s\d{4}-\d{2}-\d{2}\s(\([[:upper:]]\)|\d{4}-\d{2}-\d{2})?").unwrap();
 }
 
+const FORBIDDEN_TAGS: [&str; 10] = [
+    "<noscript>",
+    "</noscript>",
+    "<script>",
+    "</script>",
+    "<object>",
+    "</object>",
+    "<embed>",
+    "</embed>",
+    "<link>",
+    "</link>",
+];
+
 #[derive(Error, Debug)]
 pub enum TaskParseErr {
     #[error("Could not parse &str")]
@@ -72,6 +85,7 @@ impl Task {
             .unwrap_or_else(|| String::with_capacity(0));
         let metadata = self.format_metadata();
         let body = self.format_body();
+
         let table_html = format!(
             r#"<tr><td tabindex="-1">{}</td><td tabindex="-1" class="priority">{}</td><td tabindex="-1">{}</td><td tabindex="-1">{}</td><td tabindex="-1">{}</td></tr>"#,
             status, priority, created, body, metadata
@@ -80,8 +94,19 @@ impl Task {
         html
     }
 
+    fn sanitize_body(&self) -> String {
+        let mut sanitized = self.body.clone();
+        for tag in FORBIDDEN_TAGS {
+            sanitized = sanitized.replace(tag, &cleaned(tag))
+        }
+        fn cleaned(tag: &str) -> String {
+            tag.replace('>', "&gt;").replace('<', "&lt;")
+        }
+        sanitized
+    }
+
     fn format_body(&self) -> String {
-        let mut formatted = self.body.clone();
+        let mut formatted = self.sanitize_body();
         if let Some(prio) = &self.priority {
             formatted = formatted.replace(&format!("({})", prio), "");
         }
@@ -106,6 +131,11 @@ impl Task {
             let ctx_fmt = self.format_contextual_data(c, '@');
             formatted = formatted.replace(c, &ctx_fmt);
         }
+        META_RGX
+            .find_iter(formatted.clone().as_str())
+            .for_each(|m| {
+                formatted = formatted.replace(m.as_str(), "");
+            });
         formatted
     }
 

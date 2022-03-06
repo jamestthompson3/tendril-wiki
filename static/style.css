@@ -135,7 +135,7 @@ pre code {
   font-size: 1.25rem;
 }
 
-.mru ~ ul ol {
+.mru ~ ul li {
   margin: 0.5rem 0rem;
 }
 

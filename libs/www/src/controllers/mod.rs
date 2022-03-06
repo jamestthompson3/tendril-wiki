@@ -192,7 +192,6 @@ pub async fn authorize(form_body: HashMap<String, String>) -> Result<impl Reply,
                 status = StatusCode::FORBIDDEN;
                 body = "Invalid username or password";
             }
-            // Response::builder().body("Bad creds".into())
             Ok(Response::builder()
                 .status(status)
                 .header(header::LOCATION, HeaderValue::from_static("/"))
