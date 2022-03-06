@@ -73,7 +73,7 @@ impl Task {
         let metadata = self.format_metadata();
         let body = self.format_body();
         let table_html = format!(
-            r#"<tr><td tabindex="-1">{}</td><td tabindex="-1">{}</td><td tabindex="-1">{}</td><td tabindex="-1">{}</td><td tabindex="-1">{}</td></tr>"#,
+            r#"<tr><td tabindex="-1">{}</td><td tabindex="-1" class="priority">{}</td><td tabindex="-1">{}</td><td tabindex="-1">{}</td><td tabindex="-1">{}</td></tr>"#,
             status, priority, created, body, metadata
         );
         html.push_str(&table_html);
@@ -128,7 +128,7 @@ impl Task {
             _ => panic!("Invalid prefix: {}", prefix),
         };
         format!(
-            r#"<a href="{}" target="_blank" class="{}">{}</a>"#,
+            r#"<a href="{}" class="{}">{}</a>"#,
             context.strip_prefix(prefix).unwrap(),
             css_class,
             context
