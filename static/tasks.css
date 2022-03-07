@@ -12,6 +12,26 @@ thead {
   font-weight: bold;
   font-size: 1.25rem;
 }
+th[role="button"] {
+  user-select: none;
+  cursor: pointer;
+}
+
+[aria-sort="ascending"]::after {
+  content: " Δ";
+  color: var(--primary-variant);
+}
+
+[aria-sort="descending"]::after {
+  content: " ∇";
+  color: var(--primary-variant);
+}
+
 tr :not(td:nth-child(4)) {
   text-align: center;
+}
+
+table {
+  margin: auto;
+  width: 80%;
 }

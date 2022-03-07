@@ -13,12 +13,6 @@
     <link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon" />
     <link rel="icon" href="/static/favicon.ico"" type="image/x-icon" />
     <title>Tasks</title>
-    <style>
-      table {
-        margin: auto;
-        width: 80%;
-      }
-    </style>
   </head>
   <body>
     <%= include "nav" %>
@@ -27,11 +21,11 @@
       <table role="grid">
         <thead>
           <tr>
-            <td>Status</td>
-            <td>Priority</td>
-            <td>Created</td>
-            <td>Content</td>
-            <td>Metadata</td>
+            <th role="button">Status</th>
+            <th role="button">Priority</th>
+            <th>Created</th>
+            <th>Content</th>
+            <th>Metadata</th>
           </tr>
         </thead>
         <tbody>
@@ -40,5 +34,6 @@
       </table>
     </div>
     <%= include "footer" %>
+    <script src="/static/tasks.js"></script>
   </body>
 </html>
