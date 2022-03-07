@@ -87,9 +87,15 @@ li {
 }
 
 code {
-  font-weight: bold;
   background: var(--bg-darker);
   padding: 3px;
+  display: block;
+}
+
+pre code {
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 20px;
 }
 
 .tags {

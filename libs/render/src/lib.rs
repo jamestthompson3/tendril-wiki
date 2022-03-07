@@ -103,7 +103,7 @@ pub fn render_includes(ctx: String, state: &CompileState, page: Option<&Templatt
             line.to_string()
         }
     });
-    lines.collect::<Vec<String>>().join(" ")
+    lines.collect::<Vec<String>>().join("\n")
 }
 
 #[inline]
