@@ -3,39 +3,90 @@
     ASC: "ascending",
     DESC: "descending",
   };
-  const statusHeader = document.querySelector("thead > tr > th:first-child");
-  statusHeader.onclick = (e) => sortBy(e, status);
-  const prioHeader = document.querySelector("thead > tr > th:nth-child(2)");
-  prioHeader.onclick = (e) => sortBy(e, priority);
 
-  function sortBy(e, sortFn) {
-    // clear aria sort roles on other sortable headers;
-    for (const el of document.querySelectorAll("[aria-sort*='ending']")) {
-      el !== e.currentTarget && el.setAttribute("aria-sort", undefined);
+  // Event Listeners
+  // =======================================================================================
+  const statusHeader = document.querySelector("thead > tr > th:first-child");
+  statusHeader.addEventListener("click", sortBy(status));
+  const prioHeader = document.querySelector("thead > tr > th:nth-child(2)");
+  prioHeader.addEventListener("click", sortBy(priority));
+  const statusCells = document.querySelectorAll("tbody tr > td:first-child");
+  for (const statusCell of statusCells) {
+    statusCell.addEventListener("click", updateCellStatus);
+  }
+
+  // Util functions
+  // ===========================================================================================
+  /**
+   * @param task TaskRecord { id: number, data: Record<String, String> }
+   */
+  async function updateTask(task) {
+    fetch(`/tasks/update/${task.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "same-origin",
+      body: JSON.stringify(task.data),
+    });
+  }
+  async function updateCellStatus() {
+    const dataIdx = this.parentNode.getAttribute("data-idx");
+    if (!dataIdx) {
+      throw new Error("All cells should render with a data index.");
     }
-    let dir;
-    const sortDir = e.currentTarget.getAttribute("aria-sort");
-    switch (sortDir) {
-      case SORT_DIR.ASC:
-        dir = SORT_DIR.DESC;
-        e.currentTarget.setAttribute("aria-sort", SORT_DIR.DESC);
-        break;
-      case SORT_DIR.DESC:
-        dir = SORT_DIR.ASC;
-        e.currentTarget.setAttribute("aria-sort", SORT_DIR.ASC);
-        break;
-      default:
-        dir = SORT_DIR.DESC;
-        e.currentTarget.setAttribute("aria-sort", SORT_DIR.DESC);
-        break;
+    if (this.getAttribute("aria-checked") === "true") {
+      await updateTask({
+        id: dataIdx,
+        data: { completed: { done: false, date: undefined } },
+      });
+    } else {
+      const today = new Date();
+      const month = today.getMonth();
+      const day = today.getDay();
+      await updateTask({
+        id: dataIdx,
+        data: {
+          completed: {
+            done: true,
+            date: `${today.getFullYear()}-${month > 10 ? month : `0${month}`}-${
+              day > 10 ? day : `0${day}`
+            }`,
+          },
+        },
+      });
     }
-    const rowWrapper = document.querySelector("tbody");
-    const taskList = Array.from(
-      document.querySelectorAll("[role='row']").values()
-    ).sort(sortFn(dir));
-    for (const task of taskList) {
-      rowWrapper.appendChild(task);
-    }
+  }
+  function sortBy(sortFn) {
+    return function (_) {
+      // clear aria sort roles on other sortable headers;
+      for (const el of document.querySelectorAll("[aria-sort*='ending']")) {
+        el !== this && el.setAttribute("aria-sort", undefined);
+      }
+      let dir;
+      const sortDir = this.getAttribute("aria-sort");
+      switch (sortDir) {
+        case SORT_DIR.ASC:
+          dir = SORT_DIR.DESC;
+          this.setAttribute("aria-sort", SORT_DIR.DESC);
+          break;
+        case SORT_DIR.DESC:
+          dir = SORT_DIR.ASC;
+          this.setAttribute("aria-sort", SORT_DIR.ASC);
+          break;
+        default:
+          dir = SORT_DIR.DESC;
+          this.setAttribute("aria-sort", SORT_DIR.DESC);
+          break;
+      }
+      const rowWrapper = document.querySelector("tbody");
+      const taskList = Array.from(
+        document.querySelectorAll("[role='row']").values()
+      ).sort(sortFn(dir));
+      for (const task of taskList) {
+        rowWrapper.appendChild(task);
+      }
+    };
   }
 
   // Sort functions

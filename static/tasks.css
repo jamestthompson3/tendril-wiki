@@ -35,3 +35,8 @@ table {
   margin: auto;
   width: 80%;
 }
+
+tr td:first-child:hover {
+  border: 1px solid var(--accent);
+  cursor: pointer;
+}

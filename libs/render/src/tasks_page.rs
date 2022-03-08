@@ -12,8 +12,8 @@ impl TasksPage {
     }
     fn render_tasks(&self) -> String {
         let mut html = String::new();
-        for entry in &self.tasks {
-            html.push_str(&entry.to_html());
+        for (idx, entry) in self.tasks.iter().enumerate() {
+            html.push_str(&entry.to_html(Some(idx)));
         }
         html
     }

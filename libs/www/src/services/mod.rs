@@ -1,6 +1,5 @@
 use chrono::prelude::*;
 use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
-use std::time::Instant;
 
 use build::read_config;
 use tasks::verify_password;
@@ -16,7 +15,6 @@ pub fn create_jwt(username: &str, password: &str) -> Result<String, AuthError> {
     if username != config.general.user {
         return Err(AuthError::BadCredentials);
     }
-    let now = Instant::now();
     match verify_password(password.into(), config.general.pass.clone()) {
         Ok(()) => {
             let expiration = Utc::now()
@@ -35,10 +33,6 @@ pub fn create_jwt(username: &str, password: &str) -> Result<String, AuthError> {
             )
             .map_err(|_| AuthError::JWTTokenCreationError)
             .unwrap();
-            println!(
-                "verify_password & generate jwt took: {}ms",
-                now.elapsed().as_millis()
-            );
             Ok(encode)
         }
         Err(_) => Err(AuthError::BadCredentials),

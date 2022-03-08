@@ -1,8 +1,6 @@
 use persistance::fs::{read, ReadPageError};
 use render::{link_page::LinkPage, new_page::NewPage, GlobalBacklinks, Render};
-use std::{collections::HashMap, time::Instant};
-
-use logging::log;
+use std::collections::HashMap;
 
 use urlencoding::decode;
 
@@ -18,12 +16,10 @@ pub async fn render_file(
 pub async fn render_backlink_index(
     links: GlobalBacklinks,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    let now = Instant::now();
     let links = links.lock().unwrap();
     let ctx = LinkPage {
         links: links.clone(),
     };
-    log(format!("[BackLinks] render: {:?}", now.elapsed()));
     Ok(warp::reply::html(ctx.render()))
 }
 
@@ -47,16 +43,8 @@ pub fn render_from_path(
     links: GlobalBacklinks,
     query_params: HashMap<String, String>,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    let now = Instant::now();
     match read(location, path.clone(), links) {
-        Ok(page) => {
-            log(format!(
-                "[{}] render: {:?}",
-                decode(&path).unwrap(),
-                now.elapsed()
-            ));
-            Ok(warp::reply::html(page))
-        }
+        Ok(page) => Ok(warp::reply::html(page)),
         Err(ReadPageError::PageNotFoundError) => {
             // TODO: Ideally, I want to redirect, but I'm not sure how to do this with
             // warp's filter system where some branches return HTML, and others redirect...
@@ -65,12 +53,6 @@ pub fn render_from_path(
                 linkto: query_params.get("linkto"),
                 action_params: None,
             };
-
-            log(format!(
-                "[{}] render: {:?}",
-                decode(&path).unwrap(),
-                now.elapsed()
-            ));
             Ok(warp::reply::html(ctx.render()))
         }
         _ => Err(warp::reject()),

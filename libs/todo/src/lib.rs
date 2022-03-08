@@ -72,7 +72,7 @@ impl FromStr for Task {
 }
 
 impl Task {
-    pub fn to_html(&self) -> String {
+    pub fn to_html(&self, idx: Option<usize>) -> String {
         let mut html = String::new();
         let status = self.format_status();
         let priority = self
@@ -85,10 +85,16 @@ impl Task {
             .unwrap_or_else(|| String::with_capacity(0));
         let metadata = self.format_metadata();
         let body = self.format_body();
+        let str_idx = if idx.is_none() {
+            String::with_capacity(0)
+        } else {
+            format!("data-idx=\"{}\"", idx.unwrap())
+
+        };
 
         let table_html = format!(
-            r#"<tr role="row"><td tabindex="-1">{}</td><td tabindex="-1" class="priority">{}</td><td tabindex="-1">{}</td><td tabindex="-1">{}</td><td tabindex="-1">{}</td></tr>"#,
-            status, priority, created, body, metadata
+            r#"<tr role="row" {}><td tabindex="-1" aria-role="checkbox" aria-checked="{}">{}</td><td tabindex="-1" class="priority">{}</td><td tabindex="-1">{}</td><td tabindex="-1">{}</td><td tabindex="-1">{}</td></tr>"#,
+            str_idx, self.completed.0, status, priority, created, body, metadata
         );
         html.push_str(&table_html);
         html

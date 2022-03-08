@@ -129,7 +129,6 @@
           `image-${new Date().valueOf()}.${extension}`
         );
         const blob = formData.get("file");
-        console.log(blob);
         fetch("/files", {
           method: "POST",
           headers: {

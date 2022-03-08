@@ -17,6 +17,7 @@ pub use self::tasks_page::*;
 use std::convert::Infallible;
 
 use render::{login_page::LoginPage, Render};
+use warp::body::BodyDeserializeError;
 use warp::{http::StatusCode, Rejection, Reply};
 
 // 40MB file limit
@@ -31,10 +32,10 @@ pub async fn handle_rejection(err: Rejection) -> std::result::Result<impl Reply,
             AuthError::BadCredentials => (StatusCode::FORBIDDEN, e.to_string()),
             _ => (StatusCode::BAD_REQUEST, e.to_string()),
         }
-    } else if err.find::<warp::reject::MethodNotAllowed>().is_some() {
+    } else if err.find::<BodyDeserializeError>().is_some() {
         (
-            StatusCode::METHOD_NOT_ALLOWED,
-            "Method Not Allowed".to_string(),
+            StatusCode::BAD_REQUEST,
+            "Invalid body".to_string(),
         )
     } else {
         eprintln!("unhandled error: {:?}", err);

@@ -5,15 +5,13 @@ use render::{
     search_results_page::SearchResultsPage, tasks_page::TasksPage,
     uploaded_files_page::UploadedFilesPage, Render,
 };
-use std::{collections::HashMap, fs::read_dir, str::FromStr, time::Instant};
+use std::{collections::HashMap, fs::read_dir, str::FromStr};
 use tasks::context_search;
 use todo::Task;
 use tokio::fs;
 use urlencoding::encode;
 
 use markdown::parsers::EditPageData;
-
-use logging::log;
 
 use futures::TryStreamExt;
 
@@ -75,19 +73,16 @@ pub async fn edit(
     query_params: HashMap<String, String>,
 ) -> Result<impl Reply, Rejection> {
     let parsed_data = EditPageData::from(form_body);
-    let redir_uri;
-    if let Some(redirect_addition) = query_params.get("redir_to") {
-        redir_uri = format!("/{}/{}", redirect_addition, encode(&parsed_data.title));
+    let redir_uri = if let Some(redirect_addition) = query_params.get("redir_to") {
+        format!("/{}/{}", redirect_addition, encode(&parsed_data.title))
     } else {
-        redir_uri = format!("/{}", encode(&parsed_data.title));
-    }
-    let now = Instant::now();
+        format!("/{}", encode(&parsed_data.title))
+    };
     let page_title = parsed_data.title.clone();
     let update_msg = format!("{}~~{}", parsed_data.old_title, page_title);
     match write(&wiki_location, parsed_data) {
         Ok(()) => {
             sender.send(("update".into(), update_msg)).await.unwrap();
-            log(format!("[Edit]: {:?}", now.elapsed()));
             Ok(warp::redirect(redir_uri.parse::<Uri>().unwrap()))
         }
         Err(e) => {
@@ -102,7 +97,6 @@ pub async fn append(
     wiki_location: String,
     sender: RefHubTx,
 ) -> Result<impl Reply, Rejection> {
-    let now = Instant::now();
     let today = Local::now();
     let daily_file = today.format("%Y-%m-%d").to_string();
     let parsed_data = form_body.get("body").unwrap();
@@ -112,7 +106,6 @@ pub async fn append(
                 .send(("update".into(), format!("~~{}", daily_file)))
                 .await
                 .unwrap();
-            log(format!("[quick-add]: {:?}", now.elapsed()));
             Ok(warp::redirect("/".parse::<Uri>().unwrap()))
         }
         Err(e) => {
@@ -127,9 +120,7 @@ pub async fn note_search(
     wiki_location: String,
 ) -> Result<impl Reply, Rejection> {
     let term = form_body.get("term").unwrap();
-    let now = Instant::now();
     let found_pages = context_search(term, &wiki_location).await.unwrap();
-    println!("Search took: {:?}", now.elapsed());
     let ctx = SearchResultsPage { pages: found_pages };
     Ok(warp::reply::html(ctx.render()))
 }
@@ -152,9 +143,7 @@ pub async fn delete(
     form_body: HashMap<String, String>,
 ) -> Result<impl Reply, Rejection> {
     let title = form_body.get("title").unwrap();
-    let now = Instant::now();
     sender.send(("delete".into(), title.into())).await.unwrap();
-    println!("[Delete] {}: {:?}", title, now.elapsed());
 
     Ok(warp::redirect(Uri::from_static("/")))
 }
