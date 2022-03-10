@@ -4,6 +4,9 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+#[macro_use]
+extern crate lazy_static;
+
 #[cfg(not(debug_assertions))]
 use directories::ProjectDirs;
 
@@ -32,6 +35,15 @@ pub trait Render {
     fn render(&self) -> String;
 }
 
+lazy_static! {
+    pub static ref STATIC_BUILD: String = {
+        match env::var("TENDRIL_COMPILE_STATIC") {
+            Ok(val) => val,
+            _ => String::with_capacity(0),
+        }
+    };
+}
+
 pub fn parse_includes(include_str: &str) -> String {
     let included_file = include_str
         .trim()
@@ -44,12 +56,10 @@ pub fn parse_includes(include_str: &str) -> String {
 
 #[inline]
 fn process_included_file(file: String, page: Option<&TemplattedPage>) -> String {
-    let state = match env::var("TENDRIL_COMPILE_STATIC") {
-        Ok(val) => match val.as_str() {
-            "true" => CompileState::Static,
-            _ => CompileState::Dynamic,
-        },
-        _ => CompileState::Dynamic,
+    let state = if STATIC_BUILD.as_str() == "true" {
+        CompileState::Static
+    } else {
+        CompileState::Dynamic
     };
     match file.as_ref() {
         "nav" => match state {
