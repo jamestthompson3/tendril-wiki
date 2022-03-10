@@ -15,7 +15,6 @@ pub use self::wiki_page::*;
 use std::convert::Infallible;
 
 use render::{login_page::LoginPage, Render};
-use tasks::CompileState;
 use warp::{http::StatusCode, Rejection, Reply};
 
 // 40MB file limit
@@ -48,7 +47,7 @@ pub async fn handle_rejection(err: Rejection) -> std::result::Result<impl Reply,
         let ctx = LoginPage {};
         let response = warp::http::Response::builder()
             .status(StatusCode::OK)
-            .body(ctx.render(&CompileState::Dynamic))
+            .body(ctx.render())
             .unwrap();
 
         return Ok(response);

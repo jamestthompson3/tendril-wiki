@@ -1,7 +1,5 @@
 use std::fs;
 
-use tasks::CompileState;
-
 use crate::{get_template_file, render_includes, Render};
 use directories::ProjectDirs;
 
@@ -23,7 +21,7 @@ impl IndexPage {
 }
 
 impl Render for IndexPage {
-    fn render(&self, state: &CompileState) -> String {
+    fn render(&self) -> String {
         use chrono::Local;
         let now = Local::now();
         let project_dir = ProjectDirs::from("", "", "tendril").unwrap();
@@ -37,6 +35,6 @@ impl Render for IndexPage {
             "<%= mru %>",
             &self.render_mru(recent.expect("Could not read cache file")),
         );
-        render_includes(ctx, state, None)
+        render_includes(ctx, None)
     }
 }

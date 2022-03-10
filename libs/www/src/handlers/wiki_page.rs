@@ -1,7 +1,6 @@
 use std::{collections::HashMap, sync::Arc};
 
 use render::{new_page::NewPage, Render};
-use tasks::CompileState;
 use warp::{filters::BoxedFilter, Filter, Reply};
 
 use crate::{
@@ -90,7 +89,7 @@ impl WikiPageRouter {
                             linkto: query_params.get("linkto"),
                             action_params: None,
                         };
-                        warp::reply::html(ctx.render(&CompileState::Dynamic))
+                        warp::reply::html(ctx.render())
                     }),
             )
             .boxed()

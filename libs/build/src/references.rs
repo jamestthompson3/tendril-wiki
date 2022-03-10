@@ -285,59 +285,59 @@ mod tests {
             fs::remove_file(entry.path()).unwrap();
         }
     }
-fn run_test<T>(test: T)
-where
-    T: FnOnce() + panic::UnwindSafe,
-{
-    init_temp_wiki();
+    fn run_test<T>(test: T)
+    where
+        T: FnOnce() + panic::UnwindSafe,
+    {
+        init_temp_wiki();
 
-    let result = panic::catch_unwind(test);
+        let result = panic::catch_unwind(test);
 
-    teardown_temp_wiki();
+        teardown_temp_wiki();
 
-    assert!(result.is_ok())
-}
+        assert!(result.is_ok())
+    }
     #[test]
     fn updates_note_succesfully() {
         run_test(|| {
-        let title = "Logical reality";
-        let mut link_tree = BTreeMap::new();
-        link_tree.insert(title.into(), vec!["wiki page".into()]);
-        let links: GlobalBacklinks = Arc::new(Mutex::new(link_tree));
-        update_global_store(title, TEST_DIR, links.clone());
-        let updated_links = links.lock().unwrap();
-        let entry = updated_links.get(title).unwrap();
-        assert_eq!(entry, &vec![String::from("wiki page")]);
+            let title = "Logical reality";
+            let mut link_tree = BTreeMap::new();
+            link_tree.insert(title.into(), vec!["wiki page".into()]);
+            let links: GlobalBacklinks = Arc::new(Mutex::new(link_tree));
+            update_global_store(title, TEST_DIR, links.clone());
+            let updated_links = links.lock().unwrap();
+            let entry = updated_links.get(title).unwrap();
+            assert_eq!(entry, &vec![String::from("wiki page")]);
         })
     }
     #[test]
     fn renames_note_succesfully() {
         run_test(|| {
-        let title = "Logical reality";
-        let new_title = "reality building";
-        cp_file(title, new_title);
-        let mut link_tree = BTreeMap::new();
-        link_tree.insert(title.into(), vec!["wiki page".into()]);
-        let links: GlobalBacklinks = Arc::new(Mutex::new(link_tree));
-        rename_in_global_store(new_title, title, TEST_DIR, links.clone());
-        let updated_links = links.lock().unwrap();
-        let entry = updated_links.get(title);
-        let renamed_entry = updated_links.get(new_title).unwrap();
-        assert_eq!(entry, None);
-        assert_eq!(renamed_entry, &vec![String::from("wiki page")]);
+            let title = "Logical reality";
+            let new_title = "reality building";
+            cp_file(title, new_title);
+            let mut link_tree = BTreeMap::new();
+            link_tree.insert(title.into(), vec!["wiki page".into()]);
+            let links: GlobalBacklinks = Arc::new(Mutex::new(link_tree));
+            rename_in_global_store(new_title, title, TEST_DIR, links.clone());
+            let updated_links = links.lock().unwrap();
+            let entry = updated_links.get(title);
+            let renamed_entry = updated_links.get(new_title).unwrap();
+            assert_eq!(entry, None);
+            assert_eq!(renamed_entry, &vec![String::from("wiki page")]);
         })
     }
     #[test]
     fn deletes_from_global_store() {
         run_test(|| {
-        let title = "Logical reality";
-        let mut link_tree = BTreeMap::new();
-        link_tree.insert(title.into(), vec!["wiki page".into()]);
-        let links: GlobalBacklinks = Arc::new(Mutex::new(link_tree));
-        delete_from_global_store(title, TEST_DIR, links.clone());
-        let updated_links = links.lock().unwrap();
-        let entry = updated_links.get(title);
-        assert_eq!(entry, None);
+            let title = "Logical reality";
+            let mut link_tree = BTreeMap::new();
+            link_tree.insert(title.into(), vec!["wiki page".into()]);
+            let links: GlobalBacklinks = Arc::new(Mutex::new(link_tree));
+            delete_from_global_store(title, TEST_DIR, links.clone());
+            let updated_links = links.lock().unwrap();
+            let entry = updated_links.get(title);
+            assert_eq!(entry, None);
         })
     }
 }

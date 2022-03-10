@@ -1,5 +1,5 @@
 use markdown::parsers::format_links;
-use tasks::{CompileState, SearchResult};
+use tasks::SearchResult;
 
 use crate::{get_template_file, render_includes, Render};
 
@@ -16,7 +16,6 @@ impl SearchResultsPage {
             let mut ctx = String::from("<h3>No search results.</h3>");
             ctx.push_str(&render_includes(
                 r#"<%= include "search_form" %>"#.to_string(),
-                &CompileState::Dynamic,
                 None,
             ));
             return ctx;
@@ -40,9 +39,9 @@ impl SearchResultsPage {
 }
 
 impl Render for SearchResultsPage {
-    fn render(&self, state: &CompileState) -> String {
+    fn render(&self) -> String {
         let mut ctx = get_template_file("search_results").unwrap();
         ctx = ctx.replace("<%= pages %>", &self.render_pages());
-        render_includes(ctx, state, None)
+        render_includes(ctx, None)
     }
 }

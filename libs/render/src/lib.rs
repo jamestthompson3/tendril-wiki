@@ -1,6 +1,6 @@
 use std::{
     collections::BTreeMap,
-    fs, io,
+    env, fs, io,
     sync::{Arc, Mutex},
 };
 
@@ -9,7 +9,6 @@ use directories::ProjectDirs;
 
 use link_page::LinkPage;
 use markdown::parsers::TemplattedPage;
-use tasks::CompileState;
 
 pub mod file_upload_page;
 pub mod help_page;
@@ -22,10 +21,15 @@ pub mod styles_page;
 pub mod uploaded_files_page;
 pub mod wiki_page;
 
+pub enum CompileState {
+    Static,
+    Dynamic,
+}
+
 pub type GlobalBacklinks = Arc<Mutex<BTreeMap<String, Vec<String>>>>;
 
 pub trait Render {
-    fn render(&self, state: &CompileState) -> String;
+    fn render(&self) -> String;
 }
 
 pub fn parse_includes(include_str: &str) -> String {
@@ -39,11 +43,14 @@ pub fn parse_includes(include_str: &str) -> String {
 }
 
 #[inline]
-fn process_included_file(
-    file: String,
-    page: Option<&TemplattedPage>,
-    state: &CompileState,
-) -> String {
+fn process_included_file(file: String, page: Option<&TemplattedPage>) -> String {
+    let state = match env::var("TENDRIL_COMPILE_STATIC") {
+        Ok(val) => match val.as_str() {
+            "true" => CompileState::Static,
+            _ => CompileState::Dynamic,
+        },
+        _ => CompileState::Dynamic,
+    };
     match file.as_ref() {
         "nav" => match state {
             CompileState::Dynamic => get_template_file("nav").unwrap(),
@@ -95,10 +102,10 @@ fn process_included_file(
     }
 }
 
-pub fn render_includes(ctx: String, state: &CompileState, page: Option<&TemplattedPage>) -> String {
+pub fn render_includes(ctx: String, page: Option<&TemplattedPage>) -> String {
     let lines = ctx.lines().map(|line| {
         if line.contains("<%= include") {
-            process_included_file(parse_includes(line), page, state)
+            process_included_file(parse_includes(line), page)
         } else {
             line.to_string()
         }
@@ -107,12 +114,12 @@ pub fn render_includes(ctx: String, state: &CompileState, page: Option<&Templatt
 }
 
 #[inline]
-pub fn write_backlinks(map: GlobalBacklinks, state: CompileState) {
+pub fn write_backlinks(map: GlobalBacklinks) {
     let link_map = map.lock().unwrap();
     let ctx = LinkPage {
         links: link_map.clone(),
     };
-    fs::write("public/links/index.html".to_string(), ctx.render(&state)).unwrap();
+    fs::write("public/links/index.html".to_string(), ctx.render()).unwrap();
 }
 
 #[inline]

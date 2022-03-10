@@ -39,11 +39,6 @@ pub fn normalize_wiki_location(wiki_location: &str) -> String {
     location.to_string_lossy().into()
 }
 
-pub enum CompileState {
-    Static,
-    Dynamic,
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

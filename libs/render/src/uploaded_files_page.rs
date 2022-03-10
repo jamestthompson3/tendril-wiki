@@ -1,5 +1,3 @@
-use tasks::CompileState;
-
 use crate::{get_template_file, render_includes, Render};
 
 pub struct UploadedFilesPage {
@@ -20,9 +18,9 @@ impl UploadedFilesPage {
 }
 
 impl Render for UploadedFilesPage {
-    fn render(&self, state: &CompileState) -> String {
+    fn render(&self) -> String {
         let mut ctx = get_template_file("file_list").unwrap();
         ctx = ctx.replace("<%= entries %>", &self.render_entries());
-        render_includes(ctx, state, None)
+        render_includes(ctx, None)
     }
 }

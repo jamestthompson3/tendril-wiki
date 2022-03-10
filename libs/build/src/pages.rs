@@ -3,9 +3,9 @@ use markdown::parsers::{path_to_data_structure, ParsedPages};
 use markdown::processors::{to_template, update_templatted_pages};
 use persistance::fs::{write_entries, write_index_page};
 use render::{write_backlinks, GlobalBacklinks};
-use tasks::CompileState;
 use threadpool::ThreadPool;
 
+use std::env;
 use std::{
     collections::BTreeMap,
     fs::{self, read_dir},
@@ -36,11 +36,12 @@ impl Builder {
         }
     }
     pub fn compile_all(&self) {
+        env::set_var("TENDRIL_COMPILE_STATIC", "true");
         let links = Arc::clone(&self.backlinks);
         let pages = Arc::clone(&self.pages);
-        write_entries(&pages, &self.backlinks, CompileState::Static);
-        write_backlinks(links, CompileState::Static);
-        write_index_page(read_config().general.user, CompileState::Static);
+        write_entries(&pages, &self.backlinks);
+        write_backlinks(links);
+        write_index_page(read_config().general.user);
         let mut config_dir = get_config_location().0;
         config_dir.push("userstyles.css");
         fs::create_dir("public/static").unwrap();

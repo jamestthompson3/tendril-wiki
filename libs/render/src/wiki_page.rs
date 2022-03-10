@@ -1,6 +1,5 @@
 use chrono::{DateTime, FixedOffset};
 use markdown::parsers::{format_links, TemplattedPage};
-use tasks::CompileState;
 
 use crate::{get_template_file, render_includes, Render};
 
@@ -74,7 +73,7 @@ impl<'a> WikiPage<'a> {
 }
 
 impl<'a> Render for WikiPage<'a> {
-    fn render(&self, state: &CompileState) -> String {
+    fn render(&self) -> String {
         let page = self.page;
         let mut backlinks = match self.links {
             Some(links) => links.to_owned(),
@@ -95,6 +94,6 @@ impl<'a> Render for WikiPage<'a> {
             .replace("<%= tags %>", &tag_string)
             .replace("<%= links %>", &self.render_page_backlinks(&backlinks))
             .replace("<%= metadata %>", &self.render_page_metadata());
-        render_includes(ctx, state, Some(self.page))
+        render_includes(ctx, Some(self.page))
     }
 }

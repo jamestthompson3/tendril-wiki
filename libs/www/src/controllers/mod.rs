@@ -5,7 +5,7 @@ use render::{
     search_results_page::SearchResultsPage, uploaded_files_page::UploadedFilesPage, Render,
 };
 use std::{collections::HashMap, fs::read_dir, time::Instant};
-use tasks::{context_search, CompileState};
+use tasks::context_search;
 use urlencoding::encode;
 
 use markdown::parsers::EditPageData;
@@ -128,7 +128,7 @@ pub async fn note_search(
     let found_pages = context_search(term, &wiki_location).await.unwrap();
     println!("Search took: {:?}", now.elapsed());
     let ctx = SearchResultsPage { pages: found_pages };
-    Ok(warp::reply::html(ctx.render(&CompileState::Dynamic)))
+    Ok(warp::reply::html(ctx.render()))
 }
 
 pub async fn list_files(wiki_location: String) -> Result<impl Reply, Rejection> {
@@ -141,7 +141,7 @@ pub async fn list_files(wiki_location: String) -> Result<impl Reply, Rejection> 
         })
         .collect::<Vec<String>>();
     let ctx = UploadedFilesPage { entries };
-    Ok(warp::reply::html(ctx.render(&CompileState::Dynamic)))
+    Ok(warp::reply::html(ctx.render()))
 }
 
 pub async fn delete(

@@ -7,7 +7,7 @@ use markdown::{
     processors::{tags::TagsArray, to_template},
 };
 use render::{index_page::IndexPage, wiki_page::WikiPage, GlobalBacklinks, Render};
-use tasks::{path_to_reader, CompileState};
+use tasks::path_to_reader;
 use urlencoding::decode;
 
 use thiserror::Error;
@@ -157,7 +157,7 @@ pub fn read(
         let templatted = to_template(&note);
         let link_vals = backlinks.lock().unwrap();
         let links = link_vals.get(&templatted.page.title);
-        let output = WikiPage::new(&templatted.page, links).render(&CompileState::Dynamic); // we have a hard coded type since this is only called on the web server
+        let output = WikiPage::new(&templatted.page, links).render(); // we have a hard coded type since this is only called on the web server
         Ok(output)
     } else {
         Err(ReadPageError::DeserializationError)
@@ -182,26 +182,27 @@ pub fn get_file_path(wiki_location: &str, requested_file: &str) -> Result<PathBu
 }
 
 #[inline]
-pub fn write_entries(pages: &ParsedPages, backlinks: &GlobalBacklinks, state: CompileState) {
+pub fn write_entries(pages: &ParsedPages, backlinks: &GlobalBacklinks) {
     let page_vals = pages.lock().unwrap();
     let link_vals = backlinks.lock().unwrap();
     for page in page_vals.iter() {
         let links = link_vals.get(&page.title);
-        let output = WikiPage::new(page, links).render(&state);
+        let output = WikiPage::new(page, links).render();
+        let formatted_title = page.title.replace('/', "-");
+        let out_dir = format!("public/{}", formatted_title);
         // TODO use path here instead of title? Since `/` in title can cause issues in fs::write
-        fs::create_dir(format!("public/{}", page.title.replace('/', "-"))).unwrap();
-        fs::write(
-            format!("public/{}/index.html", page.title.replace('/', "-")),
-            output,
-        )
-        .unwrap();
+        fs::create_dir(&out_dir)
+            .unwrap_or_else(|e| eprintln!("{:?}\nCould not create dir: {}", e, out_dir));
+        let out_file = format!("public/{}/index.html", formatted_title);
+        fs::write(&out_file, output)
+            .unwrap_or_else(|e| eprintln!("{:?}\nCould not write file: {}", e, out_file));
     }
 }
 
 #[inline]
-pub fn write_index_page(user: String, state: CompileState) {
+pub fn write_index_page(user: String) {
     let ctx = IndexPage { user };
-    fs::write("public/index.html", ctx.render(&state)).unwrap();
+    fs::write("public/index.html", ctx.render()).unwrap();
 }
 
 #[inline]

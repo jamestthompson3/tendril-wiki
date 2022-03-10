@@ -1,9 +1,7 @@
 use std::collections::BTreeMap;
 
-use markdown::parsers::format_links;
-use tasks::CompileState;
-
 use crate::{get_template_file, render_includes, Render};
+use markdown::parsers::format_links;
 
 pub struct LinkPage {
     pub links: BTreeMap<String, Vec<String>>,
@@ -35,9 +33,9 @@ impl LinkPage {
 }
 
 impl Render for LinkPage {
-    fn render(&self, state: &CompileState) -> String {
+    fn render(&self) -> String {
         let mut ctx = get_template_file("backlinks").unwrap();
         ctx = ctx.replace("<%= link_content %>", &self.create_link_content());
-        render_includes(ctx, state, None)
+        render_includes(ctx, None)
     }
 }

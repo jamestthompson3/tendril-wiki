@@ -1,5 +1,3 @@
-use tasks::CompileState;
-
 use crate::{get_template_file, render_includes, Render};
 
 pub struct FileUploader {}
@@ -17,8 +15,8 @@ impl FileUploader {
 }
 
 impl Render for FileUploader {
-    fn render(&self, state: &CompileState) -> String {
+    fn render(&self) -> String {
         let ctx = get_template_file("file_upload").unwrap();
-        render_includes(ctx, state, None)
+        render_includes(ctx, None)
     }
 }

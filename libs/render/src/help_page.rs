@@ -1,5 +1,3 @@
-use tasks::CompileState;
-
 use crate::{get_template_file, render_includes, Render};
 
 pub struct HelpPage {}
@@ -17,8 +15,8 @@ impl Default for HelpPage {
 }
 
 impl Render for HelpPage {
-    fn render(&self, state: &CompileState) -> String {
+    fn render(&self) -> String {
         let ctx = get_template_file("help").unwrap();
-        render_includes(ctx, state, None)
+        render_includes(ctx, None)
     }
 }

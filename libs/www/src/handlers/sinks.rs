@@ -1,7 +1,6 @@
 use persistance::fs::{read, ReadPageError};
 use render::{link_page::LinkPage, new_page::NewPage, GlobalBacklinks, Render};
 use std::{collections::HashMap, time::Instant};
-use tasks::CompileState;
 
 use logging::log;
 
@@ -25,7 +24,7 @@ pub async fn render_backlink_index(
         links: links.clone(),
     };
     log(format!("[BackLinks] render: {:?}", now.elapsed()));
-    Ok(warp::reply::html(ctx.render(&CompileState::Dynamic)))
+    Ok(warp::reply::html(ctx.render()))
 }
 
 // TODO: Not repeat this the same as file
@@ -72,7 +71,7 @@ pub fn render_from_path(
                 decode(&path).unwrap(),
                 now.elapsed()
             ));
-            Ok(warp::reply::html(ctx.render(&CompileState::Dynamic)))
+            Ok(warp::reply::html(ctx.render()))
         }
         _ => Err(warp::reject()),
     }

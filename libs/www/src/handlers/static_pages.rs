@@ -5,7 +5,6 @@ use render::{
     file_upload_page::FileUploader, help_page::HelpPage, index_page::IndexPage,
     styles_page::StylesPage, Render,
 };
-use tasks::CompileState;
 use warp::{filters::BoxedFilter, Filter, Reply};
 
 use crate::{controllers::list_files, handlers::filters::with_location};
@@ -32,7 +31,7 @@ impl StaticPageRouter {
             .and(warp::path("help"))
             .map(|| {
                 let ctx = HelpPage {};
-                warp::reply::html(ctx.render(&CompileState::Dynamic))
+                warp::reply::html(ctx.render())
             })
             .boxed()
     }
@@ -43,7 +42,7 @@ impl StaticPageRouter {
             .and(with_user(user.to_string()))
             .map(|user: String| {
                 let idx_ctx = IndexPage { user };
-                warp::reply::html(idx_ctx.render(&CompileState::Dynamic))
+                warp::reply::html(idx_ctx.render())
             })
             .boxed()
     }
@@ -53,7 +52,7 @@ impl StaticPageRouter {
             .and(warp::path("upload"))
             .map(|| {
                 let ctx = FileUploader {};
-                warp::reply::html(ctx.render(&CompileState::Dynamic))
+                warp::reply::html(ctx.render())
             })
             .boxed()
     }
@@ -66,7 +65,7 @@ impl StaticPageRouter {
                 let body = fs::read_to_string(style_location).unwrap();
                 let body = body.replace("\n", "\r\n");
                 let ctx = StylesPage { body };
-                warp::reply::html(ctx.render(&CompileState::Dynamic))
+                warp::reply::html(ctx.render())
             }))
             .boxed()
     }
