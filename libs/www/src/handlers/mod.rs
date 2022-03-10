@@ -3,16 +3,16 @@ pub mod filters;
 pub mod sinks;
 pub mod static_files;
 pub mod static_pages;
-pub mod wiki_page;
 pub mod tasks_page;
+pub mod wiki_page;
 
 pub use self::api::*;
 pub use self::filters::*;
 pub use self::sinks::*;
 pub use self::static_files::*;
 pub use self::static_pages::*;
-pub use self::wiki_page::*;
 pub use self::tasks_page::*;
+pub use self::wiki_page::*;
 
 use std::convert::Infallible;
 
@@ -33,10 +33,7 @@ pub async fn handle_rejection(err: Rejection) -> std::result::Result<impl Reply,
             _ => (StatusCode::BAD_REQUEST, e.to_string()),
         }
     } else if err.find::<BodyDeserializeError>().is_some() {
-        (
-            StatusCode::BAD_REQUEST,
-            "Invalid body".to_string(),
-        )
+        (StatusCode::BAD_REQUEST, "Invalid body".to_string())
     } else {
         eprintln!("unhandled error: {:?}", err);
         (

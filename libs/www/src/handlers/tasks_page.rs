@@ -1,9 +1,7 @@
 use std::{str::FromStr, sync::Arc};
 
 use render::{tasks_page::TasksPage, Render};
-use serde::{Deserialize, Serialize};
-use tasks::CompileState;
-use todo::Task;
+use todo::{Task, TaskUpdate, UpdateType};
 use tokio::fs;
 use warp::{filters::BoxedFilter, hyper::StatusCode, Filter, Reply};
 
@@ -18,19 +16,6 @@ pub struct TaskPageRouter {
 
 // Keep all business logic here so it is easier to test and profile.
 struct Runner {}
-#[derive(Debug, Serialize, Deserialize)]
-struct TaskUpdate {
-    completed: Option<CompletionState>,
-    content: Option<String>,
-    priority: Option<String>,
-    metadata: Option<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct CompletionState {
-    done: bool,
-    date: Option<String>,
-}
 
 impl Runner {
     async fn render(location: String) -> String {
@@ -42,14 +27,32 @@ impl Runner {
             .map(|l| Task::from_str(l).unwrap())
             .collect::<Vec<Task>>();
         let ctx = TasksPage { tasks };
-        ctx.render(&CompileState::Dynamic)
+        ctx.render()
     }
 
-    async fn update(idx: u32, update: TaskUpdate) {
-        println!("Got Task {}'s update - {:?}", idx, update);
+    async fn update(location: String, idx: usize, update: TaskUpdate) -> String {
+        let file_location = format!("{}{}", location, "todo.txt");
+        // TODO: Don't read this file so much!
+        let todo_file = fs::read_to_string(&file_location).await.unwrap();
+        let mut tasks = todo_file.lines().collect::<Vec<&str>>();
+        let mut targeted_task = Task::from_str(tasks[idx]).unwrap();
+        let patch = if update.completed.is_some() {
+            UpdateType::Completion(update.completed.unwrap())
+        } else if update.priority.is_some() {
+            UpdateType::Prio(update.priority.unwrap())
+        } else if update.metadata.is_some() {
+            UpdateType::Meta(update.metadata.unwrap())
+        } else {
+            UpdateType::Content(update.content.unwrap())
+        };
+        let response = targeted_task.patch(patch);
+        let updated_task = targeted_task.body;
+        tasks[idx] = &updated_task;
+        fs::write(&file_location, tasks.join("\n")).await.unwrap();
+        response
     }
 
-    pub async fn delete(idx: u32) {
+    pub async fn delete(idx: usize) {
         println!("Deleting: {}", idx);
     }
 }
@@ -79,8 +82,8 @@ impl TaskPageRouter {
     fn delete(&self) -> BoxedFilter<(impl Reply,)> {
         warp::delete()
             .and(with_auth())
-            .and(warp::path!("delete" / u32))
-            .then(|idx: u32| async move {
+            .and(warp::path!("delete" / usize))
+            .then(|idx: usize| async move {
                 Runner::delete(idx).await;
                 warp::reply::with_status("ok", StatusCode::OK)
             })
@@ -88,15 +91,18 @@ impl TaskPageRouter {
     }
 
     fn update(&self) -> BoxedFilter<(impl Reply,)> {
-        warp::path!("update" / u32)
+        warp::path!("update" / usize)
             .and(with_auth())
             .and(warp::put())
+            .and(with_location(self.wiki_location.clone()))
             .and(warp::body::content_length_limit(MAX_BODY_SIZE))
             .and(warp::body::json())
-            .then(move |idx: u32, update: TaskUpdate| async move {
-                Runner::update(idx, update).await;
-                warp::reply::with_status("ok", StatusCode::OK)
-            })
+            .then(
+                move |idx: usize, location: String, update: TaskUpdate| async move {
+                    let response = Runner::update(location, idx, update).await;
+                    warp::reply::json(&response)
+                },
+            )
             .boxed()
     }
 }

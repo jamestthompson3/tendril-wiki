@@ -21,7 +21,7 @@
    * @param task TaskRecord { id: number, data: Record<String, String> }
    */
   async function updateTask(task) {
-    fetch(`/tasks/update/${task.id}`, {
+    return fetch(`/tasks/update/${task.id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -30,21 +30,25 @@
       body: JSON.stringify(task.data),
     });
   }
+
   async function updateCellStatus() {
     const dataIdx = this.parentNode.getAttribute("data-idx");
     if (!dataIdx) {
       throw new Error("All cells should render with a data index.");
     }
     if (this.getAttribute("aria-checked") === "true") {
-      await updateTask({
+      const response = await updateTask({
         id: dataIdx,
         data: { completed: { done: false, date: undefined } },
       });
+      const text = await response.json();
+      this.innerHTML = text;
+      this.setAttribute("aria-checked", "false");
     } else {
       const today = new Date();
-      const month = today.getMonth();
+      const month = today.getMonth() + 1;
       const day = today.getDay();
-      await updateTask({
+      const response = await updateTask({
         id: dataIdx,
         data: {
           completed: {
@@ -55,6 +59,9 @@
           },
         },
       });
+      const text = await response.json();
+      this.innerHTML = text;
+      this.setAttribute("aria-checked", "true");
     }
   }
   function sortBy(sortFn) {

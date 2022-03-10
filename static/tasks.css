@@ -40,3 +40,12 @@ tr td:first-child:hover {
   border: 1px solid var(--accent);
   cursor: pointer;
 }
+tr td:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 7rem;
+}
+td {
+  height: 3rem;
+}

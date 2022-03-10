@@ -1,24 +1,15 @@
-use std::{collections::HashMap, str::FromStr};
-use thiserror::Error;
+pub mod parse;
 
-use regex::Regex;
 #[macro_use]
 extern crate lazy_static;
 
-// TODO: explore parsing with something like tendril and doing it based on a stream instead of
-// regex
-
-lazy_static! {
-    static ref PRIO_RGX: Regex = Regex::new(r"\([[:upper:]]\)\s").unwrap();
-    static ref PROJ_RGX: Regex = Regex::new(r"(^\+|\s\+)\S+").unwrap();
-    static ref CTX_RGX: Regex = Regex::new(r"(^@|\s@)\S+").unwrap();
-    static ref META_RGX: Regex = Regex::new(r"\S+:\S+").unwrap();
-    // NOTE: This would be easier if the regex crate supported look behinds
-    static ref CREATE_RGX: Regex = Regex::new(r"(?:^\([[:upper:]]\)\s)(\d{4}-\d{2}-\d{2})|(^\d{4}-\d{2}-\d{2})").unwrap();
-    static ref DATE_RGX: Regex = Regex::new(r"^\d{4}-\d{2}-\d{2}").unwrap();
-    static ref DONE_RGX: Regex =
-        Regex::new(r"^x\s\d{4}-\d{2}-\d{2}\s(\([[:upper:]]\)|\d{4}-\d{2}-\d{2})?").unwrap();
-}
+use parse::{
+    parse_completed, parse_context, parse_created, parse_meta, parse_priority, parse_project,
+    META_RGX, PRIO_RGX,
+};
+use serde::{Deserialize, Serialize};
+use std::{collections::HashMap, str::FromStr};
+use thiserror::Error;
 
 const FORBIDDEN_TAGS: [&str; 10] = [
     "<noscript>",
@@ -32,6 +23,29 @@ const FORBIDDEN_TAGS: [&str; 10] = [
     "<link>",
     "</link>",
 ];
+
+// use this to prevent a million if let(Some) = ...  code branches in the `patch` method
+#[derive(Debug, Serialize, Deserialize)]
+pub enum UpdateType {
+    Completion(CompletionState),
+    Content(String),
+    Prio(String),
+    Meta(String),
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TaskUpdate {
+    pub completed: Option<CompletionState>,
+    pub content: Option<String>,
+    pub priority: Option<String>,
+    pub metadata: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CompletionState {
+    done: bool,
+    date: Option<String>,
+}
 
 #[derive(Error, Debug)]
 pub enum TaskParseErr {
@@ -89,7 +103,6 @@ impl Task {
             String::with_capacity(0)
         } else {
             format!("data-idx=\"{}\"", idx.unwrap())
-
         };
 
         let table_html = format!(
@@ -98,6 +111,139 @@ impl Task {
         );
         html.push_str(&table_html);
         html
+    }
+    // FIXME: This is a bit of a dumpster fire, but let's getting working and then make it better
+    // ;)
+    pub fn patch(&mut self, update: UpdateType) -> String {
+        match update {
+            UpdateType::Completion(completed) => {
+                match &self.completed {
+                    (true, None) => {
+                        match (&completed.done, &completed.date) {
+                            (true, Some(date)) => {
+                                self.completed = (true, Some(date.clone()));
+                                // index at 2 since the `x ` will be at index 0 and 1
+                                self.body.insert_str(1, date);
+                            }
+                            (false, None) => {
+                                self.completed = (false, None);
+                                self.body = self.body.strip_prefix("x ").unwrap().into();
+                            }
+                            (true, None) => {}
+                            (false, Some(_)) => {
+                                unreachable!("Should not have a completion date without the task being complete.");
+                            }
+                        }
+                    }
+                    (true, Some(date)) => match (&completed.done, &completed.date) {
+                        (true, Some(_)) => {}
+                        (false, None) => {
+                            let completion_date = date.clone();
+                            self.completed = (false, None);
+                            self.body = self
+                                .body
+                                .strip_prefix(&format!("x {}", completion_date))
+                                .unwrap()
+                                .into();
+                        }
+                        (true, None) => {
+                            let completion_date = date.clone();
+                            self.completed = (false, None);
+                            self.body = self.body.replace(&completion_date, "");
+                        }
+                        (false, Some(_)) => {
+                            unreachable!("Should not have a completion date without the task being complete.");
+                        }
+                    },
+                    (false, None) => match (&completed.done, &completed.date) {
+                        (true, Some(date)) => {
+                            self.completed = (true, Some(date.to_owned()));
+                            self.body.insert_str(0, &format!("x {} ", date));
+                        }
+                        (false, None) => {}
+                        (true, None) => {
+                            self.completed = (true, None);
+                            self.body.push_str("x ");
+                        }
+                        (false, Some(_)) => {
+                            unreachable!("Should not have a completion date without the task being complete.");
+                        }
+                    },
+                    (false, Some(_)) => {
+                        unreachable!(
+                            "Should not have a completion date without the task being complete."
+                        )
+                    }
+                }
+                self.format_status()
+            }
+            UpdateType::Prio(prio) => {
+                match &self.priority {
+                    Some(_) => {
+                        let next_prio = if !prio.is_empty() {
+                            format!("({}) ", prio)
+                        } else {
+                            String::with_capacity(0)
+                        };
+                        self.body = PRIO_RGX.replace(&self.body, next_prio).into();
+                        self.priority = Some(prio.clone());
+                    }
+                    None => {
+                        //TODO: match on completion status so we don't clobber that.
+                        match &self.completed {
+                            (true, Some(_)) => {
+                                // index is 12 to account for: x YYYY-DD-MM
+                                self.body.insert_str(12, &prio);
+                            }
+                            (true, None) => {
+                                // index is 2 to account for: `x `
+                                self.body.insert_str(2, &prio);
+                            }
+                            (false, None) => {
+                                self.body.insert_str(0, &prio);
+                            }
+                            (false, Some(_)) => {
+                                unreachable!(
+                            "Should not have a completion date without the task being complete."
+                        );
+                            }
+                        }
+                    }
+                }
+                prio
+            }
+            UpdateType::Content(text) => {
+                self.project = parse_project(&text);
+                let completed = if self.completed.0 { "x" } else { "" };
+                let priority = format!(
+                    "({})",
+                    self.priority.as_ref().unwrap_or(&String::with_capacity(0))
+                );
+                self.body = format!(
+                    "{} {} {} {}",
+                    completed,
+                    self.completed
+                        .1
+                        .as_ref()
+                        .unwrap_or(&String::with_capacity(0)),
+                    priority,
+                    text
+                )
+                .trim()
+                .into();
+                self.format_body()
+            }
+            UpdateType::Meta(metadata) => {
+                for (key, value) in &self.metadata {
+                    self.body = self.body.replace(&format!("{}:{}", key, value), "");
+                }
+                self.metadata = parse_meta(&metadata);
+                for (key, value) in &self.metadata {
+                    self.body.push_str(&format!(" {}:{}", key, value));
+                }
+                self.format_metadata()
+            }
+        }
     }
 
     fn sanitize_body(&self) -> String {
@@ -149,7 +295,7 @@ impl Task {
         let (done, date) = &self.completed;
         if let true = done {
             if date.is_some() {
-                format!("✅ {}", date.as_ref().unwrap())
+                format!("✅&nbsp;&nbsp;{}", date.as_ref().unwrap())
             } else {
                 "✅".into()
             }
@@ -178,287 +324,5 @@ impl Task {
                 formatted_str.push_str(&ctx_string);
                 formatted_str
             })
-    }
-}
-
-fn parse_completed(s: &str) -> (bool, Option<String>) {
-    let completed_found = DONE_RGX.find(s);
-    if let Some(found) = completed_found {
-        let done_parsed = found.as_str().split(' ').collect::<Vec<&str>>();
-        (true, Some(String::from(done_parsed[1])))
-    } else if s.starts_with("x ") {
-        (true, None)
-    } else {
-        (false, None)
-    }
-}
-
-fn parse_created(s: &str) -> Option<String> {
-    if s.starts_with("x ") {
-        let mut sliced = s.replace("x ", "");
-        if DATE_RGX.is_match_at(&sliced, 0) {
-            let (_, completed_removed) = sliced.split_at_mut(11);
-            capture_created(completed_removed)
-        } else {
-            capture_created(&sliced)
-        }
-    } else {
-        capture_created(s)
-    }
-}
-
-fn capture_created(s: &str) -> Option<String> {
-    let created_found = CREATE_RGX.captures(s);
-    if let Some(found) = created_found {
-        // we don't know which capture group caught the date, so let's check both one and two
-        if let Some(cap_group) = found.get(1) {
-            if DATE_RGX.is_match(cap_group.as_str()) {
-                let created = cap_group.as_str();
-                let created = created.trim();
-                return Some(String::from(created));
-            }
-        }
-        if let Some(cap_group) = found.get(2) {
-            if DATE_RGX.is_match(cap_group.as_str()) {
-                let created = cap_group.as_str();
-                let created = created.trim();
-                Some(String::from(created))
-            } else {
-                None
-            }
-        } else {
-            None
-        }
-    } else {
-        None
-    }
-}
-
-fn parse_priority(s: &str) -> Option<String> {
-    let prio_found = PRIO_RGX.find(s);
-    if let Some(found) = prio_found {
-        let alpha_prio = found.as_str();
-        let alpha_prio = alpha_prio
-            .trim()
-            .strip_prefix('(')
-            .unwrap()
-            .strip_suffix(')')
-            .unwrap();
-        Some(String::from(alpha_prio))
-    } else {
-        None
-    }
-}
-
-fn parse_project(s: &str) -> Vec<String> {
-    PROJ_RGX
-        .find_iter(s)
-        .map(|m| m.as_str().trim())
-        .map(|s| s.into())
-        .collect()
-}
-
-fn parse_context(s: &str) -> Vec<String> {
-    CTX_RGX
-        .find_iter(s)
-        .map(|m| m.as_str().trim())
-        .map(|s| s.into())
-        .collect()
-}
-
-fn parse_meta(s: &str) -> HashMap<String, String> {
-    META_RGX
-        .find_iter(s)
-        .map(|m| {
-            let found = m.as_str();
-            found.split(':').collect()
-        })
-        .fold(
-            HashMap::new(),
-            |mut mapped: HashMap<String, String>, vals: Vec<&str>| {
-                mapped.insert(vals[0].into(), vals[1].into());
-                mapped
-            },
-        )
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn parses_priorities() {
-        let test_line = "x (A) Write unit tests for new project.";
-        let parsed = parse_priority(test_line);
-        assert_eq!(Some(String::from("A")), parsed);
-
-        let no_prio = "Write unit tests for new project.";
-        let parsed = parse_priority(no_prio);
-        assert_eq!(None, parsed);
-
-        let no_prio_opt = "x Write unit tests for new project.";
-        let parsed = parse_priority(no_prio_opt);
-        assert_eq!(None, parsed);
-
-        let prio_no_spc = "(A)->Write unit tests for new project.";
-        let parsed = parse_priority(prio_no_spc);
-        assert_eq!(None, parsed);
-    }
-
-    #[test]
-    fn parses_completed() {
-        let test_line = "x 2011-03-03 Call Mom";
-        let parsed = parse_completed(test_line);
-        assert_eq!((true, Some(String::from("2011-03-03"))), parsed);
-
-        let test_line = "x (A) Call Mom";
-        let parsed = parse_completed(test_line);
-        assert_eq!((true, None), parsed);
-
-        let test_line = "x 2011-03-03 2011-03-01 Call Mom";
-        let parsed = parse_completed(test_line);
-        assert_eq!((true, Some(String::from("2011-03-03"))), parsed);
-    }
-
-    #[test]
-    fn parses_created() {
-        let test_line = "(A) 2011-03-03 Call Mom";
-        let parsed = parse_created(test_line);
-        assert_eq!(Some(String::from("2011-03-03")), parsed);
-
-        let test_line = "(A) Call Mom";
-        let parsed = parse_created(test_line);
-        assert_eq!(None, parsed);
-
-        let test_line = "2011-03-03 Call Mom";
-        let parsed = parse_created(test_line);
-        assert_eq!(Some(String::from("2011-03-03")), parsed);
-
-        let test_line = "x (A) 2011-03-03 Call Mom";
-        let parsed = parse_created(test_line);
-        assert_eq!(Some(String::from("2011-03-03")), parsed);
-
-        let test_line = "x 2011-03-04 (A) 2011-03-03 Call Mom";
-        let parsed = parse_created(test_line);
-        assert_eq!(Some(String::from("2011-03-03")), parsed);
-    }
-
-    #[test]
-    fn parses_project() {
-        let test_line = "+wiki update tags";
-        let parsed = parse_project(test_line);
-        assert_eq!(parsed, vec!["+wiki"]);
-
-        let multi_project_tags = "+wiki +update +tags";
-        let parsed = parse_project(multi_project_tags);
-        assert_eq!(parsed, vec!["+wiki", "+update", "+tags"]);
-
-        let middle_ctx = "wiki update tags +pkb";
-        let parsed = parse_project(middle_ctx);
-        assert_eq!(parsed, vec!["+pkb"]);
-
-        let no_proj = "wiki update tags pkb";
-        let parsed = parse_project(no_proj);
-        let empty_vec: Vec<String> = Vec::new();
-        assert_eq!(parsed, empty_vec);
-
-        let middle_ctx = "+wiki-update +tags_pkb";
-        let parsed = parse_project(middle_ctx);
-        assert_eq!(parsed, vec!["+wiki-update", "+tags_pkb"]);
-
-        let middle_ctx = "Learn how to add 2+2";
-        let parsed = parse_project(middle_ctx);
-        assert_eq!(parsed, empty_vec);
-    }
-    #[test]
-    fn parses_context() {
-        let test_line = "integrate todos into @tendril-wiki";
-        let parsed = parse_context(test_line);
-        assert_eq!(parsed, vec!["@tendril-wiki"]);
-
-        let test_line = "integrate todos into @wiki";
-        let parsed = parse_context(test_line);
-        assert_eq!(parsed, vec!["@wiki"]);
-
-        // FIXME
-        let test_line = "@wiki_page todos need work";
-        let parsed = parse_context(test_line);
-        assert_eq!(parsed, vec!["@wiki_page"]);
-
-        let test_line = "integrate todos into wiki_page";
-        let parsed = parse_context(test_line);
-        let empty_vec: Vec<String> = Vec::new();
-        assert_eq!(parsed, empty_vec);
-
-        let test_line = "Email SoAndSo at soandso@example.com";
-        let parsed = parse_context(test_line);
-        let empty_vec: Vec<String> = Vec::new();
-        assert_eq!(parsed, empty_vec);
-    }
-    #[test]
-    fn parsed_medata() {
-        let test_line = "reticulate splines due:2022-03-14";
-        let parsed = parse_meta(test_line);
-        let test_map = HashMap::from([("due".into(), "2022-03-14".into())]);
-        assert_eq!(parsed, test_map);
-
-        let test_line = "Discuss new features with person:firstname-lastname";
-        let parsed = parse_meta(test_line);
-        let test_map = HashMap::from([("person".into(), "firstname-lastname".into())]);
-        assert_eq!(parsed, test_map);
-    }
-    #[test]
-    fn parses_full_task() {
-        let test_line = "reticulate splines due:2022-03-14";
-        let task = Task::from_str(test_line).unwrap();
-        let expected_task = Task {
-            completed: (false, None),
-            project: Vec::new(),
-            context: Vec::new(),
-            created: None,
-            priority: None,
-            metadata: HashMap::from([("due".into(), "2022-03-14".into())]),
-            body: test_line.into(),
-        };
-        assert_eq!(task, expected_task);
-
-        let test_line = "x implement todos +tendril-wiki";
-        let task = Task::from_str(test_line).unwrap();
-        let expected_task = Task {
-            completed: (true, None),
-            created: None,
-            project: vec!["+tendril-wiki".into()],
-            context: Vec::new(),
-            priority: None,
-            metadata: HashMap::new(),
-            body: test_line.into(),
-        };
-        assert_eq!(task, expected_task);
-
-        let test_line = "(A) implement todo viewer +tendril-wiki @ui-ux";
-        let task = Task::from_str(test_line).unwrap();
-        let expected_task = Task {
-            completed: (false, None),
-            created: None,
-            project: vec!["+tendril-wiki".into()],
-            context: vec!["@ui-ux".into()],
-            priority: Some("A".into()),
-            metadata: HashMap::new(),
-            body: test_line.into(),
-        };
-        assert_eq!(task, expected_task);
-
-        let test_line = "(A) implement todo viewer +tendril-wiki @ui-ux due:2022-04-01";
-        let task = Task::from_str(test_line).unwrap();
-        let expected_task = Task {
-            completed: (false, None),
-            created: None,
-            project: vec!["+tendril-wiki".into()],
-            context: vec!["@ui-ux".into()],
-            priority: Some("A".into()),
-            metadata: HashMap::from([("due".into(), "2022-04-01".into())]),
-            body: test_line.into(),
-        };
-        assert_eq!(task, expected_task);
     }
 }
