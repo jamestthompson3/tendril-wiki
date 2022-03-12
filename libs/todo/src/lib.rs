@@ -106,8 +106,16 @@ impl Task {
         };
 
         let table_html = format!(
-            r#"<tr role="row" {}><td tabindex="-1" aria-role="checkbox" aria-checked="{}">{}</td><td tabindex="-1" class="priority">{}</td><td tabindex="-1">{}</td><td tabindex="-1">{}</td><td tabindex="-1">{}</td></tr>"#,
-            str_idx, self.completed.0, status, priority, created, body, metadata
+            r#"
+<tr role="row" {}>
+  <td tabindex="-1" aria-role="checkbox" aria-checked="{}">{}</td>
+  <td tabindex="-1" class="priority"><span class="edit-text-button">{}</span><input maxlength="1" type="text" class="edit-text-input hidden" value="{}" /></td>
+  <td tabindex="-1">{}</td>
+  <td tabindex="-1">{}</td>
+  <td tabindex="-1">{}</td>
+</tr>
+"#,
+            str_idx, self.completed.0, status, priority, priority, created, body, metadata
         );
         html.push_str(&table_html);
         html

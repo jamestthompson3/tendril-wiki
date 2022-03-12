@@ -36,7 +36,7 @@ table {
   width: 80%;
 }
 
-tr td:first-child:hover {
+tr td:hover {
   border: 1px solid var(--accent);
   cursor: pointer;
 }
@@ -48,4 +48,18 @@ tr td:first-child {
 }
 td {
   height: 3rem;
+}
+.edit-text-input {
+  border: none;
+  background-color: transparent;
+  color: var(--text-color);
+  border-radius: var(--rad);
+  font-weight: bold;
+  width: 2rem;
+  height: 3rem;
+  font-size: 1rem;
+  text-transform: uppercase;
+}
+.edit-text-input:hover {
+  border: none;
 }

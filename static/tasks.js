@@ -6,29 +6,73 @@
 
   // Event Listeners
   // =======================================================================================
-  const statusHeader = document.querySelector("thead > tr > th:first-child");
+  const headerRowSelector = "thead > tr >";
+  const bodyRowSelector = "tbody tr >";
+  const statusHeader = document.querySelector(
+    `${headerRowSelector} th:first-child`
+  );
   statusHeader.addEventListener("click", sortBy(status));
-  const prioHeader = document.querySelector("thead > tr > th:nth-child(2)");
+  const prioHeader = document.querySelector(
+    `${headerRowSelector} th:nth-child(2)`
+  );
   prioHeader.addEventListener("click", sortBy(priority));
-  const statusCells = document.querySelectorAll("tbody tr > td:first-child");
+  const statusCells = document.querySelectorAll(
+    `${bodyRowSelector} td:first-child`
+  );
   for (const statusCell of statusCells) {
     statusCell.addEventListener("click", updateCellStatus);
   }
+  const priorityCells = document.querySelectorAll(
+    `${bodyRowSelector} td:nth-child(2)`
+  );
+  for (const prioCell of priorityCells) {
+    prioCell.addEventListener("click", editPriority);
+  }
+  const priorityInputCells = document.querySelectorAll(
+    `${bodyRowSelector} td:nth-child(2) > input`
+  );
+  for (const prioCell of priorityInputCells) {
+    prioCell.addEventListener("blur", blurPriority);
+    prioCell.addEventListener("change", changePriority);
+  }
 
-  // Util functions
-  // ===========================================================================================
-  /**
-   * @param task TaskRecord { id: number, data: Record<String, String> }
-   */
-  async function updateTask(task) {
-    return fetch(`/tasks/update/${task.id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      credentials: "same-origin",
-      body: JSON.stringify(task.data),
-    });
+  function editPriority() {
+    const input = this.querySelector("input");
+    const display = this.querySelector("span");
+    input.classList.remove("hidden");
+    display.classList.add("hidden");
+    input.focus();
+    input.selectionStart = input.selectionEnd = input.value.length;
+  }
+
+  function blurPriority() {
+    const display = this.parentNode.querySelector("span");
+    display.classList.remove("hidden");
+    this.classList.add("hidden");
+  }
+
+  const alphaPattern = /[a-zA-Z]/;
+  async function changePriority(e) {
+    const {
+      target: { value },
+    } = e;
+    const display = this.parentNode.querySelector("span");
+    if (alphaPattern.test(value)) {
+      const dataIdx = this.parentNode.parentNode.getAttribute("data-idx");
+      if (!dataIdx) {
+        throw new Error("All cells should render with a data index.");
+      }
+      const response = await updateTask({
+        id: dataIdx,
+        data: {
+          priority: value.toUpperCase(),
+        },
+      });
+      const text = await response.json();
+      display.innerText = text;
+    } else {
+      e.target.value = display.innerText;
+    }
   }
 
   async function updateCellStatus() {
@@ -64,6 +108,9 @@
       this.setAttribute("aria-checked", "true");
     }
   }
+
+  // Util functions
+  // ===========================================================================================
   function sortBy(sortFn) {
     return function (_) {
       // clear aria sort roles on other sortable headers;
@@ -94,6 +141,20 @@
         rowWrapper.appendChild(task);
       }
     };
+  }
+
+  /**
+   * @param task TaskRecord { id: number, data: Record<String, String> }
+   */
+  async function updateTask(task) {
+    return fetch(`/tasks/update/${task.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "same-origin",
+      body: JSON.stringify(task.data),
+    });
   }
 
   // Sort functions
