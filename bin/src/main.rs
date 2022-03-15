@@ -29,7 +29,7 @@ async fn main() {
                 if !arg.is_empty() {
                     let config = read_config();
                     let location = normalize_wiki_location(&config.general.wiki_location);
-                    create_journal_entry(location.clone(), args.join(" ")).unwrap();
+                    create_journal_entry(&location, args.join(" ")).unwrap();
                     if config.sync.use_git {
                         git_update(&location, config.sync.branch);
                     }

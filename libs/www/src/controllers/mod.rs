@@ -103,7 +103,7 @@ pub async fn append(
     let today = Local::now();
     let daily_file = today.format("%Y-%m-%d").to_string();
     let parsed_data = form_body.get("body").unwrap();
-    match create_journal_entry(wiki_location, parsed_data.to_string()) {
+    match create_journal_entry(&wiki_location, parsed_data.to_string()) {
         Ok(()) => {
             sender
                 .send(("update".into(), format!("~~{}", daily_file)))
