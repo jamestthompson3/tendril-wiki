@@ -26,26 +26,44 @@
     `${bodyRowSelector} td:nth-child(2)`
   );
   for (const prioCell of priorityCells) {
-    prioCell.addEventListener("click", editPriority);
+    prioCell.addEventListener("click", editCell);
+  }
+  const contentCells = document.querySelectorAll(
+    `${bodyRowSelector} td:nth-child(4)`
+  );
+  for (const contentCell of contentCells) {
+    contentCell.addEventListener("click", editCell);
   }
   const priorityInputCells = document.querySelectorAll(
     `${bodyRowSelector} td:nth-child(2) > input`
   );
   for (const prioCell of priorityInputCells) {
-    prioCell.addEventListener("blur", blurPriority);
+    prioCell.addEventListener("blur", blurCell);
     prioCell.addEventListener("change", changePriority);
   }
 
-  function editPriority() {
+  const contentInputCells = document.querySelectorAll(
+    `${bodyRowSelector} td:nth-child(4) > input`
+  );
+  for (const contentCell of contentInputCells) {
+    contentCell.addEventListener("blur", blurCell);
+    contentCell.addEventListener("change", changeContent);
+  }
+
+  // Edit functions
+  // ==========================================================================================
+  function editCell() {
     const input = this.querySelector("input");
     const display = this.querySelector("span");
     input.classList.remove("hidden");
     display.classList.add("hidden");
-    input.focus();
-    input.selectionStart = input.selectionEnd = input.value.length;
+    if (document.activeElement !== input) {
+      input.focus();
+      input.selectionStart = input.selectionEnd = input.value.length;
+    }
   }
 
-  function blurPriority() {
+  function blurCell() {
     const display = this.parentNode.querySelector("span");
     display.classList.remove("hidden");
     this.classList.add("hidden");
@@ -62,15 +80,44 @@
       if (!dataIdx) {
         throw new Error("All cells should render with a data index.");
       }
+      try {
+        const response = await updateTask({
+          id: dataIdx,
+          data: {
+            priority: value.toUpperCase(),
+          },
+        });
+        const text = await response.json();
+        display.innerText = text;
+      } catch (e) {
+        console.error(e);
+        e.target.value = display.innerText;
+      }
+    } else {
+      e.target.value = display.innerText;
+    }
+  }
+
+  async function changeContent(e) {
+    const {
+      target: { value },
+    } = e;
+    const display = this.parentNode.querySelector("span");
+    const dataIdx = this.parentNode.parentNode.getAttribute("data-idx");
+    if (!dataIdx) {
+      throw new Error("All cells should render with a data index.");
+    }
+    try {
       const response = await updateTask({
         id: dataIdx,
         data: {
-          priority: value.toUpperCase(),
+          content: value,
         },
       });
       const text = await response.json();
-      display.innerText = text;
-    } else {
+      display.innerHTML = `${text}`;
+    } catch (e) {
+      console.error(e);
       e.target.value = display.innerText;
     }
   }
@@ -80,32 +127,39 @@
     if (!dataIdx) {
       throw new Error("All cells should render with a data index.");
     }
-    if (this.getAttribute("aria-checked") === "true") {
+    const checkedStatus = this.getAttribute("aria-checked");
+    const data = getStatusPayload(checkedStatus);
+
+    try {
       const response = await updateTask({
         id: dataIdx,
-        data: { completed: { done: false, date: undefined } },
+        data,
       });
       const text = await response.json();
       this.innerHTML = text;
-      this.setAttribute("aria-checked", "false");
+      checkedStatus === "true"
+        ? this.setAttribute("aria-checked", "false")
+        : this.setAttribute("aria-checked", "true");
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  function getStatusPayload(checkedStatus) {
+    if (checkedStatus === "true") {
+      return { completed: { done: false, date: undefined } };
     } else {
       const today = new Date();
       const month = today.getMonth() + 1;
       const day = today.getDay();
-      const response = await updateTask({
-        id: dataIdx,
-        data: {
-          completed: {
-            done: true,
-            date: `${today.getFullYear()}-${month > 10 ? month : `0${month}`}-${
-              day > 10 ? day : `0${day}`
-            }`,
-          },
+      return {
+        completed: {
+          done: true,
+          date: `${today.getFullYear()}-${month > 10 ? month : `0${month}`}-${
+            day > 10 ? day : `0${day}`
+          }`,
         },
-      });
-      const text = await response.json();
-      this.innerHTML = text;
-      this.setAttribute("aria-checked", "true");
+      };
     }
   }
 

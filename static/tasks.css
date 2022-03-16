@@ -27,8 +27,12 @@ th[role="button"] {
   color: var(--primary-variant);
 }
 
-tr :not(td:nth-child(4)) {
+tr {
   text-align: center;
+}
+
+tr td:nth-child(4) {
+  text-align: left;
 }
 
 table {
@@ -36,10 +40,11 @@ table {
   width: 80%;
 }
 
-tr td:hover {
-  border: 1px solid var(--accent);
+tr td:not(:nth-child(3)):hover {
   cursor: pointer;
+  outline: 2px solid var(--accent);
 }
+
 tr td:first-child {
   display: flex;
   align-items: center;
@@ -53,12 +58,16 @@ td {
   border: none;
   background-color: transparent;
   color: var(--text-color);
-  border-radius: var(--rad);
-  font-weight: bold;
-  width: 2rem;
   height: 3rem;
+  font-size: 16px;
+  width: 100%;
+}
+.priority .edit-text-input {
   font-size: 1rem;
   text-transform: uppercase;
+  font-weight: bold;
+  width: 2rem;
+  text-align: center;
 }
 .edit-text-input:hover {
   border: none;

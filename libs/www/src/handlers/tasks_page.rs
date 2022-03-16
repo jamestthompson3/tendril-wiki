@@ -49,7 +49,7 @@ impl Runner {
         let updated_task = targeted_task.body;
         tasks[idx] = &updated_task;
         fs::write(&file_location, tasks.join("\n")).await.unwrap();
-        response
+        response.trim().into()
     }
 
     pub async fn delete(idx: usize) {

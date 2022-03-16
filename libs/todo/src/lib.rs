@@ -98,7 +98,7 @@ impl Task {
             .to_owned()
             .unwrap_or_else(|| String::with_capacity(0));
         let metadata = self.format_metadata();
-        let body = self.format_body();
+        let body = self.format_body_context(self.format_body());
         let str_idx = if idx.is_none() {
             String::with_capacity(0)
         } else {
@@ -111,11 +111,19 @@ impl Task {
   <td tabindex="-1" aria-role="checkbox" aria-checked="{}">{}</td>
   <td tabindex="-1" class="priority"><span class="edit-text-button">{}</span><input maxlength="1" type="text" class="edit-text-input hidden" value="{}" /></td>
   <td tabindex="-1">{}</td>
-  <td tabindex="-1">{}</td>
+  <td tabindex="-1"><span class="edit-text-button">{}</span><input type="text" class="edit-text-input hidden" value="{}" /></td>
   <td tabindex="-1">{}</td>
 </tr>
 "#,
-            str_idx, self.completed.0, status, priority, priority, created, body, metadata
+            str_idx,
+            self.completed.0,
+            status,
+            priority,
+            priority,
+            created,
+            body,
+            self.format_body(),
+            metadata
         );
         html.push_str(&table_html);
         html
@@ -152,6 +160,7 @@ impl Task {
                                 .body
                                 .strip_prefix(&format!("x {}", completion_date))
                                 .unwrap()
+                                .trim()
                                 .into();
                         }
                         (true, None) => {
@@ -197,10 +206,10 @@ impl Task {
                         self.priority = Some(prio.clone());
                     }
                     None => {
+                        let prio = format!(" ({})", prio);
                         //TODO: match on completion status so we don't clobber that.
                         match &self.completed {
                             (true, Some(_)) => {
-                                // index is 12 to account for: x YYYY-DD-MM
                                 self.body.insert_str(12, &prio);
                             }
                             (true, None) => {
@@ -239,7 +248,7 @@ impl Task {
                 )
                 .trim()
                 .into();
-                self.format_body()
+                self.format_body_context(self.format_body())
             }
             UpdateType::Meta(metadata) => {
                 for (key, value) in &self.metadata {
@@ -282,6 +291,15 @@ impl Task {
         if let Some(created) = &self.created {
             formatted = formatted.replace(created, "");
         }
+
+        META_RGX
+            .find_iter(formatted.clone().as_str())
+            .for_each(|m| {
+                formatted = formatted.replace(m.as_str(), "");
+            });
+        formatted.trim().into()
+    }
+    fn format_body_context(&self, mut formatted: String) -> String {
         for p in &self.project {
             let project_fmt = self.format_contextual_data(p, '+');
             formatted = formatted.replace(p, &project_fmt);
@@ -291,11 +309,6 @@ impl Task {
             let ctx_fmt = self.format_contextual_data(c, '@');
             formatted = formatted.replace(c, &ctx_fmt);
         }
-        META_RGX
-            .find_iter(formatted.clone().as_str())
-            .for_each(|m| {
-                formatted = formatted.replace(m.as_str(), "");
-            });
         formatted
     }
 
