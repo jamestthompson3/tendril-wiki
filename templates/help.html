@@ -12,12 +12,29 @@
     <meta property="og:type" content="website" />
     <link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon" />
     <link rel="icon" href="/static/favicon.ico"" type="image/x-icon" />
-    <title>About</title>
+    <title>Tendril Wiki Help</title>
+    <style>
+      kbd {
+        font-size: 0.85em;
+        padding: 0.0625rem 0.5rem;
+        border-radius: 0.125rem;
+        border: 1px solid;
+        box-shadow: 1px 1px 0 var(--accent), 2px 2px 0 var(--accent);
+        font-weight: bold;
+      }
+
+      .shortcut {
+        margin: auto 0.5rem;
+      }
+      .shortcuts {
+        list-style: none;
+      }
+    </style>
   </head>
   <body>
     <div class="content-container">
       <div class="content">
-        <h1 class="title">About</h1>
+        <h1 class="title">Tendril Wiki Help</h1>
         <main class="content-body">
           <h2>Wiki Syntax</h2>
           <p>
@@ -38,12 +55,24 @@
             uploaded pdf called, "article" with the link text displaying, "this
             article"
           </p>
-          <h2>Editing Tips</h2>
+          <h2>Automatic Embeds</h2>
           <p>
-            You can copy an image to your clipboard while editing a note, and
-            paste it into the body of the note. This will automatically upload
-            the image and link it as an image tag in the body of the note.
+            Certain websites and links to filetypes will automatically be
+            embedded in your wiki by just pasting the link into the note!
           </p>
+          <p>
+            Here some examples of sites and files that you can automatically
+            embed:
+          </p>
+          <ul>
+            <li>Youtube videos</li>
+            <li>Photos copied to your clipboard</li>
+            <li>Spotify songs</li>
+            <li>Codepen pens</li>
+            <li>Codesandbox sandboxes</li>
+            <li>Vimeo videos</li>
+            <li>Links to mp3, ogg, and flac files</li>
+          </ul>
           <h2>Keyboard Shortcuts</h2>
           <p>
             Keyboard shortcuts are enabled regardless of whether or not you are
@@ -55,15 +84,17 @@
               >access key combination</a
             >
           </p>
-          <ul>
-            <li><kbd>/</kbd> Jump to the search page</li>
-            <li><kbd>e</kbd> Edit the currently viewed page</li>
-            <li><kbd>n</kbd> Create a new page</li>
+          <ul class="shortcuts">
+            <li><kbd class="shortcut">/</kbd> Jump to the search page</li>
             <li>
-              <kbd>l</kbd> Create a new page that backlinks to the currently
-              viewed page
+              <kbd class="shortcut">e</kbd> Edit the currently viewed page
             </li>
-            <li><kbd>p</kbd> Edit your user stylesheet</li>
+            <li><kbd class="shortcut">n</kbd> Create a new page</li>
+            <li>
+              <kbd class="shortcut">l</kbd> Create a new page that backlinks to
+              the currently viewed page
+            </li>
+            <li><kbd class="shortcut">p</kbd> Edit your user stylesheet</li>
           </ul>
         </main>
       </div>

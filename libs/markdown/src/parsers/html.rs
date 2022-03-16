@@ -117,7 +117,7 @@ pub fn to_html(md: &str) -> Html {
                         if text.contains("codepen.io") {
                             return Event::Html(transform_cp_url(text));
                         }
-                        if text.ends_with(".mp3") {
+                        if text.ends_with(".mp3") || text.ends_with(".ogg") || text.ends_with(".flac") {
                             return Event::Html(transform_audio_url(text));
                         }
                         if text.contains("vimeo.com") {

@@ -74,14 +74,6 @@ tbody tr:nth-child(odd) {
   background-color: var(--bg-darker);
 }
 
-kbd {
-  font-size: 0.85em;
-  padding: 0.0625rem 0.5rem;
-  border-radius: 0.125rem;
-  border: 1px solid;
-  box-shadow: 1px 1px 0 var(--accent), 2px 2px 0 var(--accent);
-}
-
 li {
   margin-bottom: 0.5rem;
 }
@@ -453,13 +445,9 @@ details {
 
 button.submit {
   height: 2.25rem;
-
   font-size: 16px;
-
   width: 25%;
-
   margin: 2rem auto;
-
   align-self: stretch;
 }
 
