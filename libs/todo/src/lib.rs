@@ -112,7 +112,7 @@ impl Task {
   <td tabindex="-1" class="priority"><span class="edit-text-button">{}</span><input maxlength="1" type="text" class="edit-text-input hidden" value="{}" /></td>
   <td tabindex="-1">{}</td>
   <td tabindex="-1"><span class="edit-text-button">{}</span><input type="text" class="edit-text-input hidden" value="{}" /></td>
-  <td tabindex="-1">{}</td>
+  <td tabindex="-1"><span class="task-metadata edit-text-button">{}</span><input type="text" class="edit-text-input hidden" value="{}" /></td>
 </tr>
 "#,
             str_idx,
@@ -123,7 +123,14 @@ impl Task {
             created,
             body,
             self.format_body(),
-            metadata
+            metadata,
+            self.metadata
+                .iter()
+                .fold(String::new(), |mut formatted_str, (key, value)| {
+                    let ctx_string = format!("{}:{}", key, value);
+                    formatted_str.push_str(&ctx_string);
+                    formatted_str
+                }),
         );
         html.push_str(&table_html);
         html
@@ -341,7 +348,7 @@ impl Task {
         self.metadata
             .iter()
             .fold(String::new(), |mut formatted_str, (key, value)| {
-                let ctx_string = format!("<strong>{}:</strong> {}", key, value);
+                let ctx_string = format!("<strong>{}:</strong>&nbsp;{}&nbsp;", key, value);
                 formatted_str.push_str(&ctx_string);
                 formatted_str
             })

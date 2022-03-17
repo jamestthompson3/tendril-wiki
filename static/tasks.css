@@ -72,3 +72,14 @@ td {
 .edit-text-input:hover {
   border: none;
 }
+
+.task-metadata {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+}
+
+.task-metadata.hidden {
+  display: none;
+}

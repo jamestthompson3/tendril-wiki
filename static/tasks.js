@@ -34,6 +34,14 @@
   for (const contentCell of contentCells) {
     contentCell.addEventListener("click", editCell);
   }
+  const metadataCells = document.querySelectorAll(
+    `${bodyRowSelector} td:nth-child(5)`
+  );
+  for (const metadataCell of metadataCells) {
+    metadataCell.addEventListener("click", editCell);
+  }
+  // INPUT HANDLERS
+  // ===============================================================================================
   const priorityInputCells = document.querySelectorAll(
     `${bodyRowSelector} td:nth-child(2) > input`
   );
@@ -41,13 +49,19 @@
     prioCell.addEventListener("blur", blurCell);
     prioCell.addEventListener("change", changePriority);
   }
-
   const contentInputCells = document.querySelectorAll(
     `${bodyRowSelector} td:nth-child(4) > input`
   );
   for (const contentCell of contentInputCells) {
     contentCell.addEventListener("blur", blurCell);
     contentCell.addEventListener("change", changeContent);
+  }
+  const metadataInputCells = document.querySelectorAll(
+    `${bodyRowSelector} td:nth-child(5) > input`
+  );
+  for (const metadataCell of metadataInputCells) {
+    metadataCell.addEventListener("blur", blurCell);
+    metadataCell.addEventListener("change", changeMetadata);
   }
 
   // Edit functions
@@ -112,6 +126,31 @@
         id: dataIdx,
         data: {
           content: value,
+        },
+      });
+      const text = await response.json();
+      display.innerHTML = `${text}`;
+    } catch (e) {
+      console.error(e);
+      e.target.value = display.innerText;
+    }
+  }
+
+  async function changeMetadata(e) {
+    const {
+      target: { value },
+    } = e;
+    const display = this.parentNode.querySelector("span");
+    const dataIdx = this.parentNode.parentNode.getAttribute("data-idx");
+    if (!dataIdx) {
+      throw new Error("All cells should render with a data index.");
+    }
+
+    try {
+      const response = await updateTask({
+        id: dataIdx,
+        data: {
+          metadata: value,
         },
       });
       const text = await response.json();
