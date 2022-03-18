@@ -108,6 +108,7 @@ impl Task {
         let table_html = format!(
             r#"
 <tr role="row" {}>
+  <td tabindex="-1"><span aria-label="delete-task" title="delete task"></span></td>
   <td tabindex="-1" aria-role="checkbox" aria-checked="{}">{}</td>
   <td tabindex="-1" class="priority"><span class="edit-text-button">{}</span><input maxlength="1" type="text" class="edit-text-input hidden" value="{}" /></td>
   <td tabindex="-1">{}</td>

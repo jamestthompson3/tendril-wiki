@@ -3,7 +3,7 @@ use std::{str::FromStr, sync::Arc};
 use render::{tasks_page::TasksPage, Render};
 use todo::{Task, TaskUpdate, UpdateType};
 use tokio::fs;
-use warp::{filters::BoxedFilter, hyper::StatusCode, Filter, Reply};
+use warp::{filters::BoxedFilter, Filter, Reply};
 
 use super::{
     filters::{with_auth, with_location},
@@ -52,8 +52,22 @@ impl Runner {
         response.trim().into()
     }
 
-    pub async fn delete(idx: usize) {
-        println!("Deleting: {}", idx);
+    pub async fn delete(location: String, idx: usize) -> usize {
+        let file_location = format!("{}{}", location, "todo.txt");
+        // TODO: Don't read this file so much!
+        let todo_file = fs::read_to_string(&file_location).await.unwrap();
+        let tasks = todo_file
+            .lines()
+            .enumerate()
+            .filter_map(|(file_idx, line)| {
+                if file_idx != idx {
+                    return Some(line);
+                }
+                None
+            })
+            .collect::<Vec<&str>>();
+        fs::write(&file_location, tasks.join("\n")).await.unwrap();
+        idx
     }
 }
 
@@ -82,10 +96,11 @@ impl TaskPageRouter {
     fn delete(&self) -> BoxedFilter<(impl Reply,)> {
         warp::delete()
             .and(with_auth())
+            .and(with_location(self.wiki_location.clone()))
             .and(warp::path!("delete" / usize))
-            .then(|idx: usize| async move {
-                Runner::delete(idx).await;
-                warp::reply::with_status("ok", StatusCode::OK)
+            .then(|location: String, idx: usize| async move {
+                let response = Runner::delete(location, idx).await;
+                warp::reply::json(&response)
             })
             .boxed()
     }

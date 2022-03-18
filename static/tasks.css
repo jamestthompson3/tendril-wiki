@@ -31,7 +31,7 @@ tr {
   text-align: center;
 }
 
-tr td:nth-child(4) {
+tr td:nth-child(5) {
   text-align: left;
 }
 
@@ -40,17 +40,29 @@ table {
   width: 80%;
 }
 
-tr td:not(:nth-child(3)):hover {
+tr td:not(:nth-child(4)):hover {
   cursor: pointer;
   outline: 2px solid var(--accent);
 }
 
-tr td:first-child {
+tr td:not(:nth-child(4)):focus {
+  outline: 2px solid var(--accent);
+}
+
+tr td:nth-child(2) {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 7rem;
 }
+tr td:first-child {
+  width: 30px;
+}
+
+tr td:first-child:hover::after {
+  content: "🗑️";
+}
+
 td {
   height: 3rem;
 }

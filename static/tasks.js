@@ -9,55 +9,62 @@
   const headerRowSelector = "thead > tr >";
   const bodyRowSelector = "tbody tr >";
   const statusHeader = document.querySelector(
-    `${headerRowSelector} th:first-child`
+    `${headerRowSelector} th:nth-child(2)`
   );
   statusHeader.addEventListener("click", sortBy(status));
   const prioHeader = document.querySelector(
-    `${headerRowSelector} th:nth-child(2)`
+    `${headerRowSelector} th:nth-child(3)`
   );
   prioHeader.addEventListener("click", sortBy(priority));
   const statusCells = document.querySelectorAll(
-    `${bodyRowSelector} td:first-child`
+    `${bodyRowSelector} td:nth-child(2)`
   );
   for (const statusCell of statusCells) {
     statusCell.addEventListener("click", updateCellStatus);
   }
   const priorityCells = document.querySelectorAll(
-    `${bodyRowSelector} td:nth-child(2)`
+    `${bodyRowSelector} td:nth-child(3)`
   );
   for (const prioCell of priorityCells) {
     prioCell.addEventListener("click", editCell);
   }
   const contentCells = document.querySelectorAll(
-    `${bodyRowSelector} td:nth-child(4)`
+    `${bodyRowSelector} td:nth-child(5)`
   );
   for (const contentCell of contentCells) {
     contentCell.addEventListener("click", editCell);
   }
   const metadataCells = document.querySelectorAll(
-    `${bodyRowSelector} td:nth-child(5)`
+    `${bodyRowSelector} td:nth-child(6)`
   );
   for (const metadataCell of metadataCells) {
     metadataCell.addEventListener("click", editCell);
   }
+
+  const deleteCells = document.querySelectorAll(
+    `${bodyRowSelector} td:first-child`
+  );
+  for (const deleteCell of deleteCells) {
+    deleteCell.addEventListener("click", deleteTask);
+  }
   // INPUT HANDLERS
   // ===============================================================================================
   const priorityInputCells = document.querySelectorAll(
-    `${bodyRowSelector} td:nth-child(2) > input`
+    `${bodyRowSelector} td:nth-child(3) > input`
   );
   for (const prioCell of priorityInputCells) {
     prioCell.addEventListener("blur", blurCell);
     prioCell.addEventListener("change", changePriority);
   }
   const contentInputCells = document.querySelectorAll(
-    `${bodyRowSelector} td:nth-child(4) > input`
+    `${bodyRowSelector} td:nth-child(5) > input`
   );
   for (const contentCell of contentInputCells) {
     contentCell.addEventListener("blur", blurCell);
     contentCell.addEventListener("change", changeContent);
   }
   const metadataInputCells = document.querySelectorAll(
-    `${bodyRowSelector} td:nth-child(5) > input`
+    `${bodyRowSelector} td:nth-child(6) > input`
   );
   for (const metadataCell of metadataInputCells) {
     metadataCell.addEventListener("blur", blurCell);
@@ -81,6 +88,32 @@
     const display = this.parentNode.querySelector("span");
     display.classList.remove("hidden");
     this.classList.add("hidden");
+  }
+
+  async function deleteTask(e) {
+    const dataIdx = this.parentNode.getAttribute("data-idx");
+    if (!dataIdx) {
+      throw new Error("All cells should render with a data index.");
+    }
+    try {
+      const request = await fetch(`/tasks/delete/${dataIdx}`, {
+        method: "DELETE",
+        credentials: "same-origin",
+      });
+      const response = await request.json();
+
+      for (const remainingRow of document.querySelectorAll("tbody tr")) {
+        const idx = parseInt(remainingRow.getAttribute("data-idx"));
+        if (idx === response) {
+          remainingRow.parentNode.removeChild(remainingRow);
+        }
+        if (idx > response) {
+          remainingRow.setAttribute("data-idx", idx - 1);
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   const alphaPattern = /[a-zA-Z]/;
