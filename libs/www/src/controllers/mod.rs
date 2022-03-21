@@ -2,8 +2,7 @@ use bytes::BufMut;
 use chrono::prelude::*;
 use persistance::fs::{write, write_media};
 use render::{
-    search_results_page::SearchResultsPage,
-    uploaded_files_page::UploadedFilesPage, Render,
+    search_results_page::SearchResultsPage, uploaded_files_page::UploadedFilesPage, Render,
 };
 use std::{collections::HashMap, fs::read_dir};
 use tasks::context_search;

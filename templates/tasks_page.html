@@ -18,15 +18,22 @@
     <%= include "nav" %>
     <div class="content-container">
       <h4>Current Tasks</h4>
-      <div class="task-header editor">
-        <div>
-          <span
-            >Use the todo.txt format for adding new todos. More information on
-            this format can be found in the <a href="/help">help page</a>.</span
-          >
-          <input type="text" />
-        </div>
-        <button type="button">New Task</button>
+      <div class="task-header">
+        <details>
+          <summary>Add new task</summary>
+          <div>
+            <span
+              >Use the todo.txt format for adding new todos. More information on
+              this format can be found in the
+              <a href="/help">help page</a>.</span
+            >
+            <form class="editor">
+              <label for="task" class="hidden">create task</label>
+              <input type="text" autocomplete="off" name="task" />
+              <button type="submit">New Task</button>
+            </form>
+          </div>
+        </details>
       </div>
       <table role="grid">
         <thead>

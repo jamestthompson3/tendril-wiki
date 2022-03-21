@@ -1,6 +1,5 @@
 use std::{str::FromStr, sync::Arc};
 
-use chrono::Local;
 use render::{tasks_page::TasksPage, Render};
 use serde::{Deserialize, Serialize};
 use todo::{Task, TaskUpdate, UpdateType};
@@ -77,16 +76,12 @@ impl Runner {
         idx
     }
     pub async fn create(location: String, new_task: NewTask) -> String {
-        let mut parsed_todo = Task::from_str(&new_task.content).unwrap();
-        if parsed_todo.created.is_none() {
-            let now = Local::now();
-            parsed_todo.created = Some(now.format("%Y-%m-%d").to_string());
-        }
+        let parsed_todo = Task::from_str(&new_task.content).unwrap();
         let file_location = format!("{}{}", location, "todo.txt");
         // TODO: Don't read this file so much!
         let todo_file = fs::read_to_string(&file_location).await.unwrap();
         let mut updated_todos = todo_file.lines().collect::<Vec<&str>>();
-        updated_todos.insert(0, &new_task.content);
+        updated_todos.insert(0, &parsed_todo.body);
         fs::write(&file_location, updated_todos.join("\n"))
             .await
             .unwrap();

@@ -11,8 +11,8 @@
   const statusHeader = document.querySelector(
     `${headerRowSelector} th:nth-child(2)`
   );
-  const newTaskButton = document.querySelector(".task-header.editor button");
-  newTaskButton.addEventListener("click", addTask);
+  const form = document.querySelector(".task-header form");
+  form.addEventListener("submit", addTask);
   statusHeader.addEventListener("click", sortBy(status));
   const prioHeader = document.querySelector(
     `${headerRowSelector} th:nth-child(3)`
@@ -25,58 +25,50 @@
   // Edit functions
   // ==========================================================================================
   async function addTask(e) {
-    const input = this.parentNode.querySelector("input");
-    if (input.classList.contains("visible")) {
-      if (input.value === "") {
-        this.innerText = "New Task";
-        input.classList.remove("visible");
-        this.parentNode.classList.remove("edit");
-        return;
-      }
-      const body = {
-        content: input.value,
-      };
-      try {
-        const request = await fetch("/tasks/create", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "same-origin",
-          body: JSON.stringify(body),
-        });
-        if (request.status === 200) {
-          const response = await request.json();
-          input.value = "";
-          input.classList.remove("visible");
-          this.innerText = "New Task";
-          const rowParser = document.createElement("tbody");
-          rowParser.innerHTML = response;
-          const rowWrapper = document.querySelector("tbody");
-          const firstRow = rowWrapper.querySelector(":first-child");
-          for (const row of document.querySelectorAll("tbody tr")) {
-            const idx = parseInt(row.getAttribute("data-idx"));
-            row.setAttribute("data-idx", idx + 1);
-          }
-          const newRow = rowParser.querySelector(":first-child");
-          setupRowEventHandlers(newRow);
-          rowWrapper.insertBefore(newRow, firstRow);
-        } else {
-          const errorMsg = document.createElement("span");
-          errorMsg.innerHTML = `Could not create task: ${request.statusText}`;
-          errorMsg.style.color = "red";
-          this.parentNode.appendChild(errorMsg);
+    e.preventDefault();
+    const data = new FormData(this);
+    const task = data.get("task");
+    if (task === "") {
+      return;
+    }
+    const body = {
+      content: `${formatDate()} ${task}`,
+    };
+    try {
+      const request = await fetch("/tasks/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "same-origin",
+        body: JSON.stringify(body),
+      });
+      if (request.status === 200) {
+        const response = await request.json();
+        const rowParser = document.createElement("tbody");
+        rowParser.innerHTML = response;
+        const rowWrapper = document.querySelector("tbody");
+        const firstRow = rowWrapper.querySelector(":first-child");
+        for (const row of document.querySelectorAll("tbody tr")) {
+          const idx = parseInt(row.getAttribute("data-idx"));
+          row.setAttribute("data-idx", idx + 1);
         }
-      } catch (e) {
+        const newRow = rowParser.querySelector(":first-child");
+        setupRowEventHandlers(newRow);
+        rowWrapper.insertBefore(newRow, firstRow);
+        // reset the form
+        this.elements["task"].value = "";
+      } else {
         const errorMsg = document.createElement("span");
-        errorMsg.innerHTML = `Could not create task: ${e}`;
+        errorMsg.innerHTML = `Could not create task: ${request.statusText}`;
         errorMsg.style.color = "red";
         this.parentNode.appendChild(errorMsg);
       }
-    } else {
-      this.innerText = "Save";
-      input.classList.add("visible");
-      this.parentNode.classList.add("edit");
+    } catch (e) {
+      const errorMsg = document.createElement("span");
+      errorMsg.innerHTML = `Could not create task: ${e}`;
+      errorMsg.style.color = "red";
+      this.parentNode.appendChild(errorMsg);
     }
   }
   function editCell() {
@@ -229,15 +221,10 @@
     if (checkedStatus === "true") {
       return { completed: { done: false, date: undefined } };
     } else {
-      const today = new Date();
-      const month = today.getMonth() + 1;
-      const day = today.getDay();
       return {
         completed: {
           done: true,
-          date: `${today.getFullYear()}-${month > 10 ? month : `0${month}`}-${
-            day > 10 ? day : `0${day}`
-          }`,
+          date: formatDate(),
         },
       };
     }
@@ -245,6 +232,14 @@
 
   // Util functions
   // ===========================================================================================
+  function formatDate() {
+    const today = new Date();
+    const month = today.getMonth() + 1;
+    const day = today.getDay();
+    return `${today.getFullYear()}-${month > 10 ? month : `0${month}`}-${
+      day > 10 ? day : `0${day}`
+    }`;
+  }
   function sortBy(sortFn) {
     return function (_) {
       // clear aria sort roles on other sortable headers;
