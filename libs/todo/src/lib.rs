@@ -214,8 +214,7 @@ impl Task {
                         self.priority = Some(prio.clone());
                     }
                     None => {
-                        let prio = format!(" ({})", prio);
-                        //TODO: match on completion status so we don't clobber that.
+                        let prio = format!(" ({}) ", prio);
                         match &self.completed {
                             (true, Some(_)) => {
                                 self.body.insert_str(12, &prio);

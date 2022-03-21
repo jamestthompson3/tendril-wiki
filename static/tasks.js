@@ -7,72 +7,78 @@
   // Event Listeners
   // =======================================================================================
   const headerRowSelector = "thead > tr >";
-  const bodyRowSelector = "tbody tr >";
+  // const bodyRowSelector = "tbody tr >";
   const statusHeader = document.querySelector(
     `${headerRowSelector} th:nth-child(2)`
   );
+  const newTaskButton = document.querySelector(".task-header.editor button");
+  newTaskButton.addEventListener("click", addTask);
   statusHeader.addEventListener("click", sortBy(status));
   const prioHeader = document.querySelector(
     `${headerRowSelector} th:nth-child(3)`
   );
   prioHeader.addEventListener("click", sortBy(priority));
-  const statusCells = document.querySelectorAll(
-    `${bodyRowSelector} td:nth-child(2)`
-  );
-  for (const statusCell of statusCells) {
-    statusCell.addEventListener("click", updateCellStatus);
-  }
-  const priorityCells = document.querySelectorAll(
-    `${bodyRowSelector} td:nth-child(3)`
-  );
-  for (const prioCell of priorityCells) {
-    prioCell.addEventListener("click", editCell);
-  }
-  const contentCells = document.querySelectorAll(
-    `${bodyRowSelector} td:nth-child(5)`
-  );
-  for (const contentCell of contentCells) {
-    contentCell.addEventListener("click", editCell);
-  }
-  const metadataCells = document.querySelectorAll(
-    `${bodyRowSelector} td:nth-child(6)`
-  );
-  for (const metadataCell of metadataCells) {
-    metadataCell.addEventListener("click", editCell);
-  }
-
-  const deleteCells = document.querySelectorAll(
-    `${bodyRowSelector} td:first-child`
-  );
-  for (const deleteCell of deleteCells) {
-    deleteCell.addEventListener("click", deleteTask);
-  }
-  // INPUT HANDLERS
-  // ===============================================================================================
-  const priorityInputCells = document.querySelectorAll(
-    `${bodyRowSelector} td:nth-child(3) > input`
-  );
-  for (const prioCell of priorityInputCells) {
-    prioCell.addEventListener("blur", blurCell);
-    prioCell.addEventListener("change", changePriority);
-  }
-  const contentInputCells = document.querySelectorAll(
-    `${bodyRowSelector} td:nth-child(5) > input`
-  );
-  for (const contentCell of contentInputCells) {
-    contentCell.addEventListener("blur", blurCell);
-    contentCell.addEventListener("change", changeContent);
-  }
-  const metadataInputCells = document.querySelectorAll(
-    `${bodyRowSelector} td:nth-child(6) > input`
-  );
-  for (const metadataCell of metadataInputCells) {
-    metadataCell.addEventListener("blur", blurCell);
-    metadataCell.addEventListener("change", changeMetadata);
+  for (const row of document.querySelectorAll("tbody tr")) {
+    setupRowEventHandlers(row);
   }
 
   // Edit functions
   // ==========================================================================================
+  async function addTask(e) {
+    const input = this.parentNode.querySelector("input");
+    if (input.classList.contains("visible")) {
+      if (input.value === "") {
+        this.innerText = "New Task";
+        input.classList.remove("visible");
+        this.parentNode.classList.remove("edit");
+        return;
+      }
+      const body = {
+        content: input.value,
+      };
+      try {
+        const request = await fetch("/tasks/create", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "same-origin",
+          body: JSON.stringify(body),
+        });
+        if (request.status === 200) {
+          const response = await request.json();
+          input.value = "";
+          input.classList.remove("visible");
+          this.innerText = "New Task";
+          const rowParser = document.createElement("tbody");
+          rowParser.innerHTML = response;
+          const rowWrapper = document.querySelector("tbody");
+          const firstRow = rowWrapper.querySelector(":first-child");
+          for (const row of document.querySelectorAll("tbody tr")) {
+            const idx = parseInt(row.getAttribute("data-idx"));
+            row.setAttribute("data-idx", idx + 1);
+          }
+          const newRow = rowParser.querySelector(":first-child");
+          setupRowEventHandlers(newRow);
+          rowWrapper.insertBefore(newRow, firstRow);
+        } else {
+          const errorMsg = document.createElement("span");
+          errorMsg.innerHTML = `Could not create task: ${request.statusText}`;
+          errorMsg.style.color = "red";
+          this.parentNode.appendChild(errorMsg);
+        }
+      } catch (e) {
+        const errorMsg = document.createElement("span");
+        errorMsg.innerHTML = `Could not create task: ${e}`;
+        errorMsg.style.color = "red";
+        this.parentNode.appendChild(errorMsg);
+      }
+    } else {
+      this.innerText = "Save";
+      input.classList.add("visible");
+      this.parentNode.classList.add("edit");
+    }
+  }
   function editCell() {
     const input = this.querySelector("input");
     const display = this.querySelector("span");
@@ -90,7 +96,7 @@
     this.classList.add("hidden");
   }
 
-  async function deleteTask(e) {
+  async function deleteTask() {
     const dataIdx = this.parentNode.getAttribute("data-idx");
     if (!dataIdx) {
       throw new Error("All cells should render with a data index.");
@@ -122,6 +128,7 @@
       target: { value },
     } = e;
     const display = this.parentNode.querySelector("span");
+    if (value === display.innerText) return;
     if (alphaPattern.test(value)) {
       const dataIdx = this.parentNode.parentNode.getAttribute("data-idx");
       if (!dataIdx) {
@@ -154,6 +161,7 @@
     if (!dataIdx) {
       throw new Error("All cells should render with a data index.");
     }
+    if (value === display.innerText) return;
     try {
       const response = await updateTask({
         id: dataIdx,
@@ -337,5 +345,28 @@
       default:
         return 0;
     }
+  }
+
+  function setupRowEventHandlers(row) {
+    const deleteCell = row.querySelector("td:first-child");
+    deleteCell.addEventListener("click", deleteTask);
+    const statusCell = row.querySelector("td:nth-child(2)");
+    statusCell.addEventListener("click", updateCellStatus);
+    const prioCell = row.querySelector("td:nth-child(3)");
+    prioCell.addEventListener("click", editCell);
+    const contentCell = row.querySelector("td:nth-child(5)");
+    contentCell.addEventListener("click", editCell);
+    const metadataCell = row.querySelector("td:nth-child(6)");
+    metadataCell.addEventListener("click", editCell);
+
+    const priorityInputCell = row.querySelector("td:nth-child(3) > input");
+    priorityInputCell.addEventListener("blur", blurCell);
+    priorityInputCell.addEventListener("change", changePriority);
+    const contentInputCell = row.querySelector("td:nth-child(5) > input");
+    contentInputCell.addEventListener("blur", blurCell);
+    contentInputCell.addEventListener("change", changeContent);
+    const metadataInputCell = row.querySelector("td:nth-child(6) > input");
+    metadataInputCell.addEventListener("blur", blurCell);
+    metadataInputCell.addEventListener("change", changeMetadata);
   }
 })();

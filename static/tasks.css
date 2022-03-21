@@ -95,3 +95,28 @@ td {
 .task-metadata.hidden {
   display: none;
 }
+.task-header {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  padding: 1rem;
+}
+
+.task-header.edit {
+  border-bottom: 1px solid var(--accent);
+}
+
+.task-header input[type="text"] {
+  margin: 0.5rem 0rem;
+  visibility: hidden;
+}
+
+.task-header input[type="text"].visible {
+  visibility: visible;
+}
+
+.task-header button {
+  width: 80px;
+}

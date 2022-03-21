@@ -1,6 +1,8 @@
 use std::{str::FromStr, sync::Arc};
 
+use chrono::Local;
 use render::{tasks_page::TasksPage, Render};
+use serde::{Deserialize, Serialize};
 use todo::{Task, TaskUpdate, UpdateType};
 use tokio::fs;
 use warp::{filters::BoxedFilter, Filter, Reply};
@@ -12,6 +14,11 @@ use super::{
 
 pub struct TaskPageRouter {
     pub wiki_location: Arc<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct NewTask {
+    content: String,
 }
 
 // Keep all business logic here so it is easier to test and profile.
@@ -69,6 +76,22 @@ impl Runner {
         fs::write(&file_location, tasks.join("\n")).await.unwrap();
         idx
     }
+    pub async fn create(location: String, new_task: NewTask) -> String {
+        let mut parsed_todo = Task::from_str(&new_task.content).unwrap();
+        if parsed_todo.created.is_none() {
+            let now = Local::now();
+            parsed_todo.created = Some(now.format("%Y-%m-%d").to_string());
+        }
+        let file_location = format!("{}{}", location, "todo.txt");
+        // TODO: Don't read this file so much!
+        let todo_file = fs::read_to_string(&file_location).await.unwrap();
+        let mut updated_todos = todo_file.lines().collect::<Vec<&str>>();
+        updated_todos.insert(0, &new_task.content);
+        fs::write(&file_location, updated_todos.join("\n"))
+            .await
+            .unwrap();
+        parsed_todo.to_html(Some(0))
+    }
 }
 
 impl TaskPageRouter {
@@ -78,7 +101,12 @@ impl TaskPageRouter {
     pub fn routes(&self) -> BoxedFilter<(impl Reply,)> {
         warp::any()
             .and(warp::path("tasks"))
-            .and(self.delete().or(self.update()).or(self.get()))
+            .and(
+                self.delete()
+                    .or(self.update())
+                    .or(self.create())
+                    .or(self.get()),
+            )
             .boxed()
     }
 
@@ -89,6 +117,19 @@ impl TaskPageRouter {
             .then(|location: String| async {
                 let template: String = Runner::render(location).await;
                 warp::reply::html(template)
+            })
+            .boxed()
+    }
+
+    fn create(&self) -> BoxedFilter<(impl Reply,)> {
+        warp::post()
+            .and(with_auth())
+            .and(with_location(self.wiki_location.clone()))
+            .and(warp::body::content_length_limit(MAX_BODY_SIZE))
+            .and(warp::body::json())
+            .then(|location: String, new_task: NewTask| async {
+                let response = Runner::create(location, new_task).await;
+                warp::reply::json(&response)
             })
             .boxed()
     }
