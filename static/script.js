@@ -85,6 +85,9 @@
     if (e.target !== document.body) return;
     if (e.ctrlKey) return;
     switch (e.key) {
+      case "t":
+        jump("tasks");
+        break;
       case "e":
         edit();
         break;
