@@ -205,16 +205,18 @@ impl Task {
             UpdateType::Prio(prio) => {
                 match &self.priority {
                     Some(_) => {
-                        let next_prio = if !prio.is_empty() {
+                        if !prio.is_empty() {
+                            let next_prio = format!("({}) ", prio);
+                            self.body = PRIO_RGX.replace(&self.body, next_prio).into();
+                            self.priority = Some(prio.clone());
+                        }
+                    }
+                    None => {
+                        let prio = if !prio.is_empty() {
                             format!("({}) ", prio)
                         } else {
                             String::with_capacity(0)
                         };
-                        self.body = PRIO_RGX.replace(&self.body, next_prio).into();
-                        self.priority = Some(prio.clone());
-                    }
-                    None => {
-                        let prio = format!(" ({}) ", prio);
                         match &self.completed {
                             (true, Some(_)) => {
                                 self.body.insert_str(12, &prio);
