@@ -71,7 +71,8 @@
       this.parentNode.appendChild(errorMsg);
     }
   }
-  function editCell() {
+  function editCell(e) {
+    if (e.target.tagName === "A") return;
     const input = this.querySelector("input");
     const display = this.querySelector("span");
     input.classList.remove("hidden");

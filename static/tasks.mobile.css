@@ -70,7 +70,12 @@ td:nth-of-type(6):before {
 }
 .task-header form {
   flex-wrap: wrap;
+  flex-direction: column;
 }
 .editor input[type="text"] {
   width: 100%;
+}
+.task-header button {
+  margin: 1rem auto;
+  width: 80%;
 }

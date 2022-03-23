@@ -17,6 +17,10 @@ th[role="button"] {
   cursor: pointer;
 }
 
+th:nth-child(5) {
+  text-align: left;
+}
+
 [aria-sort="ascending"]::after {
   content: " Δ";
   color: var(--primary-variant);
@@ -97,17 +101,17 @@ td {
 }
 .task-header {
   width: 100%;
-  padding: 1rem;
 }
 
 .task-header div {
   padding: 1rem;
+  width: 80%;
+  margin: 0.5rem auto;
 }
 
 .task-header div span {
   display: block;
   margin: auto;
-  width: 88%;
 }
 
 .task-header.edit {
@@ -115,8 +119,10 @@ td {
 }
 
 .task-header form {
-  margin: 0.5rem 0rem;
+  margin: 0.75rem auto;
   display: flex;
+  justify-content: space-between;
+  padding: 1rem 0rem;
 }
 
 .task-header form button {
@@ -124,7 +130,12 @@ td {
 }
 
 .task-header form input {
-  margin: 0px;
+  margin: 0rem;
+  outline: 1px solid var(--accent);
+}
+
+.editor input[type="text"] {
+  margin: 0rem;
 }
 
 .task-header button {
