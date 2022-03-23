@@ -1,4 +1,4 @@
-use std::{str::FromStr, sync::Arc};
+use std::{io::ErrorKind, path::PathBuf, str::FromStr, sync::Arc};
 
 use render::{tasks_page::TasksPage, Render};
 use serde::{Deserialize, Serialize};
@@ -25,9 +25,19 @@ struct Runner {}
 
 impl Runner {
     async fn render(location: String) -> String {
-        let todo_file = fs::read_to_string(format!("{}{}", location, "todo.txt"))
-            .await
-            .unwrap();
+        let todo_file_loc = format!("{}{}", location, "todo.txt");
+        let todo_file = match fs::read_to_string(&todo_file_loc).await {
+            Ok(files) => files,
+            Err(e) => match e.kind() {
+                ErrorKind::NotFound => {
+                    fs::File::create(todo_file_loc).await.unwrap();
+                    String::with_capacity(0)
+                }
+                _ => {
+                    panic!("Could not read todo file");
+                }
+            },
+        };
         let tasks = todo_file
             .lines()
             .map(|l| Task::from_str(l).unwrap())
@@ -38,7 +48,6 @@ impl Runner {
 
     async fn update(location: String, idx: usize, update: TaskUpdate) -> String {
         let file_location = format!("{}{}", location, "todo.txt");
-        // TODO: Don't read this file so much!
         let todo_file = fs::read_to_string(&file_location).await.unwrap();
         let mut tasks = todo_file.lines().collect::<Vec<&str>>();
         let mut targeted_task = Task::from_str(tasks[idx]).unwrap();
@@ -60,7 +69,6 @@ impl Runner {
 
     pub async fn delete(location: String, idx: usize) -> usize {
         let file_location = format!("{}{}", location, "todo.txt");
-        // TODO: Don't read this file so much!
         let todo_file = fs::read_to_string(&file_location).await.unwrap();
         let tasks = todo_file
             .lines()
@@ -78,7 +86,6 @@ impl Runner {
     pub async fn create(location: String, new_task: NewTask) -> String {
         let parsed_todo = Task::from_str(&new_task.content).unwrap();
         let file_location = format!("{}{}", location, "todo.txt");
-        // TODO: Don't read this file so much!
         let todo_file = fs::read_to_string(&file_location).await.unwrap();
         let mut updated_todos = todo_file.lines().collect::<Vec<&str>>();
         updated_todos.insert(0, &parsed_todo.body);

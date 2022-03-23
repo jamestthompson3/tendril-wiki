@@ -11,14 +11,10 @@ fn prep_files() {
     let static_dir = data_dir.join("static");
     let template_dir = data_dir.join("templates");
     let cache_file = data_dir.join("note_cache");
-    let task_file = data_dir.join("todo.txt");
     fs::create_dir_all(&static_dir).unwrap();
     fs::create_dir_all(&template_dir).unwrap();
     if !cache_file.exists() {
         fs::File::create(cache_file).unwrap();
-    }
-    if !task_file.exists() {
-        fs::File::create(task_file).unwrap();
     }
     let version = env!("CARGO_PKG_VERSION");
     for entry in fs::read_dir("./static").unwrap() {
