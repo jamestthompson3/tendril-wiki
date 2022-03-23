@@ -312,8 +312,8 @@ mod tests {
             metadata: HashMap::from([("due".into(), "2022-03-14".into())]),
             body: test_line.clone(),
         };
-        expected_task.patch(UpdateType::Prio(String::from("(B)")));
-        test_line.insert_str(0, "(B)");
+        expected_task.patch(UpdateType::Prio(String::from("B")));
+        test_line.insert_str(0, "(B) ");
         assert_eq!(expected_task.body, test_line);
 
         let test_line = "x implement todos +tendril-wiki";

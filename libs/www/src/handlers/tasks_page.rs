@@ -1,4 +1,4 @@
-use std::{io::ErrorKind, path::PathBuf, str::FromStr, sync::Arc};
+use std::{io::ErrorKind, str::FromStr, sync::Arc};
 
 use render::{tasks_page::TasksPage, Render};
 use serde::{Deserialize, Serialize};
