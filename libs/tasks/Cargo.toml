@@ -7,8 +7,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-argon2 = "0.1"
-directories = "3.0.1"
-futures = "0.3.19"
-rand_core = { version = "0.6", features = ["std"] }
-tokio = { version = "1.15.0", features = ["rt", "time"] }
+argon2 = "0.4.0"
+directories = "4.0.1"
+futures = "0.3.21"
+rand_core = { version = "0.6.3", features = ["std"] }
+tokio = { version = "1.17.0", features = ["rt", "time"] }

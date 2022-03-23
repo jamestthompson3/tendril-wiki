@@ -93,15 +93,14 @@ fn process_included_file(file: String, page: Option<&TemplattedPage>) -> String 
                 Some(icon) => format!("/files/{}", icon),
                 None => String::from("static/favicon.ico"),
             };
-            let desc: String;
-            if page.raw_md.len() >= 100 {
+            let desc = if page.raw_md.len() >= 100 {
                 let mut shortened_desc = page.raw_md.clone();
                 shortened_desc.truncate(80);
                 shortened_desc.push_str("...");
-                desc = shortened_desc;
+                shortened_desc
             } else {
-                desc = page.raw_md.clone();
-            }
+                page.raw_md.clone()
+            };
             templatefile
                 .replace("<%= title %>", &page.title)
                 .replace("<%= desc %>", &desc)
@@ -130,7 +129,7 @@ pub fn write_backlinks(map: GlobalBacklinks) {
     let ctx = LinkPage {
         links: link_map.clone(),
     };
-    fs::write("public/links/index.html".to_string(), ctx.render()).unwrap();
+    fs::write("public/links/index.html", ctx.render()).unwrap();
 }
 
 #[inline]

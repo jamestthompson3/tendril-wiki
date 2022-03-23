@@ -6,7 +6,7 @@ use std::{
 };
 
 use directories::ProjectDirs;
-use rpassword::read_password_from_tty;
+use rpassword::prompt_password;
 use serde_derive::{Deserialize, Serialize};
 use tasks::parse_location;
 
@@ -94,40 +94,33 @@ pub fn gen_config_interactive() -> ConfigOptions {
     let mut password: Option<String> = None;
     match use_password.as_ref() {
         "true" | "y" | "t" | "yes" => {
-            password = Some(
-                read_password_from_tty(Some("Password: "))
-                    .unwrap()
-                    .to_owned(),
-            );
+            password = Some(prompt_password("Password: ").unwrap());
         }
         _ => {}
     }
-    let parsed_location: PathBuf;
-    if location.is_empty() {
-        parsed_location = parse_location("~/wiki/");
+    let parsed_location = if location.is_empty() {
+        parse_location("~/wiki/")
     } else {
-        parsed_location = parse_location(location.strip_suffix('\n').unwrap_or(&location));
-    }
-    let parsed_media_location: PathBuf;
-    if media_location.is_empty() {
-        parsed_media_location = parse_location("~/wiki_media/");
+        parse_location(location.strip_suffix('\n').unwrap_or(&location))
+    };
+    let parsed_media_location = if media_location.is_empty() {
+        parse_location("~/wiki_media/")
     } else {
-        parsed_media_location = parse_location(&media_location);
-    }
+        parse_location(&media_location)
+    };
     let mut branch: Option<String> = None;
     if let Some(git_branch) = git_branch {
         if git_branch.is_empty() {
             branch = Some("main".into());
         } else {
-            branch = Some(git_branch.to_owned());
+            branch = Some(git_branch);
         }
     }
-    let user: String;
-    if username.is_empty() {
-        user = get_user();
+    let user = if username.is_empty() {
+        get_user()
     } else {
-        user = username.strip_suffix('\n').unwrap_or(&username).to_owned();
-    }
+        username.strip_suffix('\n').unwrap_or(&username).to_owned()
+    };
     (
         parsed_location,
         parsed_media_location,

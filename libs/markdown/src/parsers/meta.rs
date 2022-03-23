@@ -148,13 +148,12 @@ pub fn parse_meta(lines: impl Iterator<Item = String>, debug_marker: &str) -> No
             _ => match parser.current_state() {
                 MetaParserState::Parsing => {
                     let values: Vec<&str> = line.split(": ").collect();
-                    let vals: String;
                     assert!(values.len() > 1, "{}", debug_marker);
-                    if values.len() > 2 {
-                        vals = values[1..].join(": ");
+                    let vals = if values.len() > 2 {
+                        values[1..].join(": ")
                     } else {
-                        vals = values[1].into()
-                    }
+                        values[1].into()
+                    };
                     notemeta.metadata.insert(values[0].into(), vals);
                 }
                 MetaParserState::End => {

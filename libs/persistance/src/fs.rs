@@ -43,13 +43,12 @@ pub fn write_media(file_location: &str, bytes: &[u8]) -> Result<(), io::Error> {
 
 pub fn write(wiki_location: &str, data: EditPageData) -> Result<(), WriteWikiError> {
     let mut file_location = String::from(wiki_location);
-    let mut title_location: String;
-    if data.old_title != data.title && !data.old_title.is_empty() {
-        title_location = data.old_title.clone();
+    let mut title_location = if data.old_title != data.title && !data.old_title.is_empty() {
+        data.old_title.clone()
     } else {
         // wiki entires are stored by title + .md file ending
-        title_location = data.title.clone();
-    }
+        data.title.clone()
+    };
     title_location.push_str(".md");
     file_location.push_str(&title_location);
     // In the case that we're creating a new file
@@ -128,7 +127,7 @@ pub fn write(wiki_location: &str, data: EditPageData) -> Result<(), WriteWikiErr
 pub fn delete(wiki_location: &str, requested_file: &str) -> Result<(), io::Error> {
     let mut file_location = String::from(wiki_location);
     if let Ok(mut file) = decode(requested_file) {
-        file.push_str(".md");
+        file.to_mut().push_str(".md");
         file_location.push_str(&file);
         let file_path = PathBuf::from(file_location);
         if !file_path.exists() {
@@ -169,7 +168,7 @@ pub fn read(
 pub fn get_file_path(wiki_location: &str, requested_file: &str) -> Result<PathBuf, ReadPageError> {
     let mut file_location = String::from(wiki_location);
     if let Ok(mut file) = decode(requested_file) {
-        file.push_str(".md");
+        file.to_mut().push_str(".md");
         file_location.push_str(&file);
         let file_path = PathBuf::from(file_location);
         if !file_path.exists() {

@@ -9,7 +9,7 @@ edition = "2021"
 tasks = { path = "../tasks" }
 markdown = { path = "../markdown" }
 render = { path = "../render" }
-urlencoding = "1.1.1"
-thiserror = "1.0.24"
+urlencoding = "2.1.0"
+thiserror = "1.0.30"
 chrono = "0.4.19"
-directories = "3.0.1"
+directories = "4.0.1"

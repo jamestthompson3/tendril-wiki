@@ -32,7 +32,7 @@ pub async fn render_nested_file(
 ) -> Result<impl warp::Reply, warp::Rejection> {
     // I don't know why warp doesn't decode the sub path here...
     let sub_path_decoded = decode(&sub_path).unwrap();
-    main_path.push_str(sub_path_decoded.as_str());
+    main_path.push_str(&sub_path_decoded);
     let page = read(&wiki_location, main_path, reflinks).map_err(|_| warp::reject())?;
     Ok(warp::reply::html(page))
 }
@@ -49,7 +49,7 @@ pub fn render_from_path(
             // TODO: Ideally, I want to redirect, but I'm not sure how to do this with
             // warp's filter system where some branches return HTML, and others redirect...
             let ctx = NewPage {
-                title: Some(decode(&path).unwrap()),
+                title: Some(decode(&path).unwrap().into_owned()),
                 linkto: query_params.get("linkto"),
                 action_params: None,
             };

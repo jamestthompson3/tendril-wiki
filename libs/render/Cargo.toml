@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 chrono = "0.4.19"
 # Bleh. I don't like having multiple deps like this scattered about...
-directories = "3.0.1"
+directories = "4.0.1"
 lazy_static = "1.4.0"
 markdown = { path = "../markdown" }
 # TODO: fix this weird dependency...

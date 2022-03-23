@@ -89,7 +89,7 @@ pub fn build_global_store(
 ) {
     let mut global_backlinks = backlinks.lock().unwrap();
     for link in outlinks.iter() {
-        match global_backlinks.get_mut(&link.to_string()) {
+        match global_backlinks.get_mut(link) {
             Some(links) => {
                 links.push(title.to_owned());
             }
@@ -100,7 +100,7 @@ pub fn build_global_store(
     }
 
     for tag in tags.iter() {
-        match global_backlinks.get_mut(&tag.to_string()) {
+        match global_backlinks.get_mut(tag) {
             Some(tags) => {
                 tags.push(title.to_owned());
             }

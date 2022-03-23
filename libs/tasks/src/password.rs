@@ -1,5 +1,5 @@
 use argon2::{
-    password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString, VerifyError},
+    password_hash::{Error, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
     Argon2,
 };
 use rand_core::OsRng;
@@ -11,13 +11,13 @@ pub fn hash_password(password: &[u8]) -> String {
 
     // Hash password to PHC string ($argon2id$v=19$...)
     let password_hash = argon2
-        .hash_password_simple(password, salt.as_ref())
+        .hash_password(password, salt.as_ref())
         .unwrap()
         .to_string();
     password_hash
 }
 
-pub fn verify_password(password: String, hash: String) -> Result<(), VerifyError> {
+pub fn verify_password(password: String, hash: String) -> Result<(), Error> {
     let argon2 = Argon2::default();
     // Verify password against PHC string
     let parsed_hash = PasswordHash::new(&hash).unwrap();
