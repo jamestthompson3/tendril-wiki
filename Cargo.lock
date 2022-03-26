@@ -125,7 +125,6 @@ dependencies = [
  "directories",
  "futures",
  "markdown",
- "num_cpus",
  "persistance",
  "render",
  "rpassword",
