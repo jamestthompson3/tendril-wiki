@@ -184,7 +184,7 @@ pub async fn delete_from_global_store(title: &str, location: &str, links: Global
             }
         }
     }
-    links.remove(title).unwrap();
+    links.remove(title);
 }
 pub async fn purge_file(location: &str, title: &str) {
     let recent = read_note_cache().await;

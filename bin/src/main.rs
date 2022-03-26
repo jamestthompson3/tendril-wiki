@@ -86,8 +86,8 @@ async fn main() {
                                     watcher_links.clone(),
                                 )
                                 .await;
-                                update_mru_cache(old_title, current_title).await;
                             }
+                            update_mru_cache(old_title, current_title).await;
                         }
                     }
                     "delete" => {
