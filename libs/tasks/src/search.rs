@@ -3,7 +3,7 @@ use std::{
     fs::{read_dir, DirEntry},
 };
 
-use crate::{normalize_wiki_location, path_to_reader};
+use crate::{normalize_wiki_location, path_to_string};
 use futures::{stream, StreamExt};
 use tokio::task;
 
@@ -33,13 +33,13 @@ async fn search_in_dir_entries(
         let name = String::from(name);
         let join = task::spawn(async move {
             let mut result: SearchResult = HashMap::new();
-            let lines = path_to_reader::<_>(&entry.path());
+            let lines = path_to_string::<_>(&entry.path()).await.unwrap();
             let name = name.strip_suffix(".md").unwrap();
             if name.to_lowercase().contains(&term.to_lowercase()) {
                 result.insert(name.to_string(), vec![String::with_capacity(0)]);
             }
-            for line in lines.unwrap() {
-                search_lines(line, &term, &mut result, name);
+            for line in lines.lines() {
+                search_lines(line.into(), &term, &mut result, name);
             }
             result
         });

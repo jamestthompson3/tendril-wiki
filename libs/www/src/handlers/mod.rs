@@ -1,6 +1,5 @@
 pub mod api;
 pub mod filters;
-pub mod sinks;
 pub mod static_files;
 pub mod static_pages;
 pub mod tasks_page;
@@ -8,7 +7,6 @@ pub mod wiki_page;
 
 pub use self::api::*;
 pub use self::filters::*;
-pub use self::sinks::*;
 pub use self::static_files::*;
 pub use self::static_pages::*;
 pub use self::tasks_page::*;
@@ -47,7 +45,7 @@ pub async fn handle_rejection(err: Rejection) -> std::result::Result<impl Reply,
         let ctx = LoginPage {};
         let response = warp::http::Response::builder()
             .status(StatusCode::OK)
-            .body(ctx.render())
+            .body(ctx.render().await)
             .unwrap();
 
         return Ok(response);

@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use std::collections::BTreeMap;
 
 use crate::{get_template_file, render_includes, Render};
@@ -32,10 +33,11 @@ impl LinkPage {
     }
 }
 
+#[async_trait]
 impl Render for LinkPage {
-    fn render(&self) -> String {
-        let mut ctx = get_template_file("backlinks").unwrap();
+    async fn render(&self) -> String {
+        let mut ctx = get_template_file("backlinks").await.unwrap();
         ctx = ctx.replace("<%= link_content %>", &self.create_link_content());
-        render_includes(ctx, None)
+        render_includes(ctx, None).await
     }
 }

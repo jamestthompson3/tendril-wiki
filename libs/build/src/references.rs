@@ -1,17 +1,17 @@
-use std::{
-    collections::BTreeMap,
-    fs::read_dir,
-    io,
-    path::PathBuf,
-    sync::{Arc, Mutex},
-};
+use std::{collections::BTreeMap, fs::read_dir, io, path::PathBuf, sync::Arc};
 
 use async_recursion::async_recursion;
 use futures::{stream, StreamExt};
 use markdown::{parsers::path_to_data_structure, processors::to_template};
 use persistance::fs::{get_file_path, read_note_cache, write_note_cache};
 use render::GlobalBacklinks;
-use tokio::sync::mpsc::{Receiver, Sender};
+use tokio::{
+    fs,
+    sync::{
+        mpsc::{Receiver, Sender},
+        Mutex,
+    },
+};
 
 pub type RefHubTx = Sender<(String, String)>;
 pub type RefHubRx = Receiver<(String, String)>;
@@ -48,7 +48,7 @@ pub async fn parse_entries(entrypoint: PathBuf, backlinks: GlobalBacklinks) {
         if entry.file_type().unwrap().is_file()
             && entry.file_name().to_str().unwrap().ends_with(".md")
         {
-            tokio::spawn(async move { process_file(entry.path(), links) })
+            tokio::spawn(async move { process_file(entry.path(), links).await })
                 .await
                 .unwrap();
         } else if entry.file_type().unwrap().is_dir()
@@ -60,15 +60,16 @@ pub async fn parse_entries(entrypoint: PathBuf, backlinks: GlobalBacklinks) {
     pipeline.await;
 }
 
-fn process_file(path: PathBuf, backlinks: GlobalBacklinks) {
-    let note = path_to_data_structure(&path).unwrap();
+async fn process_file(path: PathBuf, backlinks: GlobalBacklinks) {
+    let note = path_to_data_structure(&path).await.unwrap();
     let templatted = to_template(&note);
     build_global_store(
         &templatted.page.title,
         &templatted.outlinks,
         backlinks,
         &templatted.page.tags,
-    );
+    )
+    .await;
 }
 
 /// Updates a BTreeMap for tags and backlinks with each tag or link to a given note title acting as a key.
@@ -81,13 +82,13 @@ fn process_file(path: PathBuf, backlinks: GlobalBacklinks) {
 /// the map when we render a specific page since each value for that key will be the title of a
 /// page that has a link to the currently viewed entry.
 ///
-pub fn build_global_store(
+pub async fn build_global_store(
     title: &str,
     outlinks: &[String],
     backlinks: GlobalBacklinks,
     tags: &[String],
 ) {
-    let mut global_backlinks = backlinks.lock().unwrap();
+    let mut global_backlinks = backlinks.lock().await;
     for link in outlinks.iter() {
         match global_backlinks.get_mut(link) {
             Some(links) => {
@@ -112,15 +113,15 @@ pub fn build_global_store(
 }
 
 pub async fn build_tags_and_links(wiki_location: &str, links: GlobalBacklinks) {
-    links.lock().unwrap().clear();
+    links.lock().await.clear();
     parse_entries(PathBuf::from(wiki_location), links.clone()).await;
 }
 
-pub fn update_global_store(current_title: &str, location: &str, links: GlobalBacklinks) {
-    let mut links = links.lock().unwrap();
+pub async fn update_global_store(current_title: &str, location: &str, links: GlobalBacklinks) {
+    let mut links = links.lock().await;
     // _should_ always be Ok(path)...
     if let Ok(path) = get_file_path(location, current_title) {
-        let note = path_to_data_structure(&path).unwrap();
+        let note = path_to_data_structure(&path).await.unwrap();
         let templatted = to_template(&note);
         for link in templatted.outlinks {
             match links.get_mut(&link) {
@@ -153,10 +154,10 @@ pub fn update_global_store(current_title: &str, location: &str, links: GlobalBac
     }
 }
 
-pub fn delete_from_global_store(title: &str, location: &str, links: GlobalBacklinks) {
-    let mut links = links.lock().unwrap();
+pub async fn delete_from_global_store(title: &str, location: &str, links: GlobalBacklinks) {
+    let mut links = links.lock().await;
     if let Ok(path) = get_file_path(location, title) {
-        let note = path_to_data_structure(&path).unwrap();
+        let note = path_to_data_structure(&path).await.unwrap();
         let templatted = to_template(&note);
         for link in templatted.outlinks {
             if let Some(exists) = links.get(&link) {
@@ -185,14 +186,14 @@ pub fn delete_from_global_store(title: &str, location: &str, links: GlobalBackli
     }
     links.remove(title).unwrap();
 }
-pub fn purge_file(location: &str, title: &str) {
-    let recent = read_note_cache();
-    write_filtered_cache_file(filter_cache_file(recent, title));
-    persistance::fs::delete(location, title).unwrap();
+pub async fn purge_file(location: &str, title: &str) {
+    let recent = read_note_cache().await;
+    write_filtered_cache_file(filter_cache_file(recent, title)).await;
+    persistance::fs::delete(location, title).await.unwrap();
 }
 
-pub fn update_mru_cache(old_title: &str, current_title: &str) {
-    let recent = read_note_cache();
+pub async fn update_mru_cache(old_title: &str, current_title: &str) {
+    let recent = read_note_cache().await;
     // Filter out the current title and the old title.
     // We don't need to separate based whether or not the not has been renamed since the
     // array is only ever 8 entries long, this will be fast.
@@ -206,34 +207,36 @@ pub fn update_mru_cache(old_title: &str, current_title: &str) {
         filtered.pop();
     }
     filtered.insert(0, current_title.into());
-    write_filtered_cache_file(filtered);
+    write_filtered_cache_file(filtered).await;
 }
 
-pub fn rename_in_global_store(
+pub async fn rename_in_global_store(
     current_title: &str,
     old_title: &str,
     location: &str,
     backlinks: GlobalBacklinks,
 ) {
-    let mut backlinks = backlinks.lock().unwrap();
+    let mut backlinks = backlinks.lock().await;
     let linked_pages = backlinks.get(old_title);
     if let Some(linked_pages) = linked_pages {
-        IntoIterator::into_iter(linked_pages).for_each(|page| {
-            let mut wiki_loc = PathBuf::from(location);
-            let mut page = page.clone();
-            page.push_str(".md");
-            wiki_loc.push(&page);
-            match std::fs::read_to_string(&wiki_loc) {
-                Ok(raw_page) => {
-                    let relinked_page = raw_page.replace(old_title, current_title);
-                    std::fs::write(wiki_loc, relinked_page).unwrap();
+        stream::iter(linked_pages)
+            .for_each(|page| async {
+                let mut wiki_loc = PathBuf::from(location);
+                let mut page = page.clone();
+                page.push_str(".md");
+                wiki_loc.push(&page);
+                match fs::read_to_string(&wiki_loc).await {
+                    Ok(raw_page) => {
+                        let relinked_page = raw_page.replace(old_title, current_title);
+                        fs::write(wiki_loc, relinked_page).await.unwrap();
+                    }
+                    Err(e) => match e.kind() {
+                        io::ErrorKind::NotFound => {}
+                        _ => std::panic::panic_any(e),
+                    },
                 }
-                Err(e) => match e.kind() {
-                    io::ErrorKind::NotFound => {}
-                    _ => std::panic::panic_any(e),
-                },
-            }
-        });
+            })
+            .await;
         let pages = linked_pages.clone();
         backlinks.insert(current_title.into(), pages);
         backlinks.remove(old_title);
@@ -248,21 +251,21 @@ fn filter_cache_file(recent: String, title: &str) -> Vec<String> {
         .collect::<Vec<String>>()
 }
 
-fn write_filtered_cache_file(filtered: Vec<String>) {
+async fn write_filtered_cache_file(filtered: Vec<String>) {
     let filtered = filtered.join("\n");
-    write_note_cache(filtered);
+    write_note_cache(filtered).await;
 }
 
 #[cfg(test)]
 mod tests {
-    use std::{fs, panic};
+    use std::fs;
 
     use super::*;
 
-    const TEST_DIR: &str = "/tmp/tendril-test/references";
+    const TEST_DIR: &str = "/tmp/tendril-test/references/";
 
-    fn init_temp_wiki() {
-        fs::create_dir_all(TEST_DIR).unwrap();
+    fn init_temp_wiki(namespace: &str) {
+        fs::create_dir_all(format!("{}{}", TEST_DIR, namespace)).unwrap();
         for entry in fs::read_dir("../markdown/fixtures").unwrap() {
             let mut dest = PathBuf::from(TEST_DIR);
             let entry = entry.unwrap();
@@ -279,67 +282,56 @@ mod tests {
         assert!(src_path.exists());
         fs::copy(src_path, dest_path).unwrap();
     }
-    fn teardown_temp_wiki() {
-        for entry in fs::read_dir(TEST_DIR).unwrap() {
+    fn teardown_temp_wiki(namespace: &str) {
+        for entry in fs::read_dir(format!("{}{}", TEST_DIR, namespace)).unwrap() {
             let entry = entry.unwrap();
             fs::remove_file(entry.path()).unwrap();
         }
     }
-    fn run_test<T>(test: T)
-    where
-        T: FnOnce() + panic::UnwindSafe,
-    {
-        init_temp_wiki();
 
-        let result = panic::catch_unwind(test);
-
-        teardown_temp_wiki();
-
-        assert!(result.is_ok())
-    }
-    #[test]
+    #[tokio::test]
     // TODO: This is flaky
     #[ignore]
-    fn updates_note_succesfully() {
-        run_test(|| {
-            let title = "Logical reality";
-            let mut link_tree = BTreeMap::new();
-            link_tree.insert(title.into(), vec!["wiki page".into()]);
-            let links: GlobalBacklinks = Arc::new(Mutex::new(link_tree));
-            update_global_store(title, TEST_DIR, links.clone());
-            let updated_links = links.lock().unwrap();
-            let entry = updated_links.get(title).unwrap();
-            assert_eq!(entry, &vec![String::from("wiki page")]);
-        })
+    async fn updates_note_succesfully() {
+        init_temp_wiki("update");
+        let title = "Logical reality";
+        let mut link_tree = BTreeMap::new();
+        link_tree.insert(title.into(), vec!["wiki page".into()]);
+        let links: GlobalBacklinks = Arc::new(Mutex::new(link_tree));
+        update_global_store(title, TEST_DIR, links.clone()).await;
+        let updated_links = links.lock().await;
+        let entry = updated_links.get(title).unwrap();
+        assert_eq!(entry, &vec![String::from("wiki page")]);
+        teardown_temp_wiki("update");
     }
-    #[test]
-    fn renames_note_succesfully() {
-        run_test(|| {
-            let title = "Logical reality";
-            let new_title = "reality building";
-            cp_file(title, new_title);
-            let mut link_tree = BTreeMap::new();
-            link_tree.insert(title.into(), vec!["wiki page".into()]);
-            let links: GlobalBacklinks = Arc::new(Mutex::new(link_tree));
-            rename_in_global_store(new_title, title, TEST_DIR, links.clone());
-            let updated_links = links.lock().unwrap();
-            let entry = updated_links.get(title);
-            let renamed_entry = updated_links.get(new_title).unwrap();
-            assert_eq!(entry, None);
-            assert_eq!(renamed_entry, &vec![String::from("wiki page")]);
-        })
+    #[tokio::test]
+    async fn renames_note_succesfully() {
+        init_temp_wiki("rename");
+        let title = "Logical reality";
+        let new_title = "reality building";
+        cp_file(title, new_title);
+        let mut link_tree = BTreeMap::new();
+        link_tree.insert(title.into(), vec!["wiki page".into()]);
+        let links: GlobalBacklinks = Arc::new(Mutex::new(link_tree));
+        rename_in_global_store(new_title, title, TEST_DIR, links.clone()).await;
+        let updated_links = links.lock().await;
+        let entry = updated_links.get(title);
+        let renamed_entry = updated_links.get(new_title).unwrap();
+        assert_eq!(entry, None);
+        assert_eq!(renamed_entry, &vec![String::from("wiki page")]);
+        teardown_temp_wiki("rename");
     }
-    #[test]
-    fn deletes_from_global_store() {
-        run_test(|| {
-            let title = "Logical reality";
-            let mut link_tree = BTreeMap::new();
-            link_tree.insert(title.into(), vec!["wiki page".into()]);
-            let links: GlobalBacklinks = Arc::new(Mutex::new(link_tree));
-            delete_from_global_store(title, TEST_DIR, links.clone());
-            let updated_links = links.lock().unwrap();
-            let entry = updated_links.get(title);
-            assert_eq!(entry, None);
-        })
+    #[tokio::test]
+    async fn deletes_from_global_store() {
+        init_temp_wiki("delete");
+        let title = "Logical reality";
+        let mut link_tree = BTreeMap::new();
+        link_tree.insert(title.into(), vec!["wiki page".into()]);
+        let links: GlobalBacklinks = Arc::new(Mutex::new(link_tree));
+        delete_from_global_store(title, TEST_DIR, links.clone()).await;
+        let updated_links = links.lock().await;
+        let entry = updated_links.get(title);
+        assert_eq!(entry, None);
+        teardown_temp_wiki("delete");
     }
 }

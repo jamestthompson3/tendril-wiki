@@ -1,6 +1,6 @@
 use std::{collections::HashMap, path::Path};
 
-use tasks::path_to_reader;
+use tasks::path_to_string;
 
 use crate::processors::tags::TagsArray;
 
@@ -110,7 +110,7 @@ impl From<EditPageData> for NoteMeta {
 
 impl From<String> for NoteMeta {
     fn from(stringified: String) -> Self {
-        parse_meta(stringified.lines().map(|l| l.into()), "raw_string") // mark that we've parsed from a passed string instead of a file
+        parse_meta(stringified.lines(), "raw_string") // mark that we've parsed from a passed string instead of a file
     }
 }
 
@@ -130,16 +130,19 @@ impl Into<String> for NoteMeta {
     }
 }
 
-pub fn path_to_data_structure(path: &Path) -> Result<NoteMeta, Box<dyn std::error::Error>> {
-    let reader = path_to_reader(path)?;
-    Ok(parse_meta(reader, path.to_str().unwrap()))
+pub async fn path_to_data_structure(
+    path: &Path,
+) -> Result<NoteMeta, Box<dyn std::error::Error + Send + Sync>> {
+    let reader = path_to_string(path).await?;
+    let meta = parse_meta(reader.lines(), path.to_str().unwrap());
+    Ok(meta)
 }
 
-pub fn parse_meta(lines: impl Iterator<Item = String>, debug_marker: &str) -> NoteMeta {
+pub fn parse_meta<'a>(lines: impl Iterator<Item = &'a str>, debug_marker: &str) -> NoteMeta {
     let mut parser = MetaParserMachine::new();
     let mut notemeta = NoteMeta::default();
     for line in lines {
-        match line.as_str() {
+        match line {
             "---" => match parser.current_state() {
                 MetaParserState::Ready => parser.send(MetaParserState::Parsing),
                 MetaParserState::Parsing => parser.send(MetaParserState::End),

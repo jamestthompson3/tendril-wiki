@@ -1,10 +1,7 @@
 use bytes::BufMut;
-use chrono::prelude::*;
 use persistance::fs::{write, write_media};
-use render::{
-    search_results_page::SearchResultsPage, uploaded_files_page::UploadedFilesPage, Render,
-};
-use std::{collections::HashMap, fs::read_dir};
+use render::{search_results_page::SearchResultsPage, Render};
+use std::collections::HashMap;
 use tasks::context_search;
 use urlencoding::encode;
 
@@ -12,7 +9,7 @@ use markdown::parsers::EditPageData;
 
 use futures::TryStreamExt;
 
-use build::{create_journal_entry, get_config_location, RefHubTx};
+use build::{get_config_location, RefHubTx};
 use warp::{
     http::{header, HeaderValue, Response, StatusCode},
     hyper::{body::Bytes, Uri},
@@ -44,7 +41,7 @@ pub async fn file(
         .await
         .unwrap_or_default();
     location.push_str(&filename);
-    match write_media(&location, &data) {
+    match write_media(&location, &data).await {
         Ok(()) => Ok(warp::redirect(Uri::from_static("/"))),
         Err(e) => {
             eprintln!("Could not write media: {}", e);
@@ -59,7 +56,7 @@ pub async fn image(
     mut media_location: String,
 ) -> Result<impl Reply, Rejection> {
     media_location.push_str(&filename);
-    write_media(&media_location, bytes.as_ref()).unwrap();
+    write_media(&media_location, bytes.as_ref()).await.unwrap();
     Ok(warp::reply::with_status("ok", StatusCode::OK))
 }
 
@@ -77,33 +74,10 @@ pub async fn edit(
     };
     let page_title = parsed_data.title.clone();
     let update_msg = format!("{}~~{}", parsed_data.old_title, page_title);
-    match write(&wiki_location, parsed_data) {
+    match write(&wiki_location, parsed_data).await {
         Ok(()) => {
             sender.send(("update".into(), update_msg)).await.unwrap();
             Ok(warp::redirect(redir_uri.parse::<Uri>().unwrap()))
-        }
-        Err(e) => {
-            eprintln!("{}", e);
-            Ok(warp::redirect(Uri::from_static("/error")))
-        }
-    }
-}
-
-pub async fn append(
-    form_body: HashMap<String, String>,
-    wiki_location: String,
-    sender: RefHubTx,
-) -> Result<impl Reply, Rejection> {
-    let today = Local::now();
-    let daily_file = today.format("%Y-%m-%d").to_string();
-    let parsed_data = form_body.get("body").unwrap();
-    match create_journal_entry(&wiki_location, parsed_data.to_string()) {
-        Ok(()) => {
-            sender
-                .send(("update".into(), format!("~~{}", daily_file)))
-                .await
-                .unwrap();
-            Ok(warp::redirect("/".parse::<Uri>().unwrap()))
         }
         Err(e) => {
             eprintln!("{}", e);
@@ -119,37 +93,14 @@ pub async fn note_search(
     let term = form_body.get("term").unwrap();
     let found_pages = context_search(term, &wiki_location).await.unwrap();
     let ctx = SearchResultsPage { pages: found_pages };
-    Ok(warp::reply::html(ctx.render()))
-}
-
-pub async fn list_files(wiki_location: String) -> Result<impl Reply, Rejection> {
-    // TODO: Make this async?
-    let entries = read_dir(wiki_location).unwrap();
-    let entries = entries
-        .map(|entry| {
-            let entry = entry.unwrap();
-            entry.file_name().into_string().unwrap()
-        })
-        .collect::<Vec<String>>();
-    let ctx = UploadedFilesPage { entries };
-    Ok(warp::reply::html(ctx.render()))
-}
-
-pub async fn delete(
-    sender: RefHubTx,
-    form_body: HashMap<String, String>,
-) -> Result<impl Reply, Rejection> {
-    let title = form_body.get("title").unwrap();
-    sender.send(("delete".into(), title.into())).await.unwrap();
-
-    Ok(warp::redirect(Uri::from_static("/")))
+    Ok(warp::reply::html(ctx.render().await))
 }
 
 pub async fn update_styles(form_body: HashMap<String, String>) -> Result<impl Reply, Rejection> {
     let (path, _) = get_config_location();
     let style_location = path.join("userstyles.css");
     let body = form_body.get("body").unwrap();
-    std::fs::write(style_location, body).unwrap();
+    tokio::fs::write(style_location, body).await.unwrap();
     Ok(warp::redirect(Uri::from_static("/")))
 }
 

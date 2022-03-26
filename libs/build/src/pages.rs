@@ -1,16 +1,18 @@
+use async_recursion::async_recursion;
+use futures::{stream, StreamExt};
 use markdown::parsers::{path_to_data_structure, ParsedPages};
 
 use markdown::processors::{to_template, update_templatted_pages};
 use persistance::fs::{write_entries, write_index_page};
 use render::{write_backlinks, GlobalBacklinks};
-use threadpool::ThreadPool;
+use tokio::sync::Mutex;
 
 use std::env;
 use std::{
     collections::BTreeMap,
     fs::{self, read_dir},
     path::{Path, PathBuf},
-    sync::{Arc, Mutex},
+    sync::Arc,
 };
 
 use crate::{build_global_store, get_config_location, read_config};
@@ -35,13 +37,13 @@ impl Builder {
             pages: Arc::new(Mutex::new(Vec::new())),
         }
     }
-    pub fn compile_all(&self) {
+    pub async fn compile_all(&self) {
         env::set_var("TENDRIL_COMPILE_STATIC", "true");
         let links = Arc::clone(&self.backlinks);
         let pages = Arc::clone(&self.pages);
-        write_entries(&pages, &self.backlinks);
-        write_backlinks(links);
-        write_index_page(read_config().general.user);
+        write_entries(&pages, &self.backlinks).await;
+        write_backlinks(links).await;
+        write_index_page(read_config().general.user).await;
         let mut config_dir = get_config_location().0;
         config_dir.push("userstyles.css");
         fs::create_dir("public/static").unwrap();
@@ -50,14 +52,14 @@ impl Builder {
         fs::copy(config_dir, "./public/config/userstyles.css").unwrap();
     }
 
-    pub fn sweep(&self, wiki_location: &str) {
+    pub async fn sweep(&self, wiki_location: &str) {
         if !Path::new("./public").exists() {
             fs::create_dir_all("./public/tags").unwrap();
             fs::create_dir_all("./public/links").unwrap();
         }
         let links = Arc::clone(&self.backlinks);
         let pages = Arc::clone(&self.pages);
-        parse_entries(PathBuf::from(wiki_location), links, pages);
+        parse_entries(PathBuf::from(wiki_location), links, pages).await;
     }
 }
 
@@ -67,35 +69,43 @@ impl Default for Builder {
     }
 }
 
-fn process_file(path: PathBuf, backlinks: GlobalBacklinks, pages: ParsedPages) {
-    let note = path_to_data_structure(&path).unwrap();
+async fn process_file(path: PathBuf, backlinks: GlobalBacklinks, pages: ParsedPages) {
+    let note = path_to_data_structure(&path).await.unwrap();
     let templatted = to_template(&note);
     build_global_store(
         &templatted.page.title,
         &templatted.outlinks,
         backlinks,
         &templatted.page.tags,
-    );
-    update_templatted_pages(templatted.page, pages);
+    )
+    .await;
+    update_templatted_pages(templatted.page, pages).await;
 }
 
-fn parse_entries(entrypoint: PathBuf, backlinks: GlobalBacklinks, rendered_pages: ParsedPages) {
-    let pool = ThreadPool::new(num_cpus::get());
-    for entry in read_dir(entrypoint).unwrap() {
+#[async_recursion]
+async fn parse_entries(
+    entrypoint: PathBuf,
+    backlinks: GlobalBacklinks,
+    rendered_pages: ParsedPages,
+) {
+    let entries = read_dir(entrypoint).unwrap();
+    let pipeline = stream::iter(entries).for_each(|entry| async {
         let links = Arc::clone(&backlinks);
         let pages = Arc::clone(&rendered_pages);
         let entry = entry.unwrap();
         if entry.file_type().unwrap().is_file()
             && entry.file_name().to_str().unwrap().ends_with(".md")
         {
-            pool.execute(move || {
-                process_file(entry.path(), links, pages);
-            });
+            tokio::spawn(async move {
+                process_file(entry.path(), links, pages).await;
+            })
+            .await
+            .unwrap();
         } else if entry.file_type().unwrap().is_dir()
             && !entry.path().to_str().unwrap().contains(".git")
         {
-            parse_entries(entry.path(), links, pages);
+            parse_entries(entry.path(), links, pages).await;
         }
-    }
-    pool.join();
+    });
+    pipeline.await
 }

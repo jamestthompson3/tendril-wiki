@@ -1,4 +1,5 @@
 use crate::{get_template_file, render_includes, Render};
+use async_trait::async_trait;
 
 pub struct LoginPage {}
 
@@ -14,9 +15,10 @@ impl Default for LoginPage {
     }
 }
 
+#[async_trait]
 impl Render for LoginPage {
-    fn render(&self) -> String {
-        let ctx = get_template_file("login").unwrap();
-        render_includes(ctx, None)
+    async fn render(&self) -> String {
+        let ctx = get_template_file("login").await.unwrap();
+        render_includes(ctx, None).await
     }
 }

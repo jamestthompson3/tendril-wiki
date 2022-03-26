@@ -6,7 +6,7 @@ use build::{
 };
 use std::{path::PathBuf, process::exit, time::Instant};
 use tasks::{git_update, normalize_wiki_location, sync};
-use tokio::sync::mpsc;
+use tokio::{fs, sync::mpsc};
 use www::server;
 
 #[tokio::main]
@@ -29,7 +29,9 @@ async fn main() {
                 if !arg.is_empty() {
                     let config = read_config();
                     let location = normalize_wiki_location(&config.general.wiki_location);
-                    create_journal_entry(&location, args.join(" ")).unwrap();
+                    create_journal_entry(&location, args.join(" "))
+                        .await
+                        .unwrap();
                     if config.sync.use_git {
                         git_update(&location, config.sync.branch);
                     }
@@ -43,16 +45,15 @@ async fn main() {
     if build_all {
         let now = Instant::now();
         if PathBuf::from("./public").exists() {
-            std::fs::remove_dir_all("./public").unwrap();
+            fs::remove_dir_all("./public").await.unwrap();
         }
         let builder = Builder::new();
-        builder.sweep(&location);
-        builder.compile_all();
+        builder.sweep(&location).await;
+        builder.compile_all().await;
         println!("Built static site in: {}ms", now.elapsed().as_millis());
     } else {
         let ref_hub = RefHub::new();
         let (tx, mut rx): (RefHubTx, RefHubRx) = mpsc::channel(50);
-        let watcher_links = ref_hub.links();
 
         if config.sync.use_git {
             sync(
@@ -63,6 +64,7 @@ async fn main() {
             )
             .await;
         }
+        let watcher_links = ref_hub.links();
         tokio::spawn(async move {
             while let Some((cmd, file)) = rx.recv().await {
                 match cmd.as_ref() {
@@ -73,7 +75,8 @@ async fn main() {
                         if let [old_title, current_title] =
                             file.split("~~").collect::<Vec<&str>>()[..]
                         {
-                            update_global_store(current_title, &location, watcher_links.clone());
+                            update_global_store(current_title, &location, watcher_links.clone())
+                                .await;
 
                             if !old_title.is_empty() && old_title != current_title {
                                 rename_in_global_store(
@@ -81,16 +84,17 @@ async fn main() {
                                     old_title,
                                     &location,
                                     watcher_links.clone(),
-                                );
-                                update_mru_cache(old_title, current_title);
+                                )
+                                .await;
+                                update_mru_cache(old_title, current_title).await;
                             }
                         }
                     }
                     "delete" => {
                         // TODO: figure out why making this async causes the tokio::spawn call to
                         // give compiler errors.
-                        delete_from_global_store(&file, &location, watcher_links.clone());
-                        purge_file(&location, &file)
+                        delete_from_global_store(&file, &location, watcher_links.clone()).await;
+                        purge_file(&location, &file).await
                     }
                     _ => {}
                 }

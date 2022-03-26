@@ -19,7 +19,5 @@ rpassword = "6.0.1"
 serde = "1.0.136"
 serde_derive = "1.0.136"
 tasks = { path = "../tasks" }
-# TODO: remove this in favor of async
-threadpool = "1.8.1"
 tokio = { version = "1.17.0", features = ["rt", "sync"] }
 toml = "0.5.8"

@@ -43,7 +43,7 @@ impl Runner {
             .map(|l| Task::from_str(l).unwrap())
             .collect::<Vec<Task>>();
         let ctx = TasksPage { tasks };
-        ctx.render()
+        ctx.render().await
     }
 
     async fn update(location: String, idx: usize, update: TaskUpdate) -> String {

@@ -6,11 +6,14 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+async-trait = "0.1.53"
 chrono = "0.4.19"
 # Bleh. I don't like having multiple deps like this scattered about...
 directories = "4.0.1"
+futures = "0.3.21"
 lazy_static = "1.4.0"
 markdown = { path = "../markdown" }
 # TODO: fix this weird dependency...
 tasks = { path = "../tasks" }
 todo = { path = "../todo" }
+tokio = { version = "1.17.0", features = ["full"] }

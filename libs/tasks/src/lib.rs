@@ -3,11 +3,10 @@ pub mod search;
 pub mod sync;
 use directories::UserDirs;
 use std::{
-    fs::File,
-    io::{BufRead, BufReader},
     path::{Path, PathBuf, MAIN_SEPARATOR},
     process::exit,
 };
+use tokio::fs::read_to_string;
 
 pub use self::password::*;
 pub use self::search::*;
@@ -56,14 +55,8 @@ mod tests {
     }
 }
 
-pub fn path_to_reader<P: AsRef<Path> + ?Sized>(
-    path: &P,
-) -> Result<impl Iterator<Item = String>, std::io::Error> {
-    match File::open(&path) {
-        Ok(fd) => {
-            let reader = BufReader::new(fd);
-            Ok(reader.lines().map(|line| line.unwrap()))
-        }
-        Err(e) => Err(e),
-    }
+// TODO: this is really dependent on file system ops, won't be good if we change the storage
+// backend.
+pub async fn path_to_string<P: AsRef<Path> + ?Sized>(path: &P) -> Result<String, std::io::Error> {
+    read_to_string(&path).await
 }

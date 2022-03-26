@@ -1,4 +1,5 @@
 use crate::{get_template_file, render_includes, Render};
+use async_trait::async_trait;
 
 pub struct NewPage<'a> {
     pub title: Option<String>,
@@ -43,14 +44,15 @@ impl<'a> NewPage<'a> {
     }
 }
 
+#[async_trait]
 impl<'a> Render for NewPage<'a> {
-    fn render(&self) -> String {
-        let mut ctx = get_template_file("new_page").unwrap();
+    async fn render(&self) -> String {
+        let mut ctx = get_template_file("new_page").await.unwrap();
         ctx = ctx
             .replace("<%= page_title %>", self.get_page_title())
             .replace("<%= note_title %>", &self.get_note_title())
             .replace("<%= action_params %>", self.action_params.unwrap_or(""))
             .replace("<%= linkto %>", &self.get_linkto());
-        render_includes(ctx, None)
+        render_includes(ctx, None).await
     }
 }

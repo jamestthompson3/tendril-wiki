@@ -1,6 +1,7 @@
 use todo::Task;
 
 use crate::{get_template_file, render_includes, Render};
+use async_trait::async_trait;
 
 pub struct TasksPage {
     pub tasks: Vec<Task>,
@@ -19,10 +20,11 @@ impl TasksPage {
     }
 }
 
+#[async_trait]
 impl Render for TasksPage {
-    fn render(&self) -> String {
-        let mut ctx = get_template_file("tasks_page").unwrap();
+    async fn render(&self) -> String {
+        let mut ctx = get_template_file("tasks_page").await.unwrap();
         ctx = ctx.replace("<%= tasks %>", &self.render_tasks());
-        render_includes(ctx, None)
+        render_includes(ctx, None).await
     }
 }

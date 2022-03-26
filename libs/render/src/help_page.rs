@@ -1,4 +1,5 @@
 use crate::{get_template_file, render_includes, Render};
+use async_trait::async_trait;
 
 pub struct HelpPage {}
 
@@ -14,9 +15,10 @@ impl Default for HelpPage {
     }
 }
 
+#[async_trait]
 impl Render for HelpPage {
-    fn render(&self) -> String {
-        let ctx = get_template_file("help").unwrap();
-        render_includes(ctx, None)
+    async fn render(&self) -> String {
+        let ctx = get_template_file("help").await.unwrap();
+        render_includes(ctx, None).await
     }
 }

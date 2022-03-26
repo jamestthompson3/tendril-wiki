@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use chrono::{DateTime, FixedOffset};
 use markdown::parsers::{format_links, TemplattedPage};
 
@@ -72,8 +73,9 @@ impl<'a> WikiPage<'a> {
     }
 }
 
+#[async_trait]
 impl<'a> Render for WikiPage<'a> {
-    fn render(&self) -> String {
+    async fn render(&self) -> String {
         let page = self.page;
         let mut backlinks = match self.links {
             Some(links) => links.to_owned(),
@@ -87,13 +89,13 @@ impl<'a> Render for WikiPage<'a> {
             .map(|t| format!("<li><a href=\"{}\">#{}</a></li>", t, t))
             .collect::<Vec<String>>()
             .join("\n");
-        let mut ctx = get_template_file("main").unwrap();
+        let mut ctx = get_template_file("main").await.unwrap();
         ctx = ctx
             .replace("<%= title %>", &page.title)
             .replace("<%= body %>", &page.body)
             .replace("<%= tags %>", &tag_string)
             .replace("<%= links %>", &self.render_page_backlinks(&backlinks))
             .replace("<%= metadata %>", &self.render_page_metadata());
-        render_includes(ctx, Some(self.page))
+        render_includes(ctx, Some(self.page)).await
     }
 }

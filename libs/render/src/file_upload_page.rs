@@ -1,4 +1,5 @@
 use crate::{get_template_file, render_includes, Render};
+use async_trait::async_trait;
 
 pub struct FileUploader {}
 
@@ -14,9 +15,10 @@ impl FileUploader {
     }
 }
 
+#[async_trait]
 impl Render for FileUploader {
-    fn render(&self) -> String {
-        let ctx = get_template_file("file_upload").unwrap();
-        render_includes(ctx, None)
+    async fn render(&self) -> String {
+        let ctx = get_template_file("file_upload").await.unwrap();
+        render_includes(ctx, None).await
     }
 }

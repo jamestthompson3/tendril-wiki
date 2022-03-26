@@ -33,7 +33,7 @@ pub fn to_template(note: &NoteMeta) -> ParsedTemplate {
     }
 }
 
-pub fn update_templatted_pages(page: TemplattedPage, pages: ParsedPages) {
-    let mut tempatted_pages = pages.lock().unwrap();
+pub async fn update_templatted_pages(page: TemplattedPage, pages: ParsedPages) {
+    let mut tempatted_pages = pages.lock().await;
     tempatted_pages.push(page);
 }

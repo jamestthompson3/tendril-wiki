@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use markdown::parsers::format_links;
 use tasks::SearchResult;
 
@@ -11,13 +12,12 @@ impl SearchResultsPage {
     pub fn new(pages: Vec<SearchResult>) -> Self {
         SearchResultsPage { pages }
     }
-    fn render_pages(&self) -> String {
+    async fn render_pages(&self) -> String {
         if self.pages.is_empty() {
             let mut ctx = String::from("<h3>No search results.</h3>");
-            ctx.push_str(&render_includes(
-                r#"<%= include "search_form" %>"#.to_string(),
-                None,
-            ));
+            ctx.push_str(
+                &render_includes(r#"<%= include "search_form" %>"#.to_string(), None).await,
+            );
             return ctx;
         }
         let mut page_list = String::new();
@@ -38,10 +38,11 @@ impl SearchResultsPage {
     }
 }
 
+#[async_trait]
 impl Render for SearchResultsPage {
-    fn render(&self) -> String {
-        let mut ctx = get_template_file("search_results").unwrap();
-        ctx = ctx.replace("<%= pages %>", &self.render_pages());
-        render_includes(ctx, None)
+    async fn render(&self) -> String {
+        let mut ctx = get_template_file("search_results").await.unwrap();
+        ctx = ctx.replace("<%= pages %>", &self.render_pages().await);
+        render_includes(ctx, None).await
     }
 }
