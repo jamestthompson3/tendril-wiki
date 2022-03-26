@@ -91,14 +91,11 @@ pub async fn write(wiki_location: &str, data: EditPageData) -> Result<(), WriteW
     }
     if note_meta.metadata.get("id").is_none() {
         let created_time = note_meta.metadata.get("created").unwrap().to_owned();
-        note_meta.metadata.insert(
-            "id".into(),
-            created_time
-                .parse::<DateTime<FixedOffset>>()
-                .unwrap()
-                .format(DT_FORMAT)
-                .to_string(),
-        );
+        let parsed_created = match created_time.parse::<DateTime<FixedOffset>>() {
+            Ok(dt) => dt.format(DT_FORMAT).to_string(),
+            Err(_) => created_time,
+        };
+        note_meta.metadata.insert("id".into(), parsed_created);
     }
     let updated_tags: TagsArray = data.tags.into();
 
