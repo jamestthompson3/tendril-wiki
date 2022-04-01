@@ -8,6 +8,7 @@ edition = "2021"
 
 [dependencies]
 logging = { path = "../libs/logging" }
+search-engine = { path = "../libs/search-engine" }
 build = { path = "../libs/build" }
 tasks = { path = "../libs/tasks" }
 www = { path = "../libs/www" }

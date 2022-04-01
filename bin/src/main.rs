@@ -4,6 +4,7 @@ use build::{
     rename_in_global_store, update, update_global_store, update_mru_cache, RefHub, RefHubRx,
     RefHubTx,
 };
+use search_engine::build_search_index;
 use std::{path::PathBuf, process::exit, time::Instant};
 use tasks::{git_update, normalize_wiki_location, sync};
 use tokio::{fs, sync::mpsc};
@@ -64,6 +65,7 @@ async fn main() {
             )
             .await;
         }
+        build_search_index(location.clone().into()).await;
         let watcher_links = ref_hub.links();
         tokio::spawn(async move {
             while let Some((cmd, file)) = rx.recv().await {
