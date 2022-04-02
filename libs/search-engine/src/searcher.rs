@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, time::Instant};
 
 use tokio::fs::read_to_string;
 
@@ -11,11 +11,13 @@ fn tokenize_query(query: &str) -> Tokens {
 pub(crate) async fn search<'a>(query: &str) -> Vec<Doc<'a>> {
     let tokens = tokenize_query(query);
     let keys = tokens.keys();
+    let now = Instant::now();
     let search_idx = read_to_string("./search-index.json").await.unwrap();
     let search_idx: HashMap<String, Vec<String>> = serde_json::from_str(&search_idx).unwrap();
     let mut relevant_docs = Vec::<Doc>::new();
     let doc_idx = read_to_string("./docs.json").await.unwrap();
     let mut doc_idx: HashMap<String, Doc> = serde_json::from_str(&doc_idx).unwrap();
+    println!("serializing took: {:?}", now.elapsed());
     keys.for_each(|key| {
         let variations = variations_of_word(key);
         for variation in variations {
@@ -32,7 +34,6 @@ pub(crate) async fn search<'a>(query: &str) -> Vec<Doc<'a>> {
 }
 
 fn rank_docs<'a>(mut relevant_docs: Vec<Doc<'a>>, tokens: Vec<&String>) -> Vec<Doc<'a>> {
-    println!("{:?}", tokens);
     let multiplier = (relevant_docs.len() / tokens.len()) as f32;
     relevant_docs.sort_by(|a, b| {
         let processed_a = fold_tokens_by_doc(a, &tokens) * multiplier;

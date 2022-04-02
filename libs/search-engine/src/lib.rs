@@ -1,14 +1,13 @@
 use async_trait::async_trait;
 use futures::{stream, StreamExt};
+use markdown::parsers::path_to_data_structure;
 use searcher::search;
 use serde::{Deserialize, Serialize};
-use std::{
-    borrow::Cow, collections::HashMap, fs::read_dir, path::PathBuf, time::SystemTime, usize,
-};
+use std::{borrow::Cow, collections::HashMap, fs::read_dir, path::PathBuf, usize};
 
 /// Heavy inspiration / code taken from: https://github.com/thesephist/monocle
 use tokenizer::tokenize;
-use tokio::fs::{read_to_string, write};
+use tokio::fs::write;
 
 mod searcher;
 mod tokenizer;
@@ -46,22 +45,19 @@ impl Proccessor for Notebook<'_> {
                     let entry = entry.unwrap();
                     if let Some(fname) = entry.file_name().to_str() {
                         if fname.ends_with(".md") {
-                            let content = read_to_string(entry.path()).await.unwrap();
-                            let tokenized_entry = tokenize(&content);
+                            let content = path_to_data_structure(&entry.path()).await.unwrap();
+                            let tokenized_entry = tokenize(&content.content);
+                            let id = if content.metadata.get("title").is_some() {
+                                content.metadata.get("title").unwrap().to_string()
+                            } else {
+                                let fixed_name = fname.strip_suffix(".md").unwrap();
+                                fixed_name.to_owned()
+                            };
+
                             let doc = Doc {
-                                id: format!(
-                                    "wiki-{:?}",
-                                    entry
-                                        .metadata()
-                                        .unwrap()
-                                        .modified()
-                                        .unwrap_or_else(|_| SystemTime::now())
-                                        .duration_since(SystemTime::UNIX_EPOCH)
-                                        .unwrap()
-                                        .as_secs()
-                                ),
+                                id,
                                 tokens: tokenized_entry,
-                                content,
+                                content: content.content,
                                 title: None,
                                 href: None,
                             };
