@@ -17,6 +17,7 @@ markdown = { path = "../markdown" }
 persistance = { path = "../persistance" }
 pretty_env_logger = "0.4.0"
 render = { path = "../render" }
+search-engine = { path = "../search-engine" }
 serde = { version = "1.0.136", features = ["derive"] }
 tasks = { path = "../tasks" }
 thiserror = "1.0.30"

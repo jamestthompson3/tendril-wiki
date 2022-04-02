@@ -1670,6 +1670,7 @@ dependencies = [
  "persistance",
  "pretty_env_logger",
  "render",
+ "search-engine",
  "serde",
  "tasks",
  "thiserror",
