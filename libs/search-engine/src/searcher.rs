@@ -17,7 +17,7 @@ pub(crate) async fn search<'a>(query: &str) -> Vec<Doc<'a>> {
     let mut relevant_docs = Vec::<Doc>::new();
     let doc_idx = read_to_string("./docs.json").await.unwrap();
     let mut doc_idx: HashMap<String, Doc> = serde_json::from_str(&doc_idx).unwrap();
-    println!("serializing took: {:?}", now.elapsed());
+    // println!("serializing took: {:?}", now.elapsed());
     keys.for_each(|key| {
         let variations = variations_of_word(key);
         for variation in variations {
@@ -36,8 +36,8 @@ pub(crate) async fn search<'a>(query: &str) -> Vec<Doc<'a>> {
 fn rank_docs<'a>(mut relevant_docs: Vec<Doc<'a>>, tokens: Vec<&String>) -> Vec<Doc<'a>> {
     let multiplier = (relevant_docs.len() / tokens.len()) as f32;
     relevant_docs.sort_by(|a, b| {
-        let processed_a = fold_tokens_by_doc(a, &tokens) * multiplier;
-        let processed_b = fold_tokens_by_doc(b, &tokens) * multiplier;
+        let processed_a = (fold_tokens_by_doc(a, &tokens) * multiplier).abs().ln();
+        let processed_b = (fold_tokens_by_doc(b, &tokens) * multiplier).abs().ln();
         processed_a.partial_cmp(&processed_b).unwrap()
     });
     relevant_docs
@@ -54,5 +54,17 @@ fn fold_tokens_by_doc(doc: &Doc, tokens: &[&String]) -> f32 {
 }
 
 fn variations_of_word(key: &str) -> Vec<String> {
-    vec![String::from(key)]
+    let word_stem = stem::get(key).unwrap();
+    let mut variations = Vec::with_capacity(17);
+    // Very very hacky lemmatization
+    for ending in WORD_ENDINGS {
+        variations.push(format!("{}{}", word_stem, ending));
+    }
+    variations.push(key.into());
+    variations.push(word_stem);
+    variations
 }
+
+const WORD_ENDINGS: [&str; 15] = [
+    "e", "s", "ly", "ment", "ed", "'s", "or", "er", "ing", "y", "tion", "ies", "r", "ation", "d",
+];

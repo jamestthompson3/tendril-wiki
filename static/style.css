@@ -384,6 +384,18 @@ details {
   width: 80%;
   height: 25px;
 }
+.result {
+  overflow: clip;
+  max-height: 15rem;
+  border: 1px solid var(--text-color);
+  border-radius: var(--rad);
+  padding: 1rem;
+  box-shadow: 2px 2px 6px 1px var(--bg-darker);
+  margin: 1rem auto;
+}
+.result h2 {
+  margin: 0px;
+}
 
 /** File Uploader **/
 .uploader {

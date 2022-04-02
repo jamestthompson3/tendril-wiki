@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use futures::{stream, StreamExt};
-use markdown::parsers::path_to_data_structure;
+use markdown::parsers::{path_to_data_structure, to_html};
 use searcher::search;
 use serde::{Deserialize, Serialize};
 use std::{borrow::Cow, collections::HashMap, fs::read_dir, path::PathBuf, usize};
@@ -46,7 +46,11 @@ impl Proccessor for Notebook<'_> {
                     if let Some(fname) = entry.file_name().to_str() {
                         if fname.ends_with(".md") {
                             let content = path_to_data_structure(&entry.path()).await.unwrap();
-                            let tokenized_entry = tokenize(&content.content);
+                            let mut tokeniziable_content = content.content.clone();
+                            tokeniziable_content.push_str(
+                                content.metadata.get("tags").unwrap_or(&String::from("")),
+                            );
+                            let tokenized_entry = tokenize(&tokeniziable_content);
                             let id = if content.metadata.get("title").is_some() {
                                 content.metadata.get("title").unwrap().to_string()
                             } else {
@@ -57,7 +61,7 @@ impl Proccessor for Notebook<'_> {
                             let doc = Doc {
                                 id,
                                 tokens: tokenized_entry,
-                                content: content.content,
+                                content: to_html(&content.content).body,
                                 title: None,
                                 href: None,
                             };
@@ -121,19 +125,10 @@ pub async fn build_search_index(location: PathBuf) {
     .unwrap();
 }
 
-pub async fn semantic_search(term: &str) -> Vec<HashMap<String, Vec<String>>> {
+pub async fn semantic_search(term: &str) -> HashMap<String, Vec<String>> {
     let results = search(term).await;
     results
         .into_iter()
-        .map(|d| HashMap::from([(d.id, vec![d.content])]))
-        .collect::<Vec<HashMap<String, Vec<String>>>>()
+        .map(|d| (d.id, vec![d.content]))
+        .collect::<HashMap<String, Vec<String>>>()
 }
-// pub fn process(slice: &str) -> Vec<String> {
-//     let tokens = tokenize(slice);
-//     let mut stemmed_keys = tokens
-//         .keys()
-//         .map(|k| stem::get(k).unwrap())
-//         .collect::<Vec<String>>();
-//     stemmed_keys.sort_by_key(|a| a.len());
-//     stemmed_keys
-// }

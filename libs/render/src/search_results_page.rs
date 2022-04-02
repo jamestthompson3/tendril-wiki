@@ -5,11 +5,11 @@ use tasks::SearchResult;
 use crate::{get_template_file, render_includes, Render};
 
 pub struct SearchResultsPage {
-    pub pages: Vec<SearchResult>,
+    pub pages: SearchResult,
 }
 
 impl SearchResultsPage {
-    pub fn new(pages: Vec<SearchResult>) -> Self {
+    pub fn new(pages: SearchResult) -> Self {
         SearchResultsPage { pages }
     }
     async fn render_pages(&self) -> String {
@@ -21,18 +21,16 @@ impl SearchResultsPage {
             return ctx;
         }
         let mut page_list = String::new();
-        for result in self.pages.iter() {
-            for (page, matched_text) in result.iter() {
-                page_list.push_str(&format!(
-                    "<li><a href=\"{}\">{}</a>",
-                    format_links(page),
-                    page,
-                ));
-                for text in matched_text {
-                    page_list.push_str(&format!("<p>{}</p>", text));
-                }
-                page_list.push_str("</li>");
+        for (page, matched_text) in self.pages.iter() {
+            page_list.push_str(&format!(
+                "<li><div class=\"result\"><h2><a href=\"{}\">{}</a></h2>",
+                format_links(page),
+                page,
+            ));
+            for text in matched_text {
+                page_list.push_str(text);
             }
+            page_list.push_str("</div></li>");
         }
         page_list
     }
