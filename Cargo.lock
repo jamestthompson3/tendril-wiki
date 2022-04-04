@@ -965,7 +965,6 @@ dependencies = [
  "futures",
  "lazy_static",
  "markdown",
- "tasks",
  "todo",
  "tokio",
 ]

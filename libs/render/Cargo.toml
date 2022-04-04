@@ -13,7 +13,5 @@ directories = "4.0.1"
 futures = "0.3.21"
 lazy_static = "1.4.0"
 markdown = { path = "../markdown" }
-# TODO: fix this weird dependency...
-tasks = { path = "../tasks" }
 todo = { path = "../todo" }
 tokio = { version = "1.17.0", features = ["fs"] }

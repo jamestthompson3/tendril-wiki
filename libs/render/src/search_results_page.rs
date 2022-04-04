@@ -1,8 +1,11 @@
+use std::collections::BTreeMap;
+
 use async_trait::async_trait;
 use markdown::parsers::format_links;
-use tasks::SearchResult;
 
 use crate::{get_template_file, render_includes, Render};
+
+type SearchResult = BTreeMap<String, Vec<String>>;
 
 pub struct SearchResultsPage {
     pub pages: SearchResult,
