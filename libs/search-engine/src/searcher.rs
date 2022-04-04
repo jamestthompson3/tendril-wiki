@@ -1,4 +1,4 @@
-use std::{collections::HashMap, time::Instant};
+use std::collections::HashMap;
 
 use tokio::fs::read_to_string;
 
@@ -11,17 +11,20 @@ fn tokenize_query(query: &str) -> Tokens {
 pub(crate) async fn search<'a>(query: &str) -> Vec<Doc<'a>> {
     let tokens = tokenize_query(query);
     let keys = tokens.keys();
-    let now = Instant::now();
+    // let now = Instant::now();
     let search_idx = read_to_string("./search-index.json").await.unwrap();
     let search_idx: HashMap<String, Vec<String>> = serde_json::from_str(&search_idx).unwrap();
     let mut relevant_docs = Vec::<Doc>::new();
     let doc_idx = read_to_string("./docs.json").await.unwrap();
     let mut doc_idx: HashMap<String, Doc> = serde_json::from_str(&doc_idx).unwrap();
     // println!("serializing took: {:?}", now.elapsed());
+    // tokenized query terms + the number of possible variations
+    let mut tokens_for_scoring = Vec::with_capacity(keys.len() * 17);
     keys.for_each(|key| {
         let variations = variations_of_word(key);
         for variation in variations {
             if let Some(doc_ids) = search_idx.get(&variation) {
+                tokens_for_scoring.push(variation);
                 for doc_id in doc_ids {
                     if let Some(doc_body) = doc_idx.remove(doc_id) {
                         relevant_docs.push(doc_body);
@@ -30,23 +33,35 @@ pub(crate) async fn search<'a>(query: &str) -> Vec<Doc<'a>> {
             }
         }
     });
-    rank_docs(relevant_docs, tokens.keys().collect::<Vec<&String>>())
+    rank_docs(relevant_docs, tokens_for_scoring, doc_idx.keys().len())
 }
 
-fn rank_docs<'a>(mut relevant_docs: Vec<Doc<'a>>, tokens: Vec<&String>) -> Vec<Doc<'a>> {
-    let multiplier = (relevant_docs.len() / tokens.len()) as f32;
+/// use term frequency-inverse document frequency to rank the search results.
+/// We use term frequency adjusted for document length accumulated over all tokens in the search
+/// query
+/// We use the inverse document frequency smooth weight (log(N / 1 + nt) + 1)
+///
+/// ### What is a document in this context?
+///
+/// A document is a `Doc` data structure which can be derived from multiple sources (though at the
+/// moment it is only derived from wiki notes).
+fn rank_docs(mut relevant_docs: Vec<Doc>, tokens: Vec<String>, total_docs: usize) -> Vec<Doc> {
+    let inverse_document_frequency =
+        (relevant_docs.len() as f32 / (1 + total_docs) as f32).ln() + 1.0;
     relevant_docs.sort_by(|a, b| {
-        let processed_a = (fold_tokens_by_doc(a, &tokens) * multiplier).abs().ln();
-        let processed_b = (fold_tokens_by_doc(b, &tokens) * multiplier).abs().ln();
-        processed_a.partial_cmp(&processed_b).unwrap()
+        let processed_a = term_frequency(a, &tokens) * inverse_document_frequency;
+        let processed_b = term_frequency(b, &tokens) * inverse_document_frequency;
+        processed_b.partial_cmp(&processed_a).unwrap()
     });
     relevant_docs
 }
 
-fn fold_tokens_by_doc(doc: &Doc, tokens: &[&String]) -> f32 {
-    tokens.iter().fold(0.0, |score, &tok| {
+/// This is a sum of the frequency of N number of tokens in a document.
+fn term_frequency(doc: &Doc, tokens: &[String]) -> f32 {
+    tokens.iter().fold(0.0, |score, tok| {
         if let Some(doc_score) = doc.tokens.get(tok) {
-            score - *doc_score as f32
+            // term frequency adjusted for document length
+            *doc_score as f32 / doc.tokens.len() as f32
         } else {
             score
         }
