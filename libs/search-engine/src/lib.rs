@@ -53,16 +53,30 @@ impl Proccessor for Notebook<'_> {
                         if fname.ends_with(".md") {
                             let content = path_to_data_structure(&entry.path()).await.unwrap();
                             let mut tokeniziable_content = content.content.clone();
-                            tokeniziable_content.push_str(
-                                content.metadata.get("tags").unwrap_or(&String::from("")),
-                            );
-                            let tokenized_entry = tokenize(&tokeniziable_content);
-                            let id = if content.metadata.get("title").is_some() {
-                                content.metadata.get("title").unwrap().to_string()
+                            let tags = content.metadata.get("tags");
+                            let title = content.metadata.get("title");
+                            // create space between content and tags
+                            tokeniziable_content.push(' ');
+                            tokeniziable_content.push_str(tags.unwrap_or(&String::from("")));
+                            // create space between content and title
+                            tokeniziable_content.push(' ');
+                            tokeniziable_content.push_str(title.unwrap_or(&String::from("")));
+                            let mut tokenized_entry = tokenize(&tokeniziable_content);
+                            let id = if let Some(t) = title {
+                                t.to_string()
                             } else {
                                 let fixed_name = fname.strip_suffix(".md").unwrap();
                                 fixed_name.to_owned()
                             };
+                            // TODO: Continue to fine tune weighting for different aspects of the note
+                            let title_tokens = tokenize(title.unwrap());
+                            for token in title_tokens.keys() {
+                                if let Some(title_token) = tokenized_entry.get_mut(token) {
+                                    *title_token += 3;
+                                } else {
+                                    println!("Failed to tokenize {} in {:?}", token, tokenized_entry);
+                                }
+                            }
 
                             let doc = Doc {
                                 id,
