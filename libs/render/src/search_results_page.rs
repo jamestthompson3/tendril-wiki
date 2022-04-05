@@ -1,11 +1,9 @@
-use std::collections::BTreeMap;
-
 use async_trait::async_trait;
 use markdown::parsers::format_links;
 
 use crate::{get_template_file, render_includes, Render};
 
-type SearchResult = BTreeMap<String, Vec<String>>;
+type SearchResult = Vec<(String, String)>;
 
 pub struct SearchResultsPage {
     pub pages: SearchResult,
@@ -30,9 +28,7 @@ impl SearchResultsPage {
                 format_links(page),
                 page,
             ));
-            for text in matched_text {
-                page_list.push_str(text);
-            }
+            page_list.push_str(matched_text);
             page_list.push_str("</div></li>");
         }
         page_list

@@ -3,13 +3,7 @@ use futures::{stream, StreamExt};
 use markdown::parsers::{path_to_data_structure, to_html};
 use searcher::search;
 use serde::{Deserialize, Serialize};
-use std::{
-    borrow::Cow,
-    collections::{BTreeMap, HashMap},
-    fs::read_dir,
-    path::PathBuf,
-    usize,
-};
+use std::{borrow::Cow, collections::HashMap, fs::read_dir, path::PathBuf, usize};
 
 /// Heavy inspiration / code taken from: https://github.com/thesephist/monocle
 use tokenizer::tokenize;
@@ -145,10 +139,10 @@ pub async fn build_search_index(location: PathBuf) {
     .unwrap();
 }
 
-pub async fn semantic_search(term: &str) -> BTreeMap<String, Vec<String>> {
+pub async fn semantic_search(term: &str) -> Vec<(String, String)> {
     let results = search(term).await;
     results
         .into_iter()
-        .map(|d| (d.id, vec![d.content]))
-        .collect::<BTreeMap<String, Vec<String>>>()
+        .map(|d| (d.id, d.content))
+        .collect::<Vec<(String, String)>>()
 }

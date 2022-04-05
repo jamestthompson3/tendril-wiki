@@ -47,7 +47,8 @@ pub(crate) async fn search<'a>(query: &str) -> Vec<Doc<'a>> {
 /// moment it is only derived from wiki notes).
 fn rank_docs(mut relevant_docs: Vec<Doc>, tokens: Vec<String>, total_docs: usize) -> Vec<Doc> {
     let inverse_document_frequency =
-        (relevant_docs.len() as f32 / (1 + total_docs) as f32).ln() + 1.0;
+        (total_docs as f32 / relevant_docs.len() as f32 + 1.0).ln() + 1.0;
+
     relevant_docs.sort_by(|a, b| {
         let processed_a = term_frequency(a, &tokens) * inverse_document_frequency;
         let processed_b = term_frequency(b, &tokens) * inverse_document_frequency;
