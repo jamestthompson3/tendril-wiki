@@ -66,9 +66,12 @@ impl Proccessor for Notebook<'_> {
                             let title_tokens = tokenize(title.unwrap());
                             for token in title_tokens.keys() {
                                 if let Some(title_token) = tokenized_entry.get_mut(token) {
-                                    *title_token += 3;
+                                    *title_token *= 3;
                                 } else {
-                                    println!("Failed to tokenize {} in {:?}", token, tokenized_entry);
+                                    println!(
+                                        "Failed to tokenize {} in {:?}",
+                                        token, tokenized_entry
+                                    );
                                 }
                             }
 
