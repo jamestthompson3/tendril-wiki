@@ -119,7 +119,7 @@ impl Proccessor for Notebook<'_> {
     }
 }
 
-pub async fn build_search_index(location: PathBuf) {
+pub async fn build_search_index(location: PathBuf, stored_location: PathBuf) {
     let mut p = Notebook {
         documents: Vec::new(),
     };
@@ -128,22 +128,22 @@ pub async fn build_search_index(location: PathBuf) {
     let index = p.index();
     println!("Writing persistent index...");
     write(
-        "./search-index.json",
+        stored_location.join("search-index.json"),
         serde_json::to_string(&index).unwrap(),
     )
     .await
     .unwrap();
     println!("Writing document files...");
     write(
-        "./docs.json",
+        stored_location.join("docs.json"),
         serde_json::to_string(&p.docs_to_id()).unwrap(),
     )
     .await
     .unwrap();
 }
 
-pub async fn semantic_search(term: &str) -> Vec<(String, String)> {
-    let results = search(term).await;
+pub async fn semantic_search(term: &str, index_location: PathBuf) -> Vec<(String, String)> {
+    let results = search(term, index_location).await;
     results
         .into_iter()
         .map(|d| (d.id, d.content))

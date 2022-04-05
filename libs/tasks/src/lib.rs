@@ -9,7 +9,6 @@ use std::{
 use tokio::fs::read_to_string;
 
 pub use self::password::*;
-pub use self::search::*;
 pub use self::sync::*;
 
 pub fn parse_location(location: &str) -> PathBuf {

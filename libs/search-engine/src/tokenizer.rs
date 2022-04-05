@@ -64,8 +64,7 @@ mod tests {
 
     #[test]
     fn tokenizes_strings_with_links() {
-        let test_string =
-            "[[link|https://teukka.tech/luanvim.html]]";
+        let test_string = "[[link|https://teukka.tech/luanvim.html]]";
         let mut mapped = HashMap::new();
         mapped.insert("teukka".to_owned(), 1);
         mapped.insert("tech".to_owned(), 1);

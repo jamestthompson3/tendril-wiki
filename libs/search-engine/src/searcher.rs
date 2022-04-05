@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, path::PathBuf};
 
 use tokio::fs::read_to_string;
 
@@ -8,14 +8,18 @@ fn tokenize_query(query: &str) -> Tokens {
     tokenize(query)
 }
 
-pub(crate) async fn search<'a>(query: &str) -> Vec<Doc<'a>> {
+pub(crate) async fn search<'a>(query: &str, index_location: PathBuf) -> Vec<Doc<'a>> {
     let tokens = tokenize_query(query);
     let keys = tokens.keys();
     // let now = Instant::now();
-    let search_idx = read_to_string("./search-index.json").await.unwrap();
+    let search_idx = read_to_string(index_location.join("search-index.json"))
+        .await
+        .unwrap();
     let search_idx: HashMap<String, Vec<String>> = serde_json::from_str(&search_idx).unwrap();
     let mut relevant_docs = Vec::<Doc>::new();
-    let doc_idx = read_to_string("./docs.json").await.unwrap();
+    let doc_idx = read_to_string(index_location.join("docs.json"))
+        .await
+        .unwrap();
     let mut doc_idx: HashMap<String, Doc> = serde_json::from_str(&doc_idx).unwrap();
     // println!("serializing took: {:?}", now.elapsed());
     // tokenized query terms + the number of possible variations
