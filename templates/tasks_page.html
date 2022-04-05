@@ -37,21 +37,9 @@
           </form>
         </div>
       </div>
-      <table role="grid">
-        <thead>
-          <tr>
-            <th></th>
-            <th role="button">Status</th>
-            <th role="button">Priority</th>
-            <th>Created</th>
-            <th>Content</th>
-            <th>Metadata</th>
-          </tr>
-        </thead>
-        <tbody>
-          <%= tasks %>
-        </tbody>
-      </table>
+      <ul class="task-list">
+        <%= tasks %>
+      </ul>
     </div>
     <%= include "footer" %>
     <script src="/static/tasks.js"></script>

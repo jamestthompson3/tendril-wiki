@@ -88,7 +88,6 @@ impl FromStr for Task {
 impl Task {
     pub fn to_html(&self, idx: Option<usize>) -> String {
         let mut html = String::new();
-        let status = self.format_status();
         let priority = self
             .priority
             .to_owned()
@@ -97,6 +96,11 @@ impl Task {
             .created
             .to_owned()
             .unwrap_or_else(|| String::with_capacity(0));
+        let formatted_priority = if priority.is_empty() {
+            priority.clone()
+        } else {
+            format!("<span class=\"edit-text-button priority\">{}</span>", priority)
+        };
         let metadata = self.format_metadata();
         let body = self.format_body_context(self.format_body());
         let str_idx = if idx.is_none() {
@@ -105,25 +109,31 @@ impl Task {
             format!("data-idx=\"{}\"", idx.unwrap())
         };
 
+        let checked = if self.completed.0 { "checked" } else { "" };
         let table_html = format!(
             r#"
-<tr role="row" {}>
-  <td tabindex="-1"><span aria-label="delete-task" title="delete task"></span></td>
-  <td tabindex="-1" aria-role="checkbox" aria-checked="{}">{}</td>
-  <td tabindex="-1" class="priority"><span class="edit-text-button">{}</span><input maxlength="1" type="text" class="edit-text-input hidden" value="{}" /></td>
-  <td tabindex="-1">{}</td>
-  <td tabindex="-1"><span class="edit-text-button">{}</span><input type="text" class="edit-text-input hidden" value="{}" /></td>
-  <td tabindex="-1"><span class="task-metadata edit-text-button">{}</span><input type="text" class="edit-text-input hidden" value="{}" /></td>
-</tr>
+<li role="row" {}>
+    <div class="task-body">
+        <input type="checkbox" {}>
+        <label>
+          <span class="edit-text-button">{}</span><input type="text" class="edit-text-input hidden" value="{}" />
+          {}<input maxlength="1" type="text" class="edit-text-input hidden" value="{}" />
+        </label>
+    </div>
+    <div class="task-meta">
+        <span>{}</span>
+        <span class="task-metadata edit-text-button">{}</span><input type="text" class="edit-text-input hidden" value="{}" />
+        <span aria-label="delete-task" title="delete task"></span>
+    </div>
+</li>
 "#,
             str_idx,
-            self.completed.0,
-            status,
-            priority,
-            priority,
-            created,
+            checked,
             body,
             self.format_body(),
+            formatted_priority,
+            priority,
+            created,
             metadata,
             self.metadata
                 .iter()
