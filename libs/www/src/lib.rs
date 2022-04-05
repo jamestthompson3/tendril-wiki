@@ -32,10 +32,7 @@ pub async fn server(config: General, parts: RefHubParts) {
     let static_files_router = StaticFileRouter {
         media_location: media_location.clone(),
     };
-    let api_router = APIRouter {
-        wiki_location,
-        media_location,
-    };
+    let api_router = APIRouter { media_location };
     pretty_env_logger::init();
     // Order matters!!
     let log = warp::log("toplevel");

@@ -89,13 +89,15 @@ pub async fn edit(
 
 pub async fn note_search(
     form_body: HashMap<String, String>,
-    wiki_location: String,
 ) -> Result<impl Reply, Rejection> {
     let term = form_body.get("term").unwrap();
     let now = Instant::now();
-    // let found_pages = context_search(term, &wiki_location).await.unwrap();
     let found_pages = semantic_search(term).await;
-    println!("Search Time [{:?}]  Search Results [{}]", now.elapsed(), found_pages.len());
+    println!(
+        "Search Time [{:?}]  Search Results [{}]",
+        now.elapsed(),
+        found_pages.len()
+    );
     let ctx = SearchResultsPage { pages: found_pages };
     Ok(warp::reply::html(ctx.render().await))
 }

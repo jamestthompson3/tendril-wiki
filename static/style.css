@@ -393,7 +393,7 @@ details {
   box-shadow: 2px 2px 6px 1px var(--bg-darker);
   margin: 1rem auto;
 }
-.result h2 {
+.result h2:first-child {
   margin: 0px;
 }
 

@@ -10,7 +10,6 @@ use super::{
 };
 
 pub struct APIRouter {
-    pub wiki_location: Arc<String>,
     pub media_location: Arc<String>,
 }
 
@@ -28,7 +27,6 @@ impl APIRouter {
             warp::path("search").and(
                 warp::body::content_length_limit(MAX_BODY_SIZE)
                     .and(warp::body::form())
-                    .and(with_location(self.wiki_location.clone()))
                     .and_then(note_search),
             ),
         )
