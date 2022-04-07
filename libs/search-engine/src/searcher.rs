@@ -8,7 +8,7 @@ fn tokenize_query(query: &str) -> Tokens {
     tokenize(query)
 }
 
-pub(crate) async fn search<'a>(query: &str, index_location: PathBuf) -> Vec<Doc<'a>> {
+pub(crate) async fn search(query: &str, index_location: PathBuf) -> Vec<Doc> {
     let tokens = tokenize_query(query);
     let keys = tokens.keys();
     // let now = Instant::now();

@@ -46,9 +46,14 @@ impl Runner {
     ) -> String {
         // I don't know why warp doesn't decode the sub path here...
         let sub_path_decoded = decode(&sub_path).unwrap();
-        main_path.push_str(&sub_path_decoded);
-        let page = read(&wiki_location, main_path, reflinks).await.unwrap();
-        page
+        main_path.push_str(&format!("/{}", sub_path_decoded));
+        let page = read(&wiki_location, main_path.clone(), reflinks).await;
+        if page.is_ok() {
+            page.unwrap()
+        } else {
+            println!("Cannot read page: {} due to {:?}", main_path, page.err());
+            String::with_capacity(0)
+        }
     }
 
     pub async fn render_from_path(

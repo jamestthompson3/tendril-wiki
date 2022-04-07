@@ -9,7 +9,7 @@ use markdown::parsers::EditPageData;
 
 use futures::TryStreamExt;
 
-use build::{get_config_location, get_data_dir_location, RefHubTx};
+use build::{get_config_location, RefHubTx};
 use warp::{
     http::{header, HeaderValue, Response, StatusCode},
     hyper::{body::Bytes, Uri},
@@ -89,7 +89,7 @@ pub async fn edit(
 pub async fn note_search(form_body: HashMap<String, String>) -> Result<impl Reply, Rejection> {
     let term = form_body.get("term").unwrap();
     let now = Instant::now();
-    let found_pages = semantic_search(term, get_data_dir_location()).await;
+    let found_pages = semantic_search(term).await;
     println!(
         "Search Time [{:?}]  Search Results [{}]",
         now.elapsed(),

@@ -65,7 +65,7 @@ async fn main() {
             )
             .await;
         }
-        build_search_index(location.clone().into(), get_data_dir_location()).await;
+        build_search_index(location.clone().into()).await;
         let watcher_links = ref_hub.links();
         tokio::spawn(async move {
             while let Some((cmd, file)) = rx.recv().await {

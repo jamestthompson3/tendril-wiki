@@ -1019,6 +1019,7 @@ name = "search-engine"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "build",
  "futures",
  "lazy_static",
  "markdown",
