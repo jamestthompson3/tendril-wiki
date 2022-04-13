@@ -80,13 +80,13 @@ impl Git {
     // Note: this will fall apart if there are merge conflicts!
     async fn sync(&self, sync_interval: u8, branch: String, sender: Sender<(String, String)>) {
         loop {
-            self.pull(&branch);
             let changed_file_count = self.status();
             if changed_file_count > 0 {
                 println!("│");
                 println!("└─> Syncing");
                 self.add();
                 self.commit();
+                self.pull(&branch);
                 self.push(&branch);
             }
             sender
@@ -112,6 +112,7 @@ pub fn git_update(wiki_location: &str, branch: String) {
     let git = Git::new(wiki_location.to_owned());
     git.add();
     git.commit();
+    git.pull(&branch);
     git.push(&branch);
     println!("\x1b[38;5;47mchanges synced\x1b[0m");
 }
