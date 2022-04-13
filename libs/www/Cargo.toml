@@ -21,6 +21,6 @@ serde = { version = "1.0.136", features = ["derive"] }
 tasks = { path = "../tasks" }
 thiserror = "1.0.30"
 todo = { path = "../todo" }
-tokio = { version = "1.17.0", features = ["full"] }
+tokio = { version = "1.17.0", features = ["fs"] }
 urlencoding = "2.1.0"
 warp = { version = "0.3.2", features = ["multipart"] }

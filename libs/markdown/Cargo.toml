@@ -12,5 +12,5 @@ logging = { path = "../logging" }
 pulldown-cmark = { version = "0.9.1", default-features = false, features = ["simd"] }
 tasks = { path = "../tasks" }
 thiserror = "1.0.30"
-tokio = { version = "1.17.0", features = ["full"] }
+tokio = { version = "1.17.0", features = ["fs"] }
 urlencoding = "2.1.0"

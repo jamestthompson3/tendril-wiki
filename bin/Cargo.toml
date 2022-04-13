@@ -11,4 +11,4 @@ logging = { path = "../libs/logging" }
 build = { path = "../libs/build" }
 tasks = { path = "../libs/tasks" }
 www = { path = "../libs/www" }
-tokio = { version = "1.17.0", features = ["full"] }
+tokio = { version = "1.17.0", features = ["fs", "macros", "rt-multi-thread"] }

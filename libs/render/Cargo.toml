@@ -16,4 +16,4 @@ markdown = { path = "../markdown" }
 # TODO: fix this weird dependency...
 tasks = { path = "../tasks" }
 todo = { path = "../todo" }
-tokio = { version = "1.17.0", features = ["full"] }
+tokio = { version = "1.17.0", features = ["fs"] }

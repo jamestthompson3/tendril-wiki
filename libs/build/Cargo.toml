@@ -18,5 +18,5 @@ rpassword = "6.0.1"
 serde = "1.0.136"
 serde_derive = "1.0.136"
 tasks = { path = "../tasks" }
-tokio = { version = "1.17.0", features = ["rt", "sync"] }
+tokio = { version = "1.17.0", features = ["sync"] }
 toml = "0.5.8"

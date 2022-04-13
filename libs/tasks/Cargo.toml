@@ -11,4 +11,4 @@ argon2 = "0.4.0"
 directories = "4.0.1"
 futures = "0.3.21"
 rand_core = { version = "0.6.3", features = ["std"] }
-tokio = { version = "1.17.0", features = ["rt", "time"] }
+tokio = { version = "1.17.0", features = ["time"] }

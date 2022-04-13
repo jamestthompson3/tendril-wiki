@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 tasks = { path = "../tasks" }
-tokio = { version = "1.17.0", features = ["full"] }
+tokio = { version = "1.17.0", features = ["fs"] }
 markdown = { path = "../markdown" }
 render = { path = "../render" }
 urlencoding = "2.1.0"
