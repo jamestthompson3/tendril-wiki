@@ -1184,6 +1184,8 @@ version = "0.1.18"
 dependencies = [
  "build",
  "logging",
+ "markdown",
+ "persistance",
  "search-engine",
  "tasks",
  "tokio",

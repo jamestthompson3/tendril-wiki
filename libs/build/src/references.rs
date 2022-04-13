@@ -2,7 +2,10 @@ use std::{collections::BTreeMap, fs::read_dir, io, path::PathBuf, sync::Arc};
 
 use async_recursion::async_recursion;
 use futures::{stream, StreamExt};
-use markdown::{parsers::path_to_data_structure, processors::to_template};
+use markdown::{
+    parsers::{path_to_data_structure, NoteMeta},
+    processors::to_template,
+};
 use persistance::fs::{get_file_path, read_note_cache, write_note_cache};
 use render::GlobalBacklinks;
 use tokio::{
@@ -117,70 +120,63 @@ pub async fn build_tags_and_links(wiki_location: &str, links: GlobalBacklinks) {
     parse_entries(PathBuf::from(wiki_location), links.clone()).await;
 }
 
-pub async fn update_global_store(current_title: &str, location: &str, links: GlobalBacklinks) {
+pub async fn update_global_store(current_title: &str, note: &NoteMeta, links: GlobalBacklinks) {
     let mut links = links.lock().await;
-    // _should_ always be Ok(path)...
-    if let Ok(path) = get_file_path(location, current_title) {
-        let note = path_to_data_structure(&path).await.unwrap();
-        let templatted = to_template(&note);
-        for link in templatted.outlinks {
-            match links.get_mut(&link) {
-                Some(exists) => {
-                    if exists.contains(&String::from(current_title)) {
-                        continue;
-                    } else {
-                        exists.push(current_title.into())
-                    }
-                }
-                None => {
-                    links.insert(link, vec![current_title.into()]);
+    let templatted = to_template(note);
+    for link in templatted.outlinks {
+        match links.get_mut(&link) {
+            Some(exists) => {
+                if exists.contains(&String::from(current_title)) {
+                    continue;
+                } else {
+                    exists.push(current_title.into())
                 }
             }
+            None => {
+                links.insert(link, vec![current_title.into()]);
+            }
         }
-        for tag in templatted.page.tags {
-            match links.get_mut(&tag) {
-                Some(exists) => {
-                    if exists.contains(&String::from(current_title)) {
-                        continue;
-                    } else {
-                        exists.push(current_title.into())
-                    }
+    }
+    for tag in templatted.page.tags {
+        match links.get_mut(&tag) {
+            Some(exists) => {
+                if exists.contains(&String::from(current_title)) {
+                    continue;
+                } else {
+                    exists.push(current_title.into())
                 }
-                None => {
-                    links.insert(tag, vec![current_title.into()]);
-                }
+            }
+            None => {
+                links.insert(tag, vec![current_title.into()]);
             }
         }
     }
 }
 
-pub async fn delete_from_global_store(title: &str, location: &str, links: GlobalBacklinks) {
+pub async fn delete_from_global_store(title: &str, note: &NoteMeta, links: GlobalBacklinks) {
     let mut links = links.lock().await;
-    if let Ok(path) = get_file_path(location, title) {
-        let note = path_to_data_structure(&path).await.unwrap();
-        let templatted = to_template(&note);
-        for link in templatted.outlinks {
-            if let Some(exists) = links.get(&link) {
-                if exists.contains(&String::from(title)) {
-                    let filtered = exists
-                        .iter()
-                        .filter(|&note| note != title)
-                        .map(|n| n.to_owned())
-                        .collect::<Vec<String>>();
-                    links.insert(link, filtered);
-                }
+    let templatted = to_template(note);
+    for link in templatted.outlinks {
+        if let Some(exists) = links.get(&link) {
+            if exists.contains(&String::from(title)) {
+                let filtered = exists
+                    .iter()
+                    .filter(|&note| note != title)
+                    .map(|n| n.to_owned())
+                    .collect::<Vec<String>>();
+                links.insert(link, filtered);
             }
         }
-        for tag in templatted.page.tags {
-            if let Some(exists) = links.get(&tag) {
-                if exists.contains(&String::from(title)) {
-                    let filtered = exists
-                        .iter()
-                        .filter(|&note| note != title)
-                        .map(|n| n.to_owned())
-                        .collect::<Vec<String>>();
-                    links.insert(tag, filtered);
-                }
+    }
+    for tag in templatted.page.tags {
+        if let Some(exists) = links.get(&tag) {
+            if exists.contains(&String::from(title)) {
+                let filtered = exists
+                    .iter()
+                    .filter(|&note| note != title)
+                    .map(|n| n.to_owned())
+                    .collect::<Vec<String>>();
+                links.insert(tag, filtered);
             }
         }
     }
@@ -298,7 +294,9 @@ mod tests {
         let mut link_tree = BTreeMap::new();
         link_tree.insert(title.into(), vec!["wiki page".into()]);
         let links: GlobalBacklinks = Arc::new(Mutex::new(link_tree));
-        update_global_store(title, TEST_DIR, links.clone()).await;
+        let path = get_file_path(&TEST_DIR, title).unwrap();
+        let note = path_to_data_structure(&path).await.unwrap();
+        update_global_store(title, &note, links.clone()).await;
         let updated_links = links.lock().await;
         let entry = updated_links.get(title).unwrap();
         assert_eq!(entry, &vec![String::from("wiki page")]);

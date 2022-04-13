@@ -10,6 +10,8 @@ edition = "2021"
 logging = { path = "../libs/logging" }
 search-engine = { path = "../libs/search-engine" }
 build = { path = "../libs/build" }
+persistance = { path = "../libs/persistance" }
+markdown = { path = "../libs/markdown" }
 tasks = { path = "../libs/tasks" }
 www = { path = "../libs/www" }
 tokio = { version = "1.17.0", features = ["fs", "macros", "rt-multi-thread"] }

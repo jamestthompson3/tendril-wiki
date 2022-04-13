@@ -4,6 +4,8 @@ use build::{
     rename_in_global_store, update, update_global_store, update_mru_cache, RefHub, RefHubRx,
     RefHubTx,
 };
+use markdown::parsers::path_to_data_structure;
+use persistance::fs::get_file_path;
 use search_engine::build_search_index;
 use std::{path::PathBuf, process::exit, time::Instant};
 use tasks::{git_update, normalize_wiki_location, sync};
@@ -77,8 +79,14 @@ async fn main() {
                         if let [old_title, current_title] =
                             file.split("~~").collect::<Vec<&str>>()[..]
                         {
-                            update_global_store(current_title, &location, watcher_links.clone())
-                                .await;
+                            // _should_ always be Ok(path)...
+                            let path =
+                                get_file_path(&location, current_title).unwrap_or_else(|_| {
+                                    panic!("Failed to get recently created file: {}", current_title)
+                                });
+                            let note = path_to_data_structure(&path).await.unwrap();
+
+                            update_global_store(current_title, &note, watcher_links.clone()).await;
 
                             if !old_title.is_empty() && old_title != current_title {
                                 rename_in_global_store(
@@ -93,9 +101,11 @@ async fn main() {
                         }
                     }
                     "delete" => {
-                        // TODO: figure out why making this async causes the tokio::spawn call to
-                        // give compiler errors.
-                        delete_from_global_store(&file, &location, watcher_links.clone()).await;
+                        let path = get_file_path(&location, &file).unwrap_or_else(|_| {
+                            panic!("Failed to find file for deletion: {}", file)
+                        });
+                        let note = path_to_data_structure(&path).await.unwrap();
+                        delete_from_global_store(&file, &note, watcher_links.clone()).await;
                         purge_file(&location, &file).await
                     }
                     _ => {}
