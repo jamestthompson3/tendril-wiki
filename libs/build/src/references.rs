@@ -6,7 +6,7 @@ use markdown::{
     parsers::{path_to_data_structure, NoteMeta},
     processors::to_template,
 };
-use persistance::fs::{get_file_path, read_note_cache, write_note_cache};
+use persistance::fs::{read_note_cache, write_note_cache};
 use render::GlobalBacklinks;
 use tokio::{
     fs,
@@ -256,6 +256,8 @@ async fn write_filtered_cache_file(filtered: Vec<String>) {
 mod tests {
     use std::fs;
 
+    use persistance::fs::get_file_path;
+
     use super::*;
 
     const TEST_DIR: &str = "/tmp/tendril-test/references/";
@@ -294,7 +296,7 @@ mod tests {
         let mut link_tree = BTreeMap::new();
         link_tree.insert(title.into(), vec!["wiki page".into()]);
         let links: GlobalBacklinks = Arc::new(Mutex::new(link_tree));
-        let path = get_file_path(&TEST_DIR, title).unwrap();
+        let path = get_file_path(TEST_DIR, title).unwrap();
         let note = path_to_data_structure(&path).await.unwrap();
         update_global_store(title, &note, links.clone()).await;
         let updated_links = links.lock().await;
@@ -326,7 +328,9 @@ mod tests {
         let mut link_tree = BTreeMap::new();
         link_tree.insert(title.into(), vec!["wiki page".into()]);
         let links: GlobalBacklinks = Arc::new(Mutex::new(link_tree));
-        delete_from_global_store(title, TEST_DIR, links.clone()).await;
+        let path = get_file_path(TEST_DIR, title).unwrap();
+        let note = path_to_data_structure(&path).await.unwrap();
+        delete_from_global_store(title, &note, links.clone()).await;
         let updated_links = links.lock().await;
         let entry = updated_links.get(title);
         assert_eq!(entry, None);

@@ -2,7 +2,7 @@ use std::{collections::HashMap, fs::read_dir, path::Path};
 
 use async_trait::async_trait;
 use futures::{stream, StreamExt};
-use markdown::parsers::{path_to_data_structure, to_html};
+use markdown::parsers::{path_to_data_structure, to_html, NoteMeta};
 
 use crate::{tokenizer::tokenize, Doc};
 
@@ -30,41 +30,15 @@ impl Proccessor for Notebook {
                     let entry = entry.unwrap();
                     if let Some(fname) = entry.file_name().to_str() {
                         if fname.ends_with(".md") {
-                            let content = path_to_data_structure(&entry.path()).await.unwrap();
-                            let mut tokeniziable_content = content.content.clone();
-                            let tags = content.metadata.get("tags");
-                            let title = content.metadata.get("title");
-                            // create space between content and tags
-                            tokeniziable_content.push(' ');
-                            tokeniziable_content.push_str(tags.unwrap_or(&String::from("")));
-                            // create space between content and title
-                            tokeniziable_content.push(' ');
-                            tokeniziable_content.push_str(title.unwrap_or(&String::from("")));
-                            let mut tokenized_entry = tokenize(&tokeniziable_content);
-                            let id = if let Some(t) = title {
-                                t.to_string()
-                            } else {
+                            let mut content = path_to_data_structure(&entry.path()).await.unwrap();
+                            if content.metadata.get("title").is_none() {
                                 let fixed_name = fname.strip_suffix(".md").unwrap();
-                                fixed_name.to_owned()
-                            };
-                            // TODO: Continue to fine tune weighting for different aspects of the note
-                            let title_tokens = tokenize(title.unwrap());
-                            for token in title_tokens.keys() {
-                                if let Some(title_token) = tokenized_entry.get_mut(token) {
-                                    *title_token *= 3;
-                                } else {
-                                    println!(
-                                        "Failed to tokenize {} in {:?}",
-                                        token, tokenized_entry
-                                    );
-                                }
+                                content
+                                    .metadata
+                                    .insert("title".into(), fixed_name.to_owned());
                             }
 
-                            let doc = Doc {
-                                id,
-                                tokens: tokenized_entry,
-                                content: to_html(&content.content).body,
-                            };
+                            let doc = tokenize_note_meta(&content);
                             Some(doc)
                         } else {
                             None
@@ -99,5 +73,33 @@ impl Proccessor for Notebook {
             .iter()
             .map(|doc| (doc.id.clone(), doc))
             .collect::<HashMap<_, _>>()
+    }
+}
+
+pub(crate) fn tokenize_note_meta(content: &NoteMeta) -> Doc {
+    let mut tokeniziable_content = content.content.clone();
+    let tags = content.metadata.get("tags");
+    let title = content.metadata.get("title");
+    // create space between content and tags
+    tokeniziable_content.push(' ');
+    tokeniziable_content.push_str(tags.unwrap_or(&String::from("")));
+    // create space between content and title
+    tokeniziable_content.push(' ');
+    tokeniziable_content.push_str(title.unwrap_or(&String::from("")));
+    let mut tokenized_entry = tokenize(&tokeniziable_content);
+    // TODO: Continue to fine tune weighting for different aspects of the note
+    let title_tokens = tokenize(title.unwrap());
+    for token in title_tokens.keys() {
+        if let Some(title_token) = tokenized_entry.get_mut(token) {
+            *title_token *= 3;
+        } else {
+            println!("Failed to tokenize {} in {:?}", token, tokenized_entry);
+        }
+    }
+
+    Doc {
+        id: title.unwrap().to_owned(),
+        tokens: tokenized_entry,
+        content: to_html(&content.content).body,
     }
 }

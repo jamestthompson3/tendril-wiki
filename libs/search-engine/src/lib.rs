@@ -1,4 +1,6 @@
 use build::get_data_dir_location;
+use indexer::tokenize_note_meta;
+use markdown::parsers::NoteMeta;
 use searcher::search;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, path::PathBuf, usize};
@@ -56,19 +58,30 @@ pub(crate) async fn write_search_index(search_idx: &HashMap<String, Vec<String>>
         .unwrap();
 }
 
-pub(crate) async fn read_doc_index(loc: PathBuf) -> HashMap<String, Doc> {
+pub(crate) async fn read_doc_index() -> HashMap<String, Doc> {
+    let stored_location = get_data_dir_location();
+    let loc = stored_location.join("docs.json");
     let doc_idx = read_to_string(&loc).await.unwrap();
     let doc_idx: HashMap<String, Doc> = serde_json::from_str(&doc_idx).unwrap();
     doc_idx
 }
 
-pub(crate) async fn read_search_index(loc: PathBuf) -> HashMap<String, Vec<String>> {
+pub(crate) async fn read_search_index() -> HashMap<String, Vec<String>> {
+    let stored_location = get_data_dir_location();
+    let loc = stored_location.join("search-index.json");
     let search_idx = read_to_string(&loc).await.unwrap();
     let search_idx: HashMap<String, Vec<String>> = serde_json::from_str(&search_idx).unwrap();
     search_idx
 }
 
-pub(crate) async fn patch_search_index(
+pub async fn patch_search_from_update(note: &NoteMeta) {
+    let search_idx = read_search_index().await;
+    let doc_idx = read_doc_index().await;
+    let doc = tokenize_note_meta(note);
+    patch_search_index(doc, search_idx, doc_idx).await;
+}
+
+async fn patch_search_index(
     doc: Doc,
     mut search_idx: HashMap<String, Vec<String>>,
     mut doc_idx: HashMap<String, Doc>,
