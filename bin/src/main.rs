@@ -6,7 +6,7 @@ use build::{
 };
 use markdown::parsers::path_to_data_structure;
 use persistance::fs::get_file_path;
-use search_engine::build_search_index;
+use search_engine::{build_search_index, delete_entry_from_update, patch_search_from_update};
 use std::{path::PathBuf, process::exit, time::Instant};
 use tasks::{git_update, normalize_wiki_location, sync};
 use tokio::{fs, sync::mpsc};
@@ -87,6 +87,7 @@ async fn main() {
                             let note = path_to_data_structure(&path).await.unwrap();
 
                             update_global_store(current_title, &note, watcher_links.clone()).await;
+                            patch_search_from_update(&note).await;
 
                             if !old_title.is_empty() && old_title != current_title {
                                 rename_in_global_store(
@@ -106,7 +107,8 @@ async fn main() {
                         });
                         let note = path_to_data_structure(&path).await.unwrap();
                         delete_from_global_store(&file, &note, watcher_links.clone()).await;
-                        purge_file(&location, &file).await
+                        delete_entry_from_update(&file).await;
+                        purge_file(&location, &file).await;
                     }
                     _ => {}
                 }
