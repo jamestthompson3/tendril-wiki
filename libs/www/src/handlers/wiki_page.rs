@@ -100,6 +100,7 @@ impl Runner {
             format!("/{}", encode(&parsed_data.title))
         };
         let page_title = parsed_data.title.clone();
+        let page_title = page_title.trim();
         let update_msg = format!("{}~~{}", parsed_data.old_title, page_title);
         match write(&wiki_location, parsed_data).await {
             Ok(()) => {
