@@ -41,7 +41,10 @@ pub async fn semantic_search(term: &str) -> Vec<(String, String)> {
     let results = search(term, index_location).await;
     results
         .into_iter()
-        .map(|d| (d.id, d.content))
+        .map(|d| {
+            let highlighted_content = d.content.replace(term, &format!("<mark>{}</mark>", term));
+            (d.id, highlighted_content)
+        })
         .collect::<Vec<(String, String)>>()
 }
 
@@ -154,7 +157,7 @@ async fn patch_search_index(
             }
         }
 
-        for token in dbg!(added_tokens) {
+        for token in added_tokens {
             let doc_id = doc.id.clone();
             if let Some(search_token) = old_version.tokens.get_mut(token) {
                 *search_token += 1;

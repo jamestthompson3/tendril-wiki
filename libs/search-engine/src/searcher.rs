@@ -75,7 +75,7 @@ fn term_frequency(doc: &Doc, tokens: &[String]) -> f32 {
 
 fn variations_of_word(key: &str) -> Vec<String> {
     let word_stem = stem::get(key).unwrap();
-    let mut variations = Vec::with_capacity(17);
+    let mut variations = Vec::with_capacity(19);
     // Very very hacky lemmatization
     for ending in WORD_ENDINGS {
         variations.push(format!("{}{}", word_stem, ending));
@@ -85,6 +85,7 @@ fn variations_of_word(key: &str) -> Vec<String> {
     variations
 }
 
-const WORD_ENDINGS: [&str; 15] = [
+const WORD_ENDINGS: [&str; 17] = [
     "e", "s", "ly", "ment", "ed", "'s", "or", "er", "ing", "y", "tion", "ies", "r", "ation", "d",
+    "n", "ian",
 ];
