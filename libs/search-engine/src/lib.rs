@@ -18,7 +18,7 @@ pub(crate) type Tokens = HashMap<String, usize>;
 type DocIdx = HashMap<String, Doc>;
 type SearchIdx = HashMap<String, Vec<String>>;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub(crate) struct Doc {
     id: String,
     tokens: Tokens,
@@ -99,9 +99,10 @@ pub async fn patch_search_from_update(note: &NoteMeta) {
     let search_idx = read_search_index().await;
     let doc_idx = read_doc_index().await;
     let doc = tokenize_note_meta(note);
-    let (search_idx, doc_idx) = patch_search_index(doc, search_idx, doc_idx).await.unwrap();
-    write_search_index(&search_idx).await;
-    write_doc_index(&doc_idx).await;
+    if let Some((search_idx, doc_idx)) = patch_search_index(doc, search_idx, doc_idx).await {
+        write_search_index(&search_idx).await;
+        write_doc_index(&doc_idx).await;
+    }
 }
 
 pub async fn delete_entry_from_update(entry: &str) {
@@ -119,7 +120,7 @@ async fn delete_entry_from_index(
 ) -> (SearchIdx, DocIdx) {
     let doc = doc_idx
         .get(entry)
-        .expect("Could not find doc marked for removal");
+        .unwrap_or_else(|| panic!("Could not find doc marked for removal -- {}", entry));
     for token in doc.tokens.keys() {
         let matched_documents = search_idx
             .get_mut(token)
@@ -185,11 +186,19 @@ async fn patch_search_index(
                 search_idx.insert(token.clone(), vec![doc_id]);
             }
         }
-        let mut doc_map = HashMap::with_capacity(1);
-        doc_map.insert(doc.id.clone(), doc);
-        Some((search_idx, doc_map))
+        doc_idx.insert(doc.id.clone(), doc);
+        Some((search_idx, doc_idx))
     } else {
-        None
+        for token in doc.tokens.keys() {
+            let doc_id = doc.id.clone();
+            if let Some(search_token) = search_idx.get_mut(token) {
+                search_token.push(doc_id);
+            } else {
+                search_idx.insert(token.clone(), vec![doc_id]);
+            }
+        }
+        doc_idx.insert(doc.id.clone(), doc);
+        Some((search_idx, doc_idx))
     }
 }
 
@@ -232,17 +241,32 @@ mod tests {
             tokens: HashMap::from([("cool".into(), 1), ("info".into(), 1)]),
             content: "cool info".into(),
         };
-        let (new_search, _new_docs) = patch_search_index(updated_doc, search_idx, doc_idx)
+        let (new_search, new_docs) = patch_search_index(updated_doc, search_idx, doc_idx)
             .await
             .unwrap();
-        let new_search = dbg!(new_search);
+
+        let added_doc = Doc {
+            id: "added_doc".into(),
+            tokens: HashMap::from([("added".into(), 1), ("doc".into(), 1)]),
+            content: "added doc".into(),
+        };
+
+        let (new_search, new_docs) = patch_search_index(added_doc.clone(), new_search, new_docs)
+            .await
+            .unwrap();
         let updated_search_term_info = new_search.get("info");
         let updated_search_term_cool = new_search.get("cool");
+        let updated_doc_id_added = new_docs.get("added_doc");
         let search_term_test = new_search.get("test");
         let search_term_token = new_search.get("token");
         assert_eq!(updated_search_term_info, Some(&vec!["test_doc".into()]));
         assert_eq!(updated_search_term_cool, Some(&vec!["test_doc".into()]));
         assert_eq!(search_term_test, Some(&vec!["another_doc".into()]));
         assert_eq!(search_term_token, None);
+        assert!(updated_doc_id_added.is_some());
+        let updated_doc_added = updated_doc_id_added.unwrap();
+        assert_eq!(updated_doc_added.id, added_doc.id);
+        assert_eq!(updated_doc_added.content, added_doc.content);
+        assert_eq!(updated_doc_added.tokens, added_doc.tokens);
     }
 }
