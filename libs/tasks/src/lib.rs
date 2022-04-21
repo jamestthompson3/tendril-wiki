@@ -1,5 +1,4 @@
 pub mod password;
-pub mod search;
 pub mod sync;
 use directories::UserDirs;
 use std::{
