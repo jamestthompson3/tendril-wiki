@@ -8,7 +8,6 @@ use std::{path::PathBuf, sync::Arc};
 use tasks::normalize_wiki_location;
 use warp::Filter;
 
-pub mod controllers;
 pub mod handlers;
 pub mod services;
 
