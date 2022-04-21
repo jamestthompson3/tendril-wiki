@@ -2,7 +2,9 @@ use std::sync::Arc;
 
 use warp::{Filter, Rejection, Reply};
 
-use crate::controllers::{authorize, file, image, note_search, unauthorize, update_styles};
+use crate::controllers::{
+    authorize, dump_search_index, file, image, note_search, unauthorize, update_styles,
+};
 
 use super::{
     filters::{with_auth, with_location},
@@ -21,6 +23,7 @@ impl APIRouter {
             .or(self.img())
             .or(self.files())
             .or(self.search())
+            .or(self.search_indicies())
     }
     fn search(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
         warp::post().and(with_auth()).and(
@@ -30,6 +33,11 @@ impl APIRouter {
                     .and_then(note_search),
             ),
         )
+    }
+    fn search_indicies(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+        warp::get()
+            .and(with_auth())
+            .and(warp::path("search-idx").and_then(dump_search_index))
     }
     fn img(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
         warp::post().and(with_auth()).and(

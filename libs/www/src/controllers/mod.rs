@@ -99,6 +99,11 @@ pub async fn note_search(form_body: HashMap<String, String>) -> Result<impl Repl
     Ok(warp::reply::html(ctx.render().await))
 }
 
+pub async fn dump_search_index() -> Result<impl Reply, Rejection> {
+    let indicies = search_engine::dump_search_index().await;
+    Ok(warp::reply::json(&indicies))
+}
+
 pub async fn update_styles(form_body: HashMap<String, String>) -> Result<impl Reply, Rejection> {
     let (path, _) = get_config_location();
     let style_location = path.join("userstyles.css");

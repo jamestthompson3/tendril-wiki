@@ -1,7 +1,7 @@
 use build::get_data_dir_location;
 use indexer::tokenize_note_meta;
 use markdown::parsers::NoteMeta;
-use searcher::search;
+use searcher::{highlight_matches, search};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, path::PathBuf, usize};
 
@@ -25,6 +25,12 @@ pub(crate) struct Doc {
     content: String,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Indicies {
+    search_idx: SearchIdx,
+    doc_idx: DocIdx,
+}
+
 pub async fn build_search_index(location: PathBuf) {
     let mut p = Notebook::default();
     println!("Indexing notes...");
@@ -36,13 +42,22 @@ pub async fn build_search_index(location: PathBuf) {
     write_doc_index(&p.docs_to_idx()).await;
 }
 
+pub async fn dump_search_index() -> Indicies {
+    let search_idx = read_search_index().await;
+    let doc_idx = read_doc_index().await;
+    Indicies {
+        search_idx,
+        doc_idx,
+    }
+}
+
 pub async fn semantic_search(term: &str) -> Vec<(String, String)> {
     let index_location = get_data_dir_location();
     let results = search(term, index_location).await;
     results
         .into_iter()
         .map(|d| {
-            let highlighted_content = d.content.replace(term, &format!("<mark>{}</mark>", term));
+            let highlighted_content = highlight_matches(d.content, term);
             (d.id, highlighted_content)
         })
         .collect::<Vec<(String, String)>>()

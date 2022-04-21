@@ -89,3 +89,22 @@ const WORD_ENDINGS: [&str; 17] = [
     "e", "s", "ly", "ment", "ed", "'s", "or", "er", "ing", "y", "tion", "ies", "r", "ation", "d",
     "n", "ian",
 ];
+
+const OPEN_TAG_LENGTH: usize = 6;
+const CLOSE_TAG_LENGTH: usize = 7;
+
+pub(crate) fn highlight_matches(mut line: String, term: &str) -> String {
+ let readline = line.clone().to_lowercase();
+    let matches = readline
+        .match_indices(&term.trim().to_lowercase())
+        .collect::<Vec<(usize, &str)>>();
+    if !matches.is_empty() {
+        for (pointer, (idx, t)) in matches.into_iter().enumerate() {
+            let current_pos = idx + (pointer * (OPEN_TAG_LENGTH + CLOSE_TAG_LENGTH));
+            let closing_tag = current_pos + OPEN_TAG_LENGTH + t.len();
+            line.insert_str(current_pos, "<mark>");
+            line.insert_str(closing_tag, "</mark>");
+        }
+    }
+    line
+}
