@@ -18,11 +18,11 @@ title: {}
 tags: [daily notes]
 created: {:?}
 ---
-[{:?}] {}
-    "#,
+[{}] {}
+"#,
             daily_file,
             now,
-            now.format("%H:%M").to_string(),
+            now.format("%H:%M"),
             entry
         );
         println!("\x1b[38;5;47mdaily journal updated\x1b[0m");
