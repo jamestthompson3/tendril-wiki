@@ -1,65 +1,8 @@
-use std::{collections::HashMap, path::Path};
+use std::collections::HashMap;
 
-use tasks::path_to_string;
+use tasks::messages::PatchData;
 
 use crate::processors::tags::TagsArray;
-
-#[derive(Debug)]
-pub struct EditPageData {
-    pub body: String,
-    pub tags: Vec<String>,
-    pub title: String,
-    pub old_title: String,
-    pub metadata: HashMap<String, String>,
-}
-
-impl From<HashMap<String, String>> for EditPageData {
-    fn from(form_body: HashMap<String, String>) -> Self {
-        let mut title: String = String::new();
-        let mut old_title: String = String::new();
-        let mut tags: Vec<String> = Vec::new();
-        let mut body: String = String::new();
-        let mut metadata: HashMap<String, String> = HashMap::new();
-        for key in form_body.keys() {
-            match key.as_str() {
-                "title" => title = form_body.get(key).unwrap().to_owned(),
-                "old_title" => {
-                    if let Some(old_title_from_form) = form_body.get(key) {
-                        old_title = old_title_from_form.to_owned()
-                    }
-                }
-                "tags" => {
-                    tags = form_body
-                        .get(key)
-                        .unwrap()
-                        .split(',')
-                        .map(|s| s.to_owned())
-                        .collect()
-                }
-                "body" => body = form_body.get(key).unwrap().to_owned(),
-                "metadata" => {
-                    let stringified_meta = form_body.get(key).unwrap().to_owned();
-                    let kv_pairs = stringified_meta.split('\n');
-                    for pair_string in kv_pairs {
-                        // Support metadata attributes with the : character.
-                        let unpaired: Vec<&str> = pair_string.split(':').collect();
-                        let key = unpaired[0].to_owned();
-                        let value = unpaired[1..].join(":");
-                        metadata.insert(key, value);
-                    }
-                }
-                _ => {}
-            }
-        }
-        EditPageData {
-            body,
-            tags,
-            title,
-            old_title,
-            metadata,
-        }
-    }
-}
 
 #[derive(Copy, Clone, PartialEq, Debug)]
 enum MetaParserState {
@@ -95,8 +38,8 @@ impl MetaParserMachine {
     }
 }
 
-impl From<EditPageData> for NoteMeta {
-    fn from(data: EditPageData) -> Self {
+impl From<PatchData> for NoteMeta {
+    fn from(data: PatchData) -> Self {
         let mut metadata: HashMap<String, String> = data.metadata;
         metadata.insert("title".into(), data.title);
         let tags = TagsArray::from(data.tags);
@@ -128,14 +71,6 @@ impl Into<String> for NoteMeta {
         formatted_string.push_str(&self.content);
         formatted_string
     }
-}
-
-pub async fn path_to_data_structure(
-    path: &Path,
-) -> Result<NoteMeta, Box<dyn std::error::Error + Send + Sync>> {
-    let reader = path_to_string(path).await?;
-    let meta = parse_meta(reader.lines(), path.to_str().unwrap());
-    Ok(meta)
 }
 
 pub fn parse_meta<'a>(lines: impl Iterator<Item = &'a str>, debug_marker: &str) -> NoteMeta {

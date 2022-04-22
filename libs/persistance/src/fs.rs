@@ -1,14 +1,17 @@
-use std::{io, path::PathBuf};
+use std::{
+    io,
+    path::{Path, PathBuf, MAIN_SEPARATOR},
+};
 
 use chrono::{DateTime, FixedOffset, Local};
-use directories::ProjectDirs;
+use directories::{ProjectDirs, UserDirs};
 use markdown::{
-    parsers::{parse_meta, path_to_data_structure, EditPageData, NoteMeta, ParsedPages},
+    parsers::{parse_meta, NoteMeta, ParsedPages},
     processors::{tags::TagsArray, to_template},
 };
 use render::{index_page::IndexPage, wiki_page::WikiPage, GlobalBacklinks, Render};
-use tasks::path_to_string;
-use tokio::fs;
+use tasks::messages::PatchData;
+use tokio::fs::{self, read_to_string};
 use urlencoding::decode;
 
 use thiserror::Error;
@@ -42,7 +45,7 @@ pub async fn write_media(file_location: &str, bytes: &[u8]) -> Result<(), io::Er
     Ok(())
 }
 
-pub async fn write(wiki_location: &str, data: EditPageData) -> Result<(), WriteWikiError> {
+pub async fn write(wiki_location: &str, data: PatchData) -> Result<(), WriteWikiError> {
     let mut file_location = String::from(wiki_location);
     let mut title_location = if data.old_title != data.title && !data.old_title.is_empty() {
         data.old_title.clone()
@@ -219,4 +222,62 @@ pub async fn write_note_cache(cache: String) {
     let mut data_dir = project_dir.data_dir().to_owned();
     data_dir.push("note_cache");
     fs::write(data_dir, cache).await.unwrap();
+}
+
+pub fn parse_location(location: &str) -> PathBuf {
+    let mut loc: String;
+    if location.contains('~') {
+        if let Some(dirs) = UserDirs::new() {
+            let home_dir: String = dirs.home_dir().to_string_lossy().into();
+            loc = location.replace('~', &home_dir);
+        } else {
+            loc = location.replace('~', &std::env::var("HOME").unwrap());
+        }
+    } else {
+        loc = location.to_owned();
+    }
+    if !loc.ends_with(MAIN_SEPARATOR) {
+        loc.push(MAIN_SEPARATOR)
+    }
+    PathBuf::from(loc)
+}
+
+pub fn normalize_wiki_location(wiki_location: &str) -> String {
+    let location = parse_location(wiki_location);
+    // Stop the process if the wiki location doesn't exist
+    if !PathBuf::from(&location).exists() {
+        panic!("Could not find directory at location: {:?}", location);
+    }
+    location.to_string_lossy().into()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::{env, path::PathBuf};
+
+    #[test]
+    fn formats_wiki_location() {
+        assert_eq!(parse_location("./wiki"), PathBuf::from("./wiki/"));
+        env::set_var("HOME", "test");
+        assert_eq!(parse_location("~/wiki"), PathBuf::from("test/wiki/"));
+        assert_eq!(
+            parse_location("/user/~/wiki"),
+            PathBuf::from("/user/test/wiki/")
+        );
+    }
+}
+
+// TODO: this is really dependent on file system ops, won't be good if we change the storage
+// backend.
+pub async fn path_to_string<P: AsRef<Path> + ?Sized>(path: &P) -> Result<String, std::io::Error> {
+    read_to_string(&path).await
+}
+
+pub async fn path_to_data_structure(
+    path: &Path,
+) -> Result<NoteMeta, Box<dyn std::error::Error + Send + Sync>> {
+    let reader = path_to_string(path).await?;
+    let meta = parse_meta(reader.lines(), path.to_str().unwrap());
+    Ok(meta)
 }

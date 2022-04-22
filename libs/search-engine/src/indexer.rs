@@ -2,7 +2,8 @@ use std::{collections::HashMap, fs::read_dir, path::Path};
 
 use async_trait::async_trait;
 use futures::{stream, StreamExt};
-use markdown::parsers::{path_to_data_structure, to_html, NoteMeta};
+use markdown::parsers::{to_html, NoteMeta};
+use persistance::fs::path_to_data_structure;
 
 use crate::{tokenizer::tokenize, Doc};
 

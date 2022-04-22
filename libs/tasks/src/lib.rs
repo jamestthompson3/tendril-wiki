@@ -1,60 +1,33 @@
+use messages::Message;
+use serde::{Deserialize, Serialize};
+use std::fmt::Debug;
+use thiserror::Error;
+use ulid::Ulid;
+
+pub mod messages;
 pub mod password;
 pub mod sync;
-use directories::UserDirs;
-use std::{
-    path::{Path, PathBuf, MAIN_SEPARATOR},
-    process::exit,
-};
-use tokio::fs::read_to_string;
 
 pub use self::password::*;
 pub use self::sync::*;
 
-pub fn parse_location(location: &str) -> PathBuf {
-    let mut loc: String;
-    if location.contains('~') {
-        if let Some(dirs) = UserDirs::new() {
-            let home_dir: String = dirs.home_dir().to_string_lossy().into();
-            loc = location.replace('~', &home_dir);
-        } else {
-            loc = location.replace('~', &std::env::var("HOME").unwrap());
-        }
-    } else {
-        loc = location.to_owned();
-    }
-    if !loc.ends_with(MAIN_SEPARATOR) {
-        loc.push(MAIN_SEPARATOR)
-    }
-    PathBuf::from(loc)
-}
-pub fn normalize_wiki_location(wiki_location: &str) -> String {
-    let location = parse_location(wiki_location);
-    // Stop the process if the wiki location doesn't exist
-    if !PathBuf::from(&location).exists() {
-        exit(1);
-    }
-    location.to_string_lossy().into()
+/// Shout out to Sylvain Kerkour's [blog post](https://kerkour.com/rust-job-queue-with-postgresql) for code snippets and inspiration!
+
+#[derive(Debug, Error)]
+pub enum TaskError {}
+
+#[async_trait::async_trait]
+pub trait Queue: Send + Sync + Debug {
+    async fn push(&self, job: Message) -> Result<(), crate::TaskError>;
+    /// pull fetches at most `number_of_jobs` from the queue.
+    async fn pull(&self, number_of_jobs: u32) -> Result<Vec<Job>, crate::TaskError>;
+    async fn delete_job(&self, job_id: Ulid) -> Result<(), crate::TaskError>;
+    async fn fail_job(&self, job_id: Ulid) -> Result<(), crate::TaskError>;
+    async fn clear(&self) -> Result<(), crate::TaskError>;
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use std::{env, path::PathBuf};
-
-    #[test]
-    fn formats_wiki_location() {
-        assert_eq!(parse_location("./wiki"), PathBuf::from("./wiki/"));
-        env::set_var("HOME", "test");
-        assert_eq!(parse_location("~/wiki"), PathBuf::from("test/wiki/"));
-        assert_eq!(
-            parse_location("/user/~/wiki"),
-            PathBuf::from("/user/test/wiki/")
-        );
-    }
-}
-
-// TODO: this is really dependent on file system ops, won't be good if we change the storage
-// backend.
-pub async fn path_to_string<P: AsRef<Path> + ?Sized>(path: &P) -> Result<String, std::io::Error> {
-    read_to_string(&path).await
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Job {
+    pub id: Ulid,
+    pub message: Message,
 }

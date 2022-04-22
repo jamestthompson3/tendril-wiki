@@ -4,11 +4,10 @@ use build::{
     rename_in_global_store, update, update_global_store, update_mru_cache, RefHub, RefHubRx,
     RefHubTx,
 };
-use markdown::parsers::path_to_data_structure;
-use persistance::fs::get_file_path;
+use persistance::fs::{get_file_path, normalize_wiki_location, path_to_data_structure};
 use search_engine::{build_search_index, delete_entry_from_update, patch_search_from_update};
 use std::{path::PathBuf, process::exit, time::Instant};
-use tasks::{git_update, normalize_wiki_location, sync};
+use tasks::{git_update, sync};
 use tokio::{fs, sync::mpsc};
 use www::server;
 
@@ -69,12 +68,10 @@ async fn main() {
         }
         build_search_index(location.clone().into()).await;
         let watcher_links = ref_hub.links();
+        build_tags_and_links(&location, watcher_links.clone()).await;
         tokio::spawn(async move {
             while let Some((cmd, file)) = rx.recv().await {
                 match cmd.as_ref() {
-                    "rebuild" => {
-                        build_tags_and_links(&location, watcher_links.clone()).await;
-                    }
                     "update" => {
                         if let [old_title, current_title] =
                             file.split("~~").collect::<Vec<&str>>()[..]
@@ -114,7 +111,6 @@ async fn main() {
                 }
             }
         });
-        tx.send(("rebuild".into(), "".into())).await.unwrap();
         server(config.general, (ref_hub.links(), tx.clone())).await
     }
 }

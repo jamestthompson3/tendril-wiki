@@ -171,10 +171,12 @@ version = "0.4.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "670ad68c9088c2a963aaa298cb369688cf3f9465ce5e2d4ca10e6e0098a1ce73"
 dependencies = [
+ "js-sys",
  "libc",
  "num-integer",
  "num-traits",
  "time 0.1.44",
+ "wasm-bindgen",
  "winapi",
 ]
 
@@ -1023,6 +1025,7 @@ dependencies = [
  "futures",
  "lazy_static",
  "markdown",
+ "persistance",
  "regex",
  "serde",
  "serde_json",
@@ -1158,10 +1161,14 @@ name = "tasks"
 version = "0.1.0"
 dependencies = [
  "argon2",
+ "async-trait",
  "directories",
  "futures",
  "rand_core",
+ "serde",
+ "thiserror",
  "tokio",
+ "ulid",
 ]
 
 [[package]]
@@ -1443,6 +1450,17 @@ name = "typenum"
 version = "1.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dcf81ac59edc17cc8697ff311e8f5ef2d99fcbd9817b34cec66f90b6c3dfd987"
+
+[[package]]
+name = "ulid"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "220b18413e1fe5e85a5580b22f44241f82404a66c792c9f3c9eda74c52d9a22e"
+dependencies = [
+ "chrono",
+ "rand",
+ "serde",
+]
 
 [[package]]
 name = "unicase"

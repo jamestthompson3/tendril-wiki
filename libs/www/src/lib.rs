@@ -3,9 +3,9 @@ use ::build::{config::General, RefHubTx};
 #[cfg(not(debug_assertions))]
 use ::build::get_data_dir_location;
 
+use persistance::fs::normalize_wiki_location;
 use render::GlobalBacklinks;
 use std::{path::PathBuf, sync::Arc};
-use tasks::normalize_wiki_location;
 use warp::Filter;
 
 pub mod handlers;
@@ -16,7 +16,7 @@ use crate::handlers::*;
 pub(crate) type RefHubParts = (GlobalBacklinks, RefHubTx);
 
 pub async fn server(config: General, parts: RefHubParts) {
-    let wiki_location = Arc::new(config.wiki_location);
+    let wiki_location = Arc::new(normalize_wiki_location(&config.wiki_location));
     let media_location = Arc::new(normalize_wiki_location(&config.media_location));
     let static_page_router = StaticPageRouter {
         user: Arc::new(config.user),

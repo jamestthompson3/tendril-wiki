@@ -2,11 +2,8 @@ use std::{collections::BTreeMap, fs::read_dir, io, path::PathBuf, sync::Arc};
 
 use async_recursion::async_recursion;
 use futures::{stream, StreamExt};
-use markdown::{
-    parsers::{path_to_data_structure, NoteMeta},
-    processors::to_template,
-};
-use persistance::fs::{read_note_cache, write_note_cache};
+use markdown::{parsers::NoteMeta, processors::to_template};
+use persistance::fs::{path_to_data_structure, read_note_cache, write_note_cache};
 use render::GlobalBacklinks;
 use tokio::{
     fs,

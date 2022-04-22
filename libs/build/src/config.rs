@@ -6,9 +6,9 @@ use std::{
 };
 
 use directories::ProjectDirs;
+use persistance::fs::parse_location;
 use rpassword::prompt_password;
 use serde_derive::{Deserialize, Serialize};
-use tasks::parse_location;
 
 pub type ConfigOptions = (
     PathBuf,

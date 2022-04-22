@@ -2,7 +2,7 @@ use std::{collections::HashMap, sync::Arc};
 
 use build::{create_journal_entry, RefHubTx};
 use chrono::Local;
-use markdown::parsers::EditPageData;
+use tasks::messages::PatchData;
 use persistance::fs::{read, write, ReadPageError};
 use render::{link_page::LinkPage, new_page::NewPage, GlobalBacklinks, Render};
 use urlencoding::{decode, encode};
@@ -93,7 +93,7 @@ impl Runner {
         sender: RefHubTx,
         query_params: HashMap<String, String>,
     ) -> Result<Uri, std::io::Error> {
-        let parsed_data = EditPageData::from(form_body);
+        let parsed_data = PatchData::from(form_body);
         let redir_uri = if let Some(redirect_addition) = query_params.get("redir_to") {
             format!("/{}/{}", redirect_addition, encode(&parsed_data.title))
         } else {

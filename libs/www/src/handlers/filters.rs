@@ -4,7 +4,6 @@ use build::{read_config, RefHubTx};
 use jsonwebtoken::{Algorithm, DecodingKey, Validation};
 use render::GlobalBacklinks;
 use serde::{Deserialize, Serialize};
-use tasks::normalize_wiki_location;
 use thiserror::Error;
 use warp::{Filter, Rejection};
 
@@ -37,7 +36,7 @@ pub struct Claims {
 pub fn with_location(
     wiki_location: Arc<String>,
 ) -> impl Filter<Extract = (String,), Error = std::convert::Infallible> + Clone {
-    warp::any().map(move || normalize_wiki_location(&wiki_location))
+    warp::any().map(move || (*wiki_location).to_owned())
 }
 
 pub fn with_user(

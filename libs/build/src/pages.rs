@@ -1,9 +1,9 @@
 use async_recursion::async_recursion;
 use futures::{stream, StreamExt};
-use markdown::parsers::{path_to_data_structure, ParsedPages};
+use markdown::parsers::ParsedPages;
 
 use markdown::processors::{to_template, update_templatted_pages};
-use persistance::fs::{write_entries, write_index_page};
+use persistance::fs::{path_to_data_structure, write_entries, write_index_page};
 use render::{write_backlinks, GlobalBacklinks};
 use tokio::sync::Mutex;
 
