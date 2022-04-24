@@ -94,7 +94,7 @@ const OPEN_TAG_LENGTH: usize = 6;
 const CLOSE_TAG_LENGTH: usize = 7;
 
 pub(crate) fn highlight_matches(mut line: String, term: &str) -> String {
- let readline = line.clone().to_lowercase();
+    let readline = line.clone().to_lowercase();
     let matches = readline
         .match_indices(&term.trim().to_lowercase())
         .collect::<Vec<(usize, &str)>>();

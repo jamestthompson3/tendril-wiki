@@ -63,5 +63,5 @@ impl From<HashMap<String, String>> for PatchData {
 pub enum Message {
     Patch { patch: PatchData },
     Rebuild,
-    Delete { title: String }
+    Delete { title: String },
 }

@@ -1,7 +1,8 @@
 use std::{
     fs::File,
     process::{exit, Command, Output},
-    time::Duration, sync::Arc,
+    sync::Arc,
+    time::Duration,
 };
 
 use tokio::task::spawn;
