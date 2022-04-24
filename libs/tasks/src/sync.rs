@@ -1,11 +1,13 @@
 use std::{
     fs::File,
     process::{exit, Command, Output},
-    time::Duration,
+    time::Duration, sync::Arc,
 };
 
+use tokio::task::spawn;
 use tokio::time::sleep;
-use tokio::{sync::mpsc::Sender, task::spawn};
+
+use crate::{messages::Message, JobQueue, Queue};
 
 struct Git {
     repo_location: String,
@@ -78,7 +80,7 @@ impl Git {
         }
     }
     // Note: this will fall apart if there are merge conflicts!
-    async fn sync(&self, sync_interval: u8, branch: String, sender: Sender<(String, String)>) {
+    async fn sync(&self, sync_interval: u8, branch: String, queue: Arc<JobQueue>) {
         loop {
             let changed_file_count = self.status();
             if changed_file_count > 0 {
@@ -89,23 +91,15 @@ impl Git {
                 self.pull(&branch);
                 self.push(&branch);
             }
-            sender
-                .send(("rebuild".into(), String::new()))
-                .await
-                .unwrap();
+            queue.push(Message::Rebuild).await.unwrap();
             sleep(Duration::from_secs(sync_interval.into())).await
         }
     }
 }
 
-pub async fn sync(
-    wiki_location: &str,
-    sync_interval: u8,
-    branch: String,
-    sender: Sender<(String, String)>,
-) {
+pub async fn sync(wiki_location: &str, sync_interval: u8, branch: String, queue: Arc<JobQueue>) {
     let git = Git::new(wiki_location.to_owned());
-    spawn(async move { git.sync(sync_interval, branch, sender).await });
+    spawn(async move { git.sync(sync_interval, branch, queue).await });
 }
 
 pub fn git_update(wiki_location: &str, branch: String) {

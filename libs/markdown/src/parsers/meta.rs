@@ -51,6 +51,35 @@ impl From<PatchData> for NoteMeta {
     }
 }
 
+#[allow(clippy::from_over_into)]
+impl Into<PatchData> for NoteMeta {
+    fn into(self) -> PatchData {
+        let title = self.metadata.get("title").unwrap().to_owned();
+        let tags = self.metadata.get("tags").unwrap().to_owned();
+        let old_title = title.clone();
+        PatchData {
+            body: self.content,
+            tags: TagsArray::from(tags).values,
+            title,
+            old_title,
+            metadata: self.metadata,
+        }
+    }
+}
+
+impl From<&PatchData> for NoteMeta {
+    fn from(data: &PatchData) -> Self {
+        let mut metadata: HashMap<String, String> = data.metadata.clone();
+        metadata.insert("title".into(), data.title.clone());
+        let tags = TagsArray::from(data.tags.clone());
+        metadata.insert("tags".into(), tags.write());
+        NoteMeta {
+            metadata,
+            content: data.body.clone(),
+        }
+    }
+}
+
 impl From<String> for NoteMeta {
     fn from(stringified: String) -> Self {
         parse_meta(stringified.lines(), "raw_string") // mark that we've parsed from a passed string instead of a file

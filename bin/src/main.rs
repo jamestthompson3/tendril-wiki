@@ -1,15 +1,19 @@
 use build::{
-    build_tags_and_links, config::read_config, create_journal_entry, delete_from_global_store,
-    get_config_location, get_data_dir_location, install, pages::Builder, purge_file,
-    rename_in_global_store, update, update_global_store, update_mru_cache, RefHub, RefHubRx,
-    RefHubTx,
+    build_tags_and_links, config::read_config, delete_from_global_store, get_config_location,
+    get_data_dir_location, install, pages::Builder, rename_in_global_store, update,
+    update_global_store, update_mru_cache, RefHub,
 };
-use persistance::fs::{get_file_path, normalize_wiki_location, path_to_data_structure};
+use futures::{stream, StreamExt};
+use persistance::fs::{
+    create_journal_entry, get_file_path, normalize_wiki_location, path_to_data_structure,
+};
 use search_engine::{build_search_index, delete_entry_from_update, patch_search_from_update};
-use std::{path::PathBuf, process::exit, time::Instant};
-use tasks::{git_update, sync};
-use tokio::{fs, sync::mpsc};
+use std::{path::PathBuf, process::exit, sync::Arc, time::Instant};
+use tasks::{git_update, messages::Message, sync, JobQueue, Queue};
+use tokio::fs;
 use www::server;
+
+const NUM_JOBS: u32 = 50;
 
 #[tokio::main]
 async fn main() {
@@ -55,63 +59,67 @@ async fn main() {
         println!("Built static site in: {}ms", now.elapsed().as_millis());
     } else {
         let ref_hub = RefHub::new();
-        let (tx, mut rx): (RefHubTx, RefHubRx) = mpsc::channel(50);
+        let job_queue = Arc::new(JobQueue::default());
 
         if config.sync.use_git {
             sync(
                 &location,
                 config.sync.sync_interval,
                 config.sync.branch.clone(),
-                tx.clone(),
+                job_queue.clone(),
             )
             .await;
         }
         build_search_index(location.clone().into()).await;
-        let watcher_links = ref_hub.links();
-        build_tags_and_links(&location, watcher_links.clone()).await;
+        let links = ref_hub.links();
+        build_tags_and_links(&location, links.clone()).await;
+        let queue = job_queue.clone();
         tokio::spawn(async move {
-            while let Some((cmd, file)) = rx.recv().await {
-                match cmd.as_ref() {
-                    "update" => {
-                        if let [old_title, current_title] =
-                            file.split("~~").collect::<Vec<&str>>()[..]
-                        {
-                            // _should_ always be Ok(path)...
-                            let path =
-                                get_file_path(&location, current_title).unwrap_or_else(|_| {
-                                    panic!("Failed to get recently created file: {}", current_title)
-                                });
-                            let note = path_to_data_structure(&path).await.unwrap();
-
-                            update_global_store(current_title, &note, watcher_links.clone()).await;
-                            patch_search_from_update(&note).await;
-
-                            if !old_title.is_empty() && old_title != current_title {
-                                rename_in_global_store(
-                                    current_title,
-                                    old_title,
-                                    &location,
-                                    watcher_links.clone(),
-                                )
-                                .await;
+            loop {
+                let jobs = match queue.pull(NUM_JOBS).await {
+                    Ok(jobs) => jobs,
+                    Err(err) => {
+                        eprintln!("{}", err);
+                        panic!("Failed to pull jobs");
+                    }
+                };
+                stream::iter(jobs)
+                    .for_each_concurrent(NUM_JOBS as usize, |job| async {
+                        match job.message {
+                            Message::Rebuild => {
+                                build_tags_and_links(&location, links.clone()).await;
                             }
-                            update_mru_cache(old_title, current_title).await;
+                            Message::Patch { patch } => {
+                                let note = patch.clone().into();
+
+                                update_global_store(&patch.title, &note, links.clone()).await;
+                                patch_search_from_update(&note).await;
+
+                                if !patch.old_title.is_empty() && patch.old_title != patch.title {
+                                    rename_in_global_store(
+                                        &patch.title,
+                                        &patch.old_title,
+                                        &location,
+                                        links.clone(),
+                                    )
+                                    .await;
+                                }
+                                update_mru_cache(&patch.old_title, &patch.title).await;
+                            }
+                            Message::Delete { title } => {
+                                let path = get_file_path(&location, &title).unwrap_or_else(|_| {
+                                    panic!("Failed to find file for deletion: {}", title)
+                                });
+                                let note = path_to_data_structure(&path).await.unwrap();
+                                delete_from_global_store(&title, &note, links.clone()).await;
+                                delete_entry_from_update(&title).await;
+                            }
                         }
-                    }
-                    "delete" => {
-                        let path = get_file_path(&location, &file).unwrap_or_else(|_| {
-                            panic!("Failed to find file for deletion: {}", file)
-                        });
-                        let note = path_to_data_structure(&path).await.unwrap();
-                        delete_from_global_store(&file, &note, watcher_links.clone()).await;
-                        delete_entry_from_update(&file).await;
-                        purge_file(&location, &file).await;
-                    }
-                    _ => {}
-                }
+                    })
+                    .await;
             }
         });
-        server(config.general, (ref_hub.links(), tx.clone())).await
+        server(config.general, (ref_hub.links(), job_queue.clone())).await
     }
 }
 

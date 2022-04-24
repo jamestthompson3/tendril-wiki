@@ -1,9 +1,10 @@
 use std::sync::Arc;
 
-use build::{read_config, RefHubTx};
+use build::read_config;
 use jsonwebtoken::{Algorithm, DecodingKey, Validation};
 use render::GlobalBacklinks;
 use serde::{Deserialize, Serialize};
+use tasks::JobQueue;
 use thiserror::Error;
 use warp::{Filter, Rejection};
 
@@ -45,10 +46,10 @@ pub fn with_user(
     warp::any().map(move || user.clone())
 }
 
-pub fn with_sender(
-    sender: RefHubTx,
-) -> impl Filter<Extract = (RefHubTx,), Error = std::convert::Infallible> + Clone {
-    warp::any().map(move || sender.clone())
+pub fn with_queue(
+    queue: Arc<JobQueue>,
+) -> impl Filter<Extract = (Arc<JobQueue>,), Error = std::convert::Infallible> + Clone {
+    warp::any().map(move || queue.clone())
 }
 
 pub fn with_links(

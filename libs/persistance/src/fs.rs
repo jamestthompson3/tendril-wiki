@@ -7,7 +7,7 @@ use chrono::{DateTime, FixedOffset, Local};
 use directories::{ProjectDirs, UserDirs};
 use markdown::{
     parsers::{parse_meta, NoteMeta, ParsedPages},
-    processors::{tags::TagsArray, to_template},
+    processors::to_template,
 };
 use render::{index_page::IndexPage, wiki_page::WikiPage, GlobalBacklinks, Render};
 use tasks::messages::PatchData;
@@ -45,7 +45,7 @@ pub async fn write_media(file_location: &str, bytes: &[u8]) -> Result<(), io::Er
     Ok(())
 }
 
-pub async fn write(wiki_location: &str, data: PatchData) -> Result<(), WriteWikiError> {
+pub async fn write(wiki_location: &str, data: &PatchData) -> Result<(), WriteWikiError> {
     let mut file_location = String::from(wiki_location);
     let mut title_location = if data.old_title != data.title && !data.old_title.is_empty() {
         data.old_title.clone()
@@ -55,10 +55,10 @@ pub async fn write(wiki_location: &str, data: PatchData) -> Result<(), WriteWiki
     };
     title_location.push_str(".md");
     file_location.push_str(&title_location);
+    let mut note_meta = NoteMeta::from(data);
+    let now = Local::now().format(DT_FORMAT).to_string();
     // In the case that we're creating a new file
     if !PathBuf::from(&file_location).exists() {
-        let mut note_meta = NoteMeta::from(data);
-        let now = Local::now().format(DT_FORMAT).to_string();
         note_meta.metadata.insert("created".into(), now.clone());
         note_meta.metadata.insert("id".into(), now);
         let note: String = note_meta.into();
@@ -70,24 +70,11 @@ pub async fn write(wiki_location: &str, data: PatchData) -> Result<(), WriteWiki
             }
         };
     }
-    let mut note_meta = parse_meta(
-        path_to_string(&file_location).await.unwrap().lines(),
-        &file_location,
-    );
-    // Some reason the browser adds \r\n
-    note_meta.content = data.body.replace("\r\n", "\n");
-    // FIXME: relying on the metadata title attribute when making the template when
-    // the path is used everywhere else isn't great...
-    note_meta.metadata = data.metadata;
-    let now = Local::now().format(DT_FORMAT).to_string();
-    note_meta
-        .metadata
-        .insert("title".into(), data.title.clone());
-    // Update last edited time
     note_meta.metadata.insert("modified".into(), now.clone());
 
     let created = note_meta.metadata.get("created");
 
+    // HACK: Only for legacy notes
     if created.is_none() {
         note_meta.metadata.insert("created".into(), now.clone());
         note_meta.metadata.insert("id".into(), now);
@@ -100,11 +87,7 @@ pub async fn write(wiki_location: &str, data: PatchData) -> Result<(), WriteWiki
         };
         note_meta.metadata.insert("id".into(), parsed_created);
     }
-    let updated_tags: TagsArray = data.tags.into();
-
-    note_meta
-        .metadata
-        .insert("tags".into(), updated_tags.write());
+    // END HACK
 
     let final_note: String = note_meta.into();
     if data.old_title != data.title && !data.old_title.is_empty() {
@@ -280,4 +263,37 @@ pub async fn path_to_data_structure(
     let reader = path_to_string(path).await?;
     let meta = parse_meta(reader.lines(), path.to_str().unwrap());
     Ok(meta)
+}
+
+pub async fn create_journal_entry(
+    location: &str,
+    entry: String,
+) -> Result<PatchData, std::io::Error> {
+    let now = Local::now();
+    let daily_file = now.format("%Y-%m-%d").to_string();
+    if let Ok(exists) = get_file_path(location, &daily_file) {
+        let mut entry_file = fs::read_to_string(exists.clone()).await.unwrap();
+        entry_file.push_str(&format!("\n\n[{}] {}", now.format("%H:%M"), entry));
+        println!("\x1b[38;5;47mdaily journal updated\x1b[0m");
+        fs::write(exists, &entry_file).await?;
+        Ok(NoteMeta::from(entry_file).into())
+    } else {
+        let docstring = format!(
+            r#"
+---
+title: {}
+tags: [daily notes]
+created: {:?}
+---
+[{}] {}
+"#,
+            daily_file,
+            now,
+            now.format("%H:%M"),
+            entry
+        );
+        println!("\x1b[38;5;47mdaily journal updated\x1b[0m");
+        fs::write(format!("{}{}.md", location, daily_file), docstring).await?;
+        Ok(NoteMeta::from(daily_file).into())
+    }
 }

@@ -20,7 +20,7 @@ impl From<HashMap<String, String>> for PatchData {
         let mut metadata: HashMap<String, String> = HashMap::new();
         for key in form_body.keys() {
             match key.as_str() {
-                "title" => title = form_body.get(key).unwrap().to_owned(),
+                "title" => title = form_body.get(key).unwrap().trim().to_owned(),
                 "old_title" => {
                     if let Some(old_title_from_form) = form_body.get(key) {
                         old_title = old_title_from_form.to_owned()
@@ -62,5 +62,6 @@ impl From<HashMap<String, String>> for PatchData {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Message {
     Patch { patch: PatchData },
-    // ...
+    Rebuild,
+    Delete { title: String }
 }

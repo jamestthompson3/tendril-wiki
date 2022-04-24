@@ -5,16 +5,7 @@ use futures::{stream, StreamExt};
 use markdown::{parsers::NoteMeta, processors::to_template};
 use persistance::fs::{path_to_data_structure, read_note_cache, write_note_cache};
 use render::GlobalBacklinks;
-use tokio::{
-    fs,
-    sync::{
-        mpsc::{Receiver, Sender},
-        Mutex,
-    },
-};
-
-pub type RefHubTx = Sender<(String, String)>;
-pub type RefHubRx = Receiver<(String, String)>;
+use tokio::{fs, sync::Mutex};
 
 #[derive(Debug)]
 pub struct RefHub {

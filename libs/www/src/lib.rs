@@ -1,4 +1,4 @@
-use ::build::{config::General, RefHubTx};
+use ::build::config::General;
 
 #[cfg(not(debug_assertions))]
 use ::build::get_data_dir_location;
@@ -6,6 +6,7 @@ use ::build::get_data_dir_location;
 use persistance::fs::normalize_wiki_location;
 use render::GlobalBacklinks;
 use std::{path::PathBuf, sync::Arc};
+use tasks::JobQueue;
 use warp::Filter;
 
 pub mod handlers;
@@ -13,7 +14,7 @@ pub mod services;
 
 use crate::handlers::*;
 
-pub(crate) type RefHubParts = (GlobalBacklinks, RefHubTx);
+pub(crate) type RefHubParts = (GlobalBacklinks, Arc<JobQueue>);
 
 pub async fn server(config: General, parts: RefHubParts) {
     let wiki_location = Arc::new(normalize_wiki_location(&config.wiki_location));

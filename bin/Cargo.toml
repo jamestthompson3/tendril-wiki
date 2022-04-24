@@ -7,11 +7,12 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-logging = { path = "../libs/logging" }
-search-engine = { path = "../libs/search-engine" }
 build = { path = "../libs/build" }
-persistance = { path = "../libs/persistance" }
+futures = "0.3.21"
+logging = { path = "../libs/logging" }
 markdown = { path = "../libs/markdown" }
+persistance = { path = "../libs/persistance" }
+search-engine = { path = "../libs/search-engine" }
 tasks = { path = "../libs/tasks" }
-www = { path = "../libs/www" }
 tokio = { version = "1.17.0", features = ["fs", "macros", "rt-multi-thread"] }
+www = { path = "../libs/www" }
