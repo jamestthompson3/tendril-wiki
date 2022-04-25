@@ -103,6 +103,22 @@ impl Runner {
         } else {
             format!("/{}", encode(&parsed_data.title))
         };
+        if parsed_data
+            .tags
+            .iter()
+            .map(|t| t.to_lowercase())
+            .any(|t| t == "bookmark")
+        {
+            if let Some(url) = parsed_data.metadata.get("url") {
+                queue
+                    .push(Message::Archive {
+                        url: url.into(),
+                        title: parsed_data.title.clone(),
+                    })
+                    .await
+                    .unwrap();
+            }
+        }
         match write(&wiki_location, &parsed_data).await {
             Ok(()) => {
                 queue

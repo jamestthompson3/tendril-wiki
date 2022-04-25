@@ -297,3 +297,11 @@ created: {:?}
         Ok(NoteMeta::from(daily_file).into())
     }
 }
+
+pub async fn write_archive(text: String, title: String) {
+    let project_dir = ProjectDirs::from("", "", "tendril").unwrap();
+    let mut dir_path = project_dir.data_dir().to_owned();
+    dir_path.push("archive");
+    dir_path.push(title);
+    fs::write(dir_path, text).await.unwrap();
+}

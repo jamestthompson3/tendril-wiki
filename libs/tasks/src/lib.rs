@@ -9,6 +9,7 @@ use ulid::Ulid;
 pub mod messages;
 pub mod password;
 pub mod sync;
+pub mod archive;
 
 pub use self::password::*;
 pub use self::sync::*;

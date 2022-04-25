@@ -64,4 +64,5 @@ pub enum Message {
     Patch { patch: PatchData },
     Rebuild,
     Delete { title: String },
+    Archive { url: String, title: String }
 }

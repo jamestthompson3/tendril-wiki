@@ -10,7 +10,9 @@ fn prep_files() {
     let data_dir = get_data_dir_location();
     let static_dir = data_dir.join("static");
     let template_dir = data_dir.join("templates");
+    let archive_dir = data_dir.join("archive");
     let cache_file = data_dir.join("note_cache");
+    fs::create_dir_all(&archive_dir).unwrap();
     fs::create_dir_all(&static_dir).unwrap();
     fs::create_dir_all(&template_dir).unwrap();
     if !cache_file.exists() {
