@@ -7,13 +7,8 @@ use persistance::fs::path_to_data_structure;
 
 use crate::{tokenizer::tokenize, Doc};
 
-#[async_trait]
-pub(crate) trait Proccessor {
-    async fn load(&mut self, location: &Path);
-    fn index(&self) -> HashMap<String, Vec<String>>;
-    /// Converts a set of doc data structures into a searchable index.
-    fn docs_to_idx(&self) -> HashMap<String, &Doc>;
-}
+use super::Proccessor;
+
 
 #[derive(Default, Debug)]
 pub(crate) struct Notebook {

@@ -1,5 +1,5 @@
 use build::get_data_dir_location;
-use indexer::tokenize_note_meta;
+use indexer::notebook::{tokenize_note_meta, Notebook};
 use markdown::parsers::NoteMeta;
 use searcher::{highlight_matches, search};
 use serde::{Deserialize, Serialize};
@@ -8,7 +8,7 @@ use std::{collections::HashMap, path::PathBuf, usize};
 /// Heavy inspiration / code taken from: https://github.com/thesephist/monocle
 use tokio::fs::{read_to_string, write};
 
-use crate::indexer::{Notebook, Proccessor};
+use crate::indexer::{archive::Archive, Proccessor};
 
 mod indexer;
 mod searcher;
@@ -32,14 +32,20 @@ pub struct Indicies {
 }
 
 pub async fn build_search_index(location: PathBuf) {
-    let mut p = Notebook::default();
+    let mut n = Notebook::default();
+    let mut a = Archive::default();
     println!("Indexing notes...");
-    p.load(&location).await;
-    let index = p.index();
+    n.load(&location).await;
+    a.load(&location).await;
+    let (search_idx, doc_idx) = index_sources(vec![n.documents, a.documents]);
     println!("Writing persistent index...");
-    write_search_index(&index).await;
+    write_search_index(&search_idx).await;
     println!("Writing document files...");
-    write_doc_index(&p.docs_to_idx()).await;
+    write_doc_index(doc_idx).await;
+}
+
+fn index_sources(vec: Vec<Vec<Doc>>) -> (SearchIdx, DocIdx) {
+    todo!()
 }
 
 pub async fn dump_search_index() -> Indicies {
