@@ -59,6 +59,12 @@ you will need to properly escape quotes from you shell if you choose to update t
 processing the entry, Tendril Wiki will also automatically update the git repo if you've chosen to use the git sync
 feature in your config file.
 
+### Bookmark Archiving
+
+If you tag a note with `bookmark`, and add `url:<your-url-here>`, to the metadata editor, tendril
+will automatically archive the full text of the URL. This text will subsequently be available to be
+searched by tendril's search engine, allowing you to run a full text search on your notes.
+
 ### Customization
 
 You can find your configuration and your custom CSS files in the config directory. The location of this directory depends on your platform and will be printed out when you run `tendril --version`.
