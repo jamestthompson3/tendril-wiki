@@ -32,11 +32,12 @@ pub struct Indicies {
 }
 
 pub async fn build_search_index(location: PathBuf) {
+    let archive_location = get_archive_location();
     let mut n = Notebook::default();
     let mut a = Archive::default();
     println!("Indexing notes...");
     n.load(&location).await;
-    a.load(&location).await;
+    a.load(&archive_location).await;
     let (search_idx, doc_idx) = index_sources(vec![n.documents, a.documents]);
     println!("Writing persistent index...");
     write_search_index(&search_idx).await;
@@ -44,8 +45,25 @@ pub async fn build_search_index(location: PathBuf) {
     write_doc_index(doc_idx).await;
 }
 
-fn index_sources(vec: Vec<Vec<Doc>>) -> (SearchIdx, DocIdx) {
-    todo!()
+fn index_sources(doc_vec: Vec<Vec<Doc>>) -> (SearchIdx, DocIdx) {
+    let hash_map_size = doc_vec.iter().fold(0, |acc, d| d.len() + acc);
+    let mut search_index = HashMap::with_capacity(hash_map_size);
+    let mut doc_index = HashMap::with_capacity(hash_map_size);
+    doc_vec.iter().for_each(|doc_arr| {
+        doc_arr.iter().for_each(|doc| {
+            doc_index.insert(doc.id.clone(), doc.to_owned());
+            let tokens = &doc.tokens;
+            for key in tokens.keys() {
+                if search_index.get(key).is_none() {
+                    search_index.insert(key.to_owned(), vec![doc.id.to_owned()]);
+                } else {
+                    let ids = search_index.get_mut(key).unwrap();
+                    ids.push(doc.id.to_owned());
+                }
+            }
+        })
+    });
+    (search_index, doc_index)
 }
 
 pub async fn dump_search_index() -> Indicies {
@@ -64,7 +82,12 @@ pub async fn semantic_search(term: &str) -> Vec<(String, String)> {
         .into_iter()
         .map(|d| {
             let highlighted_content = highlight_matches(d.content, term);
-            (d.id, highlighted_content)
+            let id = if d.id.contains("archive") {
+                d.id.replace(".archive", "")
+            } else {
+                d.id
+            };
+            (id, highlighted_content)
         })
         .collect::<Vec<(String, String)>>()
 }
@@ -83,6 +106,11 @@ pub(crate) async fn write_search_index(search_idx: &SearchIdx) {
     write(loc, serde_json::to_string(search_idx).unwrap())
         .await
         .unwrap();
+}
+
+fn get_archive_location() -> PathBuf {
+    let stored_location = get_data_dir_location();
+    stored_location.join("archive")
 }
 
 pub(crate) async fn read_doc_index() -> DocIdx {
