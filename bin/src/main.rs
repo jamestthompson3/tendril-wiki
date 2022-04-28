@@ -8,9 +8,14 @@ use persistance::fs::{
     create_journal_entry, get_file_path, normalize_wiki_location, path_to_data_structure,
 };
 use search_engine::{build_search_index, delete_entry_from_update, patch_search_from_update};
-use std::{path::PathBuf, process::exit, sync::Arc, time::Instant};
+use std::{
+    path::PathBuf,
+    process::exit,
+    sync::Arc,
+    time::{Duration, Instant},
+};
 use tasks::{git_update, messages::Message, sync, JobQueue, Queue};
-use tokio::fs;
+use tokio::{fs, time::sleep};
 use www::server;
 
 const NUM_JOBS: u32 = 50;
@@ -117,6 +122,7 @@ async fn main() {
                         }
                     })
                     .await;
+                sleep(Duration::from_millis(10)).await;
             }
         });
         server(config.general, (ref_hub.links(), job_queue.clone())).await
