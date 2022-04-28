@@ -298,7 +298,7 @@ created: {:?}
     }
 }
 
-pub async fn write_archive(text: String, title: String) {
+pub async fn write_archive(text: &str, title: &str) {
     let project_dir = ProjectDirs::from("", "", "tendril").unwrap();
     let mut dir_path = project_dir.data_dir().to_owned();
     dir_path.push("archive");

@@ -3,6 +3,7 @@ use indexer::notebook::{tokenize_note_meta, Notebook};
 use markdown::parsers::NoteMeta;
 use searcher::{highlight_matches, search};
 use serde::{Deserialize, Serialize};
+use tokenizer::tokenize;
 use std::{collections::HashMap, path::PathBuf, usize};
 
 /// Heavy inspiration / code taken from: https://github.com/thesephist/monocle
@@ -133,6 +134,25 @@ pub async fn patch_search_from_update(note: &NoteMeta) {
     let search_idx = read_search_index().await;
     let doc_idx = read_doc_index().await;
     let doc = tokenize_note_meta(note);
+    if let Some((search_idx, doc_idx)) = patch_search_index(doc, search_idx, doc_idx).await {
+        write_search_index(&search_idx).await;
+        write_doc_index(&doc_idx).await;
+    }
+}
+
+type Title = String;
+type Content = String;
+type ArchivePatch = (Title, Content);
+
+pub async fn patch_search_from_archive(patch: ArchivePatch) {
+    let search_idx = read_search_index().await;
+    let doc_idx = read_doc_index().await;
+    let tokens = tokenize(&patch.1);
+    let doc = Doc {
+        id: patch.0,
+        tokens,
+        content: patch.1
+    };
     if let Some((search_idx, doc_idx)) = patch_search_index(doc, search_idx, doc_idx).await {
         write_search_index(&search_idx).await;
         write_doc_index(&doc_idx).await;

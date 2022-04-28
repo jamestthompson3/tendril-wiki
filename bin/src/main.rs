@@ -118,7 +118,8 @@ async fn main() {
                             Message::Archive { url, title } => {
                                 let text =
                                     tokio::task::spawn_blocking(|| extract(url)).await.unwrap();
-                                write_archive(text, title).await;
+                                write_archive(&text, &title).await;
+                                patch_search_from_archive((title, text)).await;
                             }
                         }
                     })
