@@ -80,7 +80,9 @@ pub fn to_html(md: &str) -> Html {
                     outlinks.push(location.to_string());
                     wiki_link_location.clear();
                     parser_machine.send(ParserState::Accept);
-                    Event::Html(format!(r#"<a href="{}">{}</a>"#, link_location, text).into())
+                    Event::Html(
+                        format!(r#"<a href="{}">{}</a>"#, link_location.trim(), text).into(),
+                    )
                 }
                 ParserState::LocationParsing => {
                     parser_machine.send(ParserState::LinkEnd);
