@@ -6,10 +6,10 @@ use std::sync::Mutex;
 use thiserror::Error;
 use ulid::Ulid;
 
+pub mod archive;
 pub mod messages;
 pub mod password;
 pub mod sync;
-pub mod archive;
 
 pub use self::password::*;
 pub use self::sync::*;

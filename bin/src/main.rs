@@ -8,8 +8,16 @@ use persistance::fs::{
     create_journal_entry, get_file_path, normalize_wiki_location, path_to_data_structure,
     write_archive,
 };
-use search_engine::{build_search_index, delete_entry_from_update, patch_search_from_update};
-use std::{path::PathBuf, process::exit, sync::Arc, time::{Duration, Instant}};
+use search_engine::{
+    build_search_index, delete_archived_file, delete_entry_from_update, patch_search_from_archive,
+    patch_search_from_update,
+};
+use std::{
+    path::PathBuf,
+    process::exit,
+    sync::Arc,
+    time::{Duration, Instant},
+};
 use tasks::{archive::extract, git_update, messages::Message, sync, JobQueue, Queue};
 use tokio::{fs, time::sleep};
 use www::server;
@@ -112,8 +120,15 @@ async fn main() {
                                     panic!("Failed to find file for deletion: {}", title)
                                 });
                                 let note = path_to_data_structure(&path).await.unwrap();
+                                persistance::fs::delete(
+                                    &location,
+                                    &title,
+                                )
+                                .await
+                                .unwrap();
                                 delete_from_global_store(&title, &note, links.clone()).await;
                                 delete_entry_from_update(&title).await;
+                                delete_archived_file(&title).await;
                             }
                             Message::Archive { url, title } => {
                                 let text =

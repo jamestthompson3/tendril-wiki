@@ -170,10 +170,9 @@ pub async fn delete_from_global_store(title: &str, note: &NoteMeta, links: Globa
     }
     links.remove(title);
 }
-pub async fn purge_file(location: &str, title: &str) {
+pub async fn purge_mru_cache(title: &str) {
     let recent = read_note_cache().await;
     write_filtered_cache_file(filter_cache_file(recent, title)).await;
-    persistance::fs::delete(location, title).await.unwrap();
 }
 
 pub async fn update_mru_cache(old_title: &str, current_title: &str) {

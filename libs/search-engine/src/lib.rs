@@ -3,11 +3,11 @@ use indexer::notebook::{tokenize_note_meta, Notebook};
 use markdown::parsers::NoteMeta;
 use searcher::{highlight_matches, search};
 use serde::{Deserialize, Serialize};
-use tokenizer::tokenize;
 use std::{collections::HashMap, path::PathBuf, usize};
+use tokenizer::tokenize;
 
 /// Heavy inspiration / code taken from: https://github.com/thesephist/monocle
-use tokio::fs::{read_to_string, write};
+use tokio::fs::{read_to_string, remove_file, write};
 
 use crate::indexer::{archive::Archive, Proccessor};
 
@@ -151,7 +151,7 @@ pub async fn patch_search_from_archive(patch: ArchivePatch) {
     let doc = Doc {
         id: patch.0,
         tokens,
-        content: patch.1
+        content: patch.1,
     };
     if let Some((search_idx, doc_idx)) = patch_search_index(doc, search_idx, doc_idx).await {
         write_search_index(&search_idx).await;
@@ -165,6 +165,16 @@ pub async fn delete_entry_from_update(entry: &str) {
     let (search_idx, doc_idx) = delete_entry_from_index(search_idx, doc_idx, entry).await;
     write_doc_index(doc_idx).await;
     write_search_index(&search_idx).await;
+}
+
+pub async fn delete_archived_file(entry: &str) {
+    let mut archive_path = get_archive_location();
+    archive_path.push(entry);
+    if archive_path.exists() {
+        remove_file(archive_path)
+            .await
+            .expect("Could not delete archive file");
+    }
 }
 
 async fn delete_entry_from_index(

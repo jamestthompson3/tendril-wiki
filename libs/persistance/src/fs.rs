@@ -120,7 +120,7 @@ pub async fn delete(wiki_location: &str, requested_file: &str) -> Result<(), io:
         if !file_path.exists() {
             return Err(io::Error::new(
                 io::ErrorKind::NotFound,
-                "Could not find reuqested file",
+                "Could not find requested file",
             ));
         }
         fs::remove_file(file_path).await?;

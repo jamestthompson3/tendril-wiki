@@ -1,6 +1,6 @@
 use std::{collections::HashMap, sync::Arc};
 
-use build::purge_file;
+use build::purge_mru_cache;
 use persistance::fs::{create_journal_entry, read, write, ReadPageError};
 use render::{link_page::LinkPage, new_page::NewPage, GlobalBacklinks, Render};
 use tasks::{
@@ -152,11 +152,7 @@ impl Runner {
         }
     }
 
-    pub async fn delete(
-        location: String,
-        queue: QueueHandle,
-        form_body: HashMap<String, String>,
-    ) -> Uri {
+    pub async fn delete(queue: QueueHandle, form_body: HashMap<String, String>) -> Uri {
         let title = form_body.get("title").unwrap();
         queue
             .push(Message::Delete {
@@ -165,7 +161,7 @@ impl Runner {
             .await
             .unwrap();
 
-        purge_file(&location, title).await;
+        purge_mru_cache(title).await;
         Uri::from_static("/")
     }
 }
@@ -249,13 +245,12 @@ impl WikiPageRouter {
         warp::post()
             .and(with_auth())
             .and(warp::path("delete"))
-            .and(with_location(self.wiki_location.clone()))
             .and(with_queue(queue.to_owned()))
             .and(warp::body::content_length_limit(MAX_BODY_SIZE))
             .and(warp::body::form())
             .then(
-                |location: String, queue: QueueHandle, form_body: HashMap<String, String>| async {
-                    let response = Runner::delete(location, queue, form_body).await;
+                |queue: QueueHandle, form_body: HashMap<String, String>| async {
+                    let response = Runner::delete(queue, form_body).await;
                     warp::redirect(response)
                 },
             )
