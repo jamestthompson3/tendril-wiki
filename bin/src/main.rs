@@ -18,7 +18,7 @@ use std::{
     sync::Arc,
     time::{Duration, Instant},
 };
-use tasks::{archive::extract, git_update, messages::Message, sync, JobQueue, Queue};
+use tasks::{archive::{extract, compress}, git_update, messages::Message, sync, JobQueue, Queue};
 use tokio::{fs, time::sleep};
 use www::server;
 
@@ -133,7 +133,8 @@ async fn main() {
                             Message::Archive { url, title } => {
                                 let text =
                                     tokio::task::spawn_blocking(|| extract(url)).await.unwrap();
-                                write_archive(&text, &title).await;
+                                let compressed = compress(&text);
+                                write_archive(compressed, &title).await;
                                 patch_search_from_archive((title, text)).await;
                             }
                         }

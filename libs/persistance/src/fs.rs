@@ -298,10 +298,10 @@ created: {:?}
     }
 }
 
-pub async fn write_archive(text: &str, title: &str) {
+pub async fn write_archive(compressed: Vec<u8>, title: &str) {
     let project_dir = ProjectDirs::from("", "", "tendril").unwrap();
     let mut dir_path = project_dir.data_dir().to_owned();
     dir_path.push("archive");
     dir_path.push(title);
-    fs::write(dir_path, text).await.unwrap();
+    fs::write(dir_path, compressed).await.unwrap();
 }
