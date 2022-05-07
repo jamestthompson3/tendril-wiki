@@ -1,7 +1,7 @@
 use ::build::config::General;
 
 #[cfg(not(debug_assertions))]
-use ::build::get_data_dir_location;
+use ::persistance::fs::utils::get_data_dir_location;
 
 use persistance::fs::normalize_wiki_location;
 use render::GlobalBacklinks;
