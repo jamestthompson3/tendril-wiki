@@ -167,6 +167,16 @@ pre code {
   display: none;
 }
 
+.title-error-msg {
+  display: none;
+}
+
+#title-edit:invalid ~ .title-error-msg {
+  display: inline;
+  color: red;
+  margin: auto;
+}
+
 .content-container > label {
   background-color: var(--accent);
   box-shadow: var(--shadow);

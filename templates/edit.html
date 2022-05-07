@@ -11,9 +11,10 @@
 </form>
 <form class="editor" method="post" action="/edit" target="_parent">
   <input class="hidden" type="text" name="old_title" value="<%= title %>" />
-  <button type="submit" class="submit">Save</button>
+  <button class="submit">Save</button>
   <label for="title-edit">Title</label>
-  <input name="title" id="title-edit" type="text" value="<%= title %>" />
+  <input name="title" id="title-edit" type="text" value="<%= title %>" pattern="([a-zA-Z0-9-_]\s?)+" />
+  <p class="title-error-msg">Titles cannot contain special characters other than hypen and underscore.</p>
   <label for="tag-edit">Tags</label>
   <input id="tag-edit" type="text" name="tags" value="<%= tags %>" />
   <label for="body">Body</label>
