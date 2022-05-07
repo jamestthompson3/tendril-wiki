@@ -12,8 +12,9 @@ argon2 = "0.4.0"
 compression = "0.1.5"
 directories = "4.0.1"
 futures = "0.3.21"
+openssl-sys = { version = "0.9.73", features = ['vendored'] }
 rand_core = { version = "0.6.3", features = ["std"] }
-readability = "0.2.0"
+readability = { version = "0.2.0", features = ["reqwest"] }
 serde = { version = "1.0.136", features = ["derive"] }
 thiserror = "1.0.30"
 tokio = { version = "1.17.0", features = ["time", "rt", "sync"] }

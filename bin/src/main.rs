@@ -18,7 +18,12 @@ use std::{
     sync::Arc,
     time::{Duration, Instant},
 };
-use tasks::{archive::{extract, compress}, git_update, messages::Message, sync, JobQueue, Queue};
+use tasks::{
+    archive::{compress, extract},
+    git_update,
+    messages::Message,
+    sync, JobQueue, Queue,
+};
 use tokio::{fs, time::sleep};
 use www::server;
 
@@ -120,12 +125,7 @@ async fn main() {
                                     panic!("Failed to find file for deletion: {}", title)
                                 });
                                 let note = path_to_data_structure(&path).await.unwrap();
-                                persistance::fs::delete(
-                                    &location,
-                                    &title,
-                                )
-                                .await
-                                .unwrap();
+                                persistance::fs::delete(&location, &title).await.unwrap();
                                 delete_from_global_store(&title, &note, links.clone()).await;
                                 delete_entry_from_update(&title).await;
                                 delete_archived_file(&title).await;
