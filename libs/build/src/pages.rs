@@ -3,6 +3,7 @@ use futures::{stream, StreamExt};
 use markdown::parsers::ParsedPages;
 
 use markdown::processors::{to_template, update_templatted_pages};
+use persistance::fs::utils::get_config_location;
 use persistance::fs::{path_to_data_structure, write_entries, write_index_page};
 use render::{write_backlinks, GlobalBacklinks};
 use tokio::sync::Mutex;
@@ -15,7 +16,7 @@ use std::{
     sync::Arc,
 };
 
-use crate::{build_global_store, get_config_location, read_config};
+use crate::{build_global_store, read_config};
 
 /// ## TODO:
 /// figure out how to encapsulate parse_entries and process_file better

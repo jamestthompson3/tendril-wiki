@@ -1,3 +1,5 @@
+pub mod utils;
+
 use std::{
     io,
     path::{Path, PathBuf, MAIN_SEPARATOR},
@@ -15,6 +17,8 @@ use tokio::fs::{self, read_to_string};
 use urlencoding::decode;
 
 use thiserror::Error;
+
+use self::utils::get_data_dir_location;
 
 #[derive(Error, Debug)]
 pub enum WriteWikiError {
@@ -234,23 +238,6 @@ pub fn normalize_wiki_location(wiki_location: &str) -> String {
     location.to_string_lossy().into()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use std::{env, path::PathBuf};
-
-    #[test]
-    fn formats_wiki_location() {
-        assert_eq!(parse_location("./wiki"), PathBuf::from("./wiki/"));
-        env::set_var("HOME", "test");
-        assert_eq!(parse_location("~/wiki"), PathBuf::from("test/wiki/"));
-        assert_eq!(
-            parse_location("/user/~/wiki"),
-            PathBuf::from("/user/test/wiki/")
-        );
-    }
-}
-
 // TODO: this is really dependent on file system ops, won't be good if we change the storage
 // backend.
 pub async fn path_to_string<P: AsRef<Path> + ?Sized>(path: &P) -> Result<String, std::io::Error> {
@@ -304,4 +291,33 @@ pub async fn write_archive(compressed: Vec<u8>, title: &str) {
     dir_path.push("archive");
     dir_path.push(title);
     fs::write(dir_path, compressed).await.unwrap();
+}
+
+pub fn get_archive_location() -> PathBuf {
+    let stored_location = get_data_dir_location();
+    stored_location.join("archive")
+}
+
+pub async fn move_archive(old_title: String, new_title: String) {
+    let archive = get_archive_location();
+    let old_location = archive.join(old_title);
+    let new_location = archive.join(new_title);
+    fs::rename(old_location, new_location).await.unwrap();
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::{env, path::PathBuf};
+
+    #[test]
+    fn formats_wiki_location() {
+        assert_eq!(parse_location("./wiki"), PathBuf::from("./wiki/"));
+        env::set_var("HOME", "test");
+        assert_eq!(parse_location("~/wiki"), PathBuf::from("test/wiki/"));
+        assert_eq!(
+            parse_location("/user/~/wiki"),
+            PathBuf::from("/user/test/wiki/")
+        );
+    }
 }

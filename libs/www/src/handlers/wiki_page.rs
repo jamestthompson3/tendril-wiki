@@ -110,13 +110,23 @@ impl Runner {
             .any(|t| t == "bookmark")
         {
             if let Some(url) = parsed_data.metadata.get("url") {
-                queue
-                    .push(Message::Archive {
-                        url: url.into(),
-                        title: parsed_data.title.clone(),
-                    })
-                    .await
-                    .unwrap();
+                if parsed_data.old_title != parsed_data.title && !parsed_data.old_title.is_empty() {
+                    queue
+                        .push(Message::ArchiveMove {
+                            old_title: parsed_data.old_title.clone(),
+                            new_title: parsed_data.title.clone(),
+                        })
+                        .await
+                        .unwrap();
+                } else {
+                    queue
+                        .push(Message::Archive {
+                            url: url.into(),
+                            title: parsed_data.title.clone(),
+                        })
+                        .await
+                        .unwrap();
+                }
             }
         }
         match write(&wiki_location, &parsed_data).await {

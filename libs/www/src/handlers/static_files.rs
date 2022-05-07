@@ -1,6 +1,6 @@
 use std::{path::PathBuf, sync::Arc};
 
-use build::get_config_location;
+use persistance::fs::utils::get_config_location;
 use warp::{filters::BoxedFilter, Filter, Reply};
 
 use crate::get_static_dir;

@@ -1,11 +1,12 @@
 use build::{
-    build_tags_and_links, config::read_config, delete_from_global_store, get_config_location,
-    get_data_dir_location, install, pages::Builder, rename_in_global_store, update,
-    update_global_store, update_mru_cache, RefHub,
+    build_tags_and_links, config::read_config, delete_from_global_store, install, pages::Builder,
+    rename_in_global_store, update, update_global_store, update_mru_cache, RefHub,
 };
 use futures::{stream, StreamExt};
 use persistance::fs::{
-    create_journal_entry, get_file_path, normalize_wiki_location, path_to_data_structure,
+    create_journal_entry, get_file_path, move_archive, normalize_wiki_location,
+    path_to_data_structure,
+    utils::{get_config_location, get_data_dir_location},
     write_archive,
 };
 use search_engine::{
@@ -136,6 +137,12 @@ async fn main() {
                                 let compressed = compress(&text);
                                 write_archive(compressed, &title).await;
                                 patch_search_from_archive((title, text)).await;
+                            }
+                            Message::ArchiveMove {
+                                old_title,
+                                new_title,
+                            } => {
+                                move_archive(old_title, new_title).await;
                             }
                         }
                     })

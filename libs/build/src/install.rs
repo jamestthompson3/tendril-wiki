@@ -1,10 +1,9 @@
 use std::{fs, process::exit};
 
+use persistance::fs::utils::{get_config_location, get_data_dir_location};
 use tasks::hash_password;
 
-use crate::{
-    gen_config_interactive, get_config_location, get_data_dir_location, Config, ConfigOptions,
-};
+use crate::{gen_config_interactive, Config, ConfigOptions};
 
 fn prep_files() {
     let data_dir = get_data_dir_location();

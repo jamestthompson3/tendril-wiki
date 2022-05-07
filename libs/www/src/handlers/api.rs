@@ -1,4 +1,3 @@
-use build::get_config_location;
 use bytes::{BufMut, Bytes};
 use futures::TryStreamExt;
 use render::{search_results_page::SearchResultsPage, Render};
@@ -6,7 +5,7 @@ use search_engine::{semantic_search, Indicies};
 use std::{collections::HashMap, io, sync::Arc, time::Instant};
 use thiserror::Error;
 
-use persistance::fs::write_media;
+use persistance::fs::{utils::get_config_location, write_media};
 use warp::{
     http::{header, HeaderValue, Response},
     hyper::{StatusCode, Uri},

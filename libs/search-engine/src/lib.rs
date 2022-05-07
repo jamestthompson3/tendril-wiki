@@ -1,6 +1,6 @@
-use build::get_data_dir_location;
 use indexer::notebook::{tokenize_note_meta, Notebook};
 use markdown::parsers::NoteMeta;
+use persistance::fs::{get_archive_location, utils::get_data_dir_location};
 use searcher::{highlight_matches, search};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, path::PathBuf, usize};
@@ -107,11 +107,6 @@ pub(crate) async fn write_search_index(search_idx: &SearchIdx) {
     write(loc, serde_json::to_string(search_idx).unwrap())
         .await
         .unwrap();
-}
-
-fn get_archive_location() -> PathBuf {
-    let stored_location = get_data_dir_location();
-    stored_location.join("archive")
 }
 
 pub(crate) async fn read_doc_index() -> DocIdx {

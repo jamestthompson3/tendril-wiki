@@ -61,8 +61,19 @@ impl From<HashMap<String, String>> for PatchData {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Message {
-    Patch { patch: PatchData },
+    Patch {
+        patch: PatchData,
+    },
     Rebuild,
-    Delete { title: String },
-    Archive { url: String, title: String },
+    Delete {
+        title: String,
+    },
+    Archive {
+        url: String,
+        title: String,
+    },
+    ArchiveMove {
+        old_title: String,
+        new_title: String,
+    },
 }
