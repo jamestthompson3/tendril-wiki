@@ -172,7 +172,7 @@ pub async fn delete_from_global_store(title: &str, note: &NoteMeta, links: Globa
 }
 pub async fn purge_mru_cache(title: &str) {
     let recent = read_note_cache().await;
-    write_filtered_cache_file(filter_cache_file(recent, title)).await;
+    write_filtered_cache_file(filter_cache_file(&recent, title)).await;
 }
 
 pub async fn update_mru_cache(old_title: &str, current_title: &str) {
@@ -180,12 +180,8 @@ pub async fn update_mru_cache(old_title: &str, current_title: &str) {
     // Filter out the current title and the old title.
     // We don't need to separate based whether or not the not has been renamed since the
     // array is only ever 8 entries long, this will be fast.
-    let mut filtered = filter_cache_file(recent, current_title);
-    filtered = filtered
-        .iter()
-        .filter(|&entry| entry != old_title)
-        .map(|n| n.to_owned())
-        .collect::<Vec<String>>();
+    let filtered = filter_cache_file(&recent, current_title);
+    let mut filtered = filter_cache_file(&filtered.join("\n"), old_title);
     if filtered.len() >= 8 {
         filtered.pop();
     }
@@ -226,7 +222,7 @@ pub async fn rename_in_global_store(
     }
 }
 
-fn filter_cache_file(recent: String, title: &str) -> Vec<String> {
+fn filter_cache_file(recent: &str, title: &str) -> Vec<String> {
     recent
         .lines()
         .filter(|&line| line != title)
