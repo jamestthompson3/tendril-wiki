@@ -63,7 +63,7 @@ feature in your config file.
 
 If you tag a note with `bookmark`, and add `url:<your-url-here>`, to the metadata editor, tendril
 will automatically archive the full text of the URL. This text will subsequently be available to be
-searched by tendril's search engine, allowing you to run a full text search on your notes.
+searched by tendril's search engine, allowing you to run a full text search on your bookmarks.
 
 ### Customization
 
