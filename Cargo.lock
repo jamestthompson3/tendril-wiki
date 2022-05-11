@@ -1692,9 +1692,11 @@ version = "0.1.23"
 dependencies = [
  "build",
  "futures",
+ "lazy_static",
  "logging",
  "markdown",
  "persistance",
+ "regex",
  "search-engine",
  "tasks",
  "tokio",

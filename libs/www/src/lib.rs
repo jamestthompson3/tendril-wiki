@@ -24,7 +24,7 @@ pub async fn server(config: General, parts: RefHubParts) {
         media_location: media_location.clone(),
     };
     let wiki_router = WikiPageRouter {
-        parts,
+        parts: parts.clone(),
         wiki_location: wiki_location.clone(),
     };
 
@@ -33,6 +33,7 @@ pub async fn server(config: General, parts: RefHubParts) {
         media_location: media_location.clone(),
     };
     let api_router = APIRouter { media_location };
+    let bookmark_router = bookmarks_page::BookmarkPageRouter::new(parts.1.clone());
     pretty_env_logger::init();
     // Order matters!!
     let log = warp::log("toplevel");
@@ -41,6 +42,7 @@ pub async fn server(config: General, parts: RefHubParts) {
             static_files_router
                 .routes()
                 .or(static_page_router.routes())
+                .or(bookmark_router.routes())
                 .or(api_router.routes())
                 .or(task_router.routes())
                 .or(wiki_router.routes())
