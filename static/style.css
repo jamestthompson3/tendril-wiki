@@ -246,6 +246,7 @@ form.editor div {
   border-radius: var(--rad);
 }
 .editor input[type="text"],
+.editor input[type="url"],
 .editor input[type="password"] {
   width: 80%;
   margin: 0.5rem auto;

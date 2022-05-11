@@ -5,18 +5,17 @@ use persistance::fs::{create_journal_entry, read, write, ReadPageError};
 use render::{link_page::LinkPage, new_page::NewPage, GlobalBacklinks, Render};
 use tasks::{
     messages::{Message, PatchData},
-    JobQueue, Queue,
+    Queue,
 };
 use urlencoding::{decode, encode};
 use warp::{filters::BoxedFilter, hyper::Uri, Filter, Reply};
 
 use crate::RefHubParts;
 
-type QueueHandle = Arc<JobQueue>;
 
 use super::{
     filters::{with_auth, with_links, with_location, with_queue},
-    MAX_BODY_SIZE,
+    MAX_BODY_SIZE, QueueHandle,
 };
 
 struct Runner {}

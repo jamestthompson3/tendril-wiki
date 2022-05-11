@@ -1,18 +1,23 @@
-use std::{collections::BTreeMap, sync::Arc, time::Duration};
+use std::{
+    collections::{BTreeMap, HashMap},
+    sync::Arc,
+    time::Duration,
+};
 
 use build::{
     build_tags_and_links, delete_from_global_store, rename_in_global_store, update_global_store,
     update_mru_cache,
 };
 use futures::{stream, StreamExt};
-use persistance::fs::{get_file_path, move_archive, path_to_data_structure, write_archive};
+use persistance::fs::{get_file_path, move_archive, path_to_data_structure, write, write_archive};
+use regex::Regex;
 use search_engine::{
     delete_archived_file, delete_entry_from_update, patch_search_from_archive,
     patch_search_from_update,
 };
 use tasks::{
     archive::{compress, extract},
-    messages::Message,
+    messages::{Message, PatchData},
     JobQueue, Queue,
 };
 use tokio::sync::Mutex;
@@ -20,6 +25,9 @@ use tokio::time::sleep;
 
 const NUM_JOBS: u32 = 50;
 
+lazy_static! {
+    static ref TITLE_RGX: Regex = Regex::new(r"\?|\\|/|\||:|;|>|<|,|\.").unwrap();
+}
 pub async fn process_tasks(
     queue: Arc<JobQueue>,
     location: String,
@@ -67,16 +75,36 @@ pub async fn process_tasks(
                         delete_archived_file(&title).await;
                     }
                     Message::Archive { url, title } => {
-                        let text = tokio::task::spawn_blocking(|| extract(url)).await.unwrap();
-                        let compressed = compress(&text);
+                        let product = tokio::task::spawn_blocking(|| extract(url)).await.unwrap();
+                        let compressed = compress(&product.text);
                         write_archive(compressed, &title).await;
-                        patch_search_from_archive((title, text)).await;
+                        patch_search_from_archive((title, product.text)).await;
                     }
                     Message::ArchiveMove {
                         old_title,
                         new_title,
                     } => {
                         move_archive(old_title, new_title).await;
+                    }
+                    Message::NewFromUrl { url, tags } => {
+                        let mut metadata = HashMap::new();
+                        metadata.insert(String::from("url"), url.clone());
+                        let product = tokio::task::spawn_blocking(move || extract(url))
+                            .await
+                            .unwrap();
+                        let note_title = TITLE_RGX.replace(&product.title, "").to_string();
+                        let compressed = compress(&product.text);
+                        write_archive(compressed, &note_title).await;
+                        patch_search_from_archive((note_title.clone(), product.text)).await;
+                        let patch = PatchData {
+                            body: String::with_capacity(0),
+                            tags,
+                            title: note_title.clone(),
+                            old_title: String::with_capacity(0),
+                            metadata,
+                        };
+                        write(&location, &patch).await.unwrap();
+                        update_mru_cache(&patch.old_title, &patch.title).await;
                     }
                 }
             })

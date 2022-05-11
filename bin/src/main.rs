@@ -10,6 +10,9 @@ use tasks::{git_update, sync, JobQueue};
 use tokio::fs;
 use www::server;
 
+#[macro_use]
+extern crate lazy_static;
+
 mod task_queue;
 
 #[tokio::main]

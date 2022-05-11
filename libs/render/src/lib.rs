@@ -13,6 +13,7 @@ use markdown::parsers::TemplattedPage;
 use tokio::{fs, sync::Mutex};
 
 pub mod file_upload_page;
+pub mod bookmark_page;
 pub mod help_page;
 pub mod index_page;
 pub mod link_page;

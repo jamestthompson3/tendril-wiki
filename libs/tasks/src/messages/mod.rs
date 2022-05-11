@@ -76,4 +76,8 @@ pub enum Message {
         old_title: String,
         new_title: String,
     },
+    NewFromUrl {
+        url: String,
+        tags: Vec<String>
+    }
 }

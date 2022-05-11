@@ -1,9 +1,9 @@
 use compression::prelude::*;
-use readability::extractor;
+use readability::extractor::{self, Product};
 
-pub fn extract(url: String) -> String {
+pub fn extract(url: String) -> Product {
     match extractor::scrape(&url) {
-        Ok(product) => product.text,
+        Ok(product) => product,
         Err(e) => panic!("{}", e),
     }
 }
