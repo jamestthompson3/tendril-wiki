@@ -3,7 +3,9 @@ use std::{collections::BTreeMap, fs::read_dir, io, path::PathBuf, sync::Arc};
 use async_recursion::async_recursion;
 use futures::{stream, StreamExt};
 use markdown::{parsers::NoteMeta, processors::to_template};
-use persistance::fs::{path_to_data_structure, read_note_cache, write_note_cache};
+use persistance::fs::{
+    path_to_data_structure, read_note_cache, utils::get_file_path, write_note_cache,
+};
 use render::GlobalBacklinks;
 use tokio::{fs, sync::Mutex};
 
@@ -192,7 +194,6 @@ pub async fn update_mru_cache(old_title: &str, current_title: &str) {
 pub async fn rename_in_global_store(
     current_title: &str,
     old_title: &str,
-    location: &str,
     backlinks: GlobalBacklinks,
 ) {
     let mut backlinks = backlinks.lock().await;
@@ -200,14 +201,11 @@ pub async fn rename_in_global_store(
     if let Some(linked_pages) = linked_pages {
         stream::iter(linked_pages)
             .for_each(|page| async {
-                let mut wiki_loc = PathBuf::from(location);
-                let mut page = page.clone();
-                page.push_str(".md");
-                wiki_loc.push(&page);
-                match fs::read_to_string(&wiki_loc).await {
+                let location = get_file_path(page).unwrap();
+                match fs::read_to_string(&location).await {
                     Ok(raw_page) => {
                         let relinked_page = raw_page.replace(old_title, current_title);
-                        fs::write(wiki_loc, relinked_page).await.unwrap();
+                        fs::write(location, relinked_page).await.unwrap();
                     }
                     Err(e) => match e.kind() {
                         io::ErrorKind::NotFound => {}
@@ -237,15 +235,16 @@ async fn write_filtered_cache_file(filtered: Vec<String>) {
 
 #[cfg(test)]
 mod tests {
-    use std::fs;
+    use std::{env, fs};
 
-    use persistance::fs::get_file_path;
+    use persistance::fs::utils::get_file_path;
 
     use super::*;
 
     const TEST_DIR: &str = "/tmp/tendril-test/references/";
 
     fn init_temp_wiki(namespace: &str) {
+        env::set_var("TENDRIL_WIKI_DIR", TEST_DIR);
         fs::create_dir_all(format!("{}{}", TEST_DIR, namespace)).unwrap();
         for entry in fs::read_dir("../markdown/fixtures").unwrap() {
             let mut dest = PathBuf::from(TEST_DIR);
@@ -279,7 +278,7 @@ mod tests {
         let mut link_tree = BTreeMap::new();
         link_tree.insert(title.into(), vec!["wiki page".into()]);
         let links: GlobalBacklinks = Arc::new(Mutex::new(link_tree));
-        let path = get_file_path(TEST_DIR, title).unwrap();
+        let path = get_file_path(title).unwrap();
         let note = path_to_data_structure(&path).await.unwrap();
         update_global_store(title, &note, links.clone()).await;
         let updated_links = links.lock().await;
@@ -296,7 +295,7 @@ mod tests {
         let mut link_tree = BTreeMap::new();
         link_tree.insert(title.into(), vec!["wiki page".into()]);
         let links: GlobalBacklinks = Arc::new(Mutex::new(link_tree));
-        rename_in_global_store(new_title, title, TEST_DIR, links.clone()).await;
+        rename_in_global_store(new_title, title, links.clone()).await;
         let updated_links = links.lock().await;
         let entry = updated_links.get(title);
         let renamed_entry = updated_links.get(new_title).unwrap();
@@ -311,7 +310,7 @@ mod tests {
         let mut link_tree = BTreeMap::new();
         link_tree.insert(title.into(), vec!["wiki page".into()]);
         let links: GlobalBacklinks = Arc::new(Mutex::new(link_tree));
-        let path = get_file_path(TEST_DIR, title).unwrap();
+        let path = get_file_path(title).unwrap();
         let note = path_to_data_structure(&path).await.unwrap();
         delete_from_global_store(title, &note, links.clone()).await;
         let updated_links = links.lock().await;

@@ -1,13 +1,14 @@
-use ::build::config::General;
-
 #[cfg(not(debug_assertions))]
 use ::persistance::fs::utils::get_data_dir_location;
 
-use persistance::fs::normalize_wiki_location;
+use persistance::fs::{config::General, utils::normalize_wiki_location};
 use render::GlobalBacklinks;
 use std::{path::PathBuf, sync::Arc};
 use tasks::JobQueue;
 use warp::Filter;
+
+#[macro_use]
+extern crate lazy_static;
 
 pub mod handlers;
 pub mod services;
@@ -17,7 +18,6 @@ use crate::handlers::*;
 pub(crate) type RefHubParts = (GlobalBacklinks, Arc<JobQueue>);
 
 pub async fn server(config: General, parts: RefHubParts) {
-    let wiki_location = Arc::new(normalize_wiki_location(&config.wiki_location));
     let media_location = Arc::new(normalize_wiki_location(&config.media_location));
     let static_page_router = StaticPageRouter {
         user: Arc::new(config.user),
@@ -25,10 +25,9 @@ pub async fn server(config: General, parts: RefHubParts) {
     };
     let wiki_router = WikiPageRouter {
         parts: parts.clone(),
-        wiki_location: wiki_location.clone(),
     };
 
-    let task_router = TaskPageRouter::new(wiki_location.clone());
+    let task_router = TaskPageRouter::new();
     let static_files_router = StaticFileRouter {
         media_location: media_location.clone(),
     };

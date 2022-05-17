@@ -16,7 +16,7 @@ use warp::{
 use crate::services::{create_jwt, MONTH};
 
 use super::{
-    filters::{with_auth, with_location, AuthError},
+    filters::{with_auth, AuthError},
     MAX_BODY_SIZE,
 };
 
@@ -35,7 +35,7 @@ enum FileError {
 }
 
 impl Runner {
-    pub async fn file(form: multipart::FormData, mut location: String) -> Result<(), FileError> {
+    pub async fn file(form: multipart::FormData) -> Result<(), FileError> {
         let parts: Vec<Part> = form.try_collect().await.map_err(|e| {
             eprint!("Parsing form err: {}", e);
             FileError::FormBodyRead
@@ -50,8 +50,7 @@ impl Runner {
             })
             .await
             .unwrap_or_default();
-        location.push_str(&filename);
-        match write_media(&location, &data).await {
+        match write_media(&filename, &data).await {
             Ok(()) => Ok(()),
             Err(e) => {
                 eprintln!("Could not write media: {}", e);
@@ -60,13 +59,8 @@ impl Runner {
         }
     }
 
-    pub async fn process_image(
-        filename: String,
-        bytes: Bytes,
-        mut media_location: String,
-    ) -> Result<(), io::Error> {
-        media_location.push_str(&filename);
-        write_media(&media_location, bytes.as_ref()).await
+    pub async fn process_image(filename: String, bytes: Bytes) -> Result<(), io::Error> {
+        write_media(&filename, bytes.as_ref()).await
     }
 
     pub async fn note_search(form_body: HashMap<String, String>) -> String {
@@ -130,9 +124,8 @@ impl APIRouter {
                 warp::body::content_length_limit(MAX_BODY_SIZE)
                     .and(warp::header::<String>("filename"))
                     .and(warp::body::bytes())
-                    .and(with_location(self.media_location.clone()))
-                    .then(|filename, bytes, media_location| async {
-                        match Runner::process_image(filename, bytes, media_location).await {
+                    .then(|filename, bytes| async {
+                        match Runner::process_image(filename, bytes).await {
                             Ok(()) => warp::reply::with_status("ok", StatusCode::OK),
                             Err(e) => {
                                 eprintln!("{}", e);
@@ -151,9 +144,8 @@ impl APIRouter {
             .and(with_auth())
             .and(warp::body::content_length_limit(MAX_BODY_SIZE))
             .and(warp::filters::multipart::form())
-            .and(with_location(self.media_location.clone()))
-            .then(|form_body, media_location| async {
-                match Runner::file(form_body, media_location).await {
+            .then(|form_body| async {
+                match Runner::file(form_body).await {
                     Ok(()) => warp::redirect(Uri::from_static("/")),
                     Err(e) => {
                         eprintln!("{}", e);

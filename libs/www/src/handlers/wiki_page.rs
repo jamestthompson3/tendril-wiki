@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc};
+use std::collections::HashMap;
 
 use build::purge_mru_cache;
 use persistance::fs::{create_journal_entry, read, write, ReadPageError};
@@ -12,10 +12,9 @@ use warp::{filters::BoxedFilter, hyper::Uri, Filter, Reply};
 
 use crate::RefHubParts;
 
-
 use super::{
-    filters::{with_auth, with_links, with_location, with_queue},
-    MAX_BODY_SIZE, QueueHandle,
+    filters::{with_auth, with_links, with_queue},
+    QueueHandle, MAX_BODY_SIZE,
 };
 
 struct Runner {}
@@ -33,10 +32,10 @@ impl Runner {
         &self,
         path: String,
         reflinks: GlobalBacklinks,
-        wiki_location: String,
         query_params: HashMap<String, String>,
     ) -> String {
-        self.render_from_path(&wiki_location, path, reflinks, query_params)
+        let path = decode(&path).unwrap();
+        self.render_from_path(path.to_string(), reflinks, query_params)
             .await
             .unwrap()
     }
@@ -45,12 +44,11 @@ impl Runner {
         mut main_path: String,
         sub_path: String,
         reflinks: GlobalBacklinks,
-        wiki_location: String,
     ) -> String {
         // I don't know why warp doesn't decode the sub path here...
         let sub_path_decoded = decode(&sub_path).unwrap();
         main_path.push_str(&format!("/{}", sub_path_decoded));
-        let page = read(&wiki_location, main_path.clone(), reflinks).await;
+        let page = read(main_path.clone(), reflinks).await;
         if page.is_ok() {
             page.unwrap()
         } else {
@@ -61,16 +59,13 @@ impl Runner {
 
     pub async fn render_from_path(
         &self,
-        location: &str,
         path: String,
         links: GlobalBacklinks,
         query_params: HashMap<String, String>,
     ) -> Result<String, ReadPageError> {
-        match read(location, path.clone(), links).await {
+        match read(path.clone(), links).await {
             Ok(page) => Ok(page),
             Err(ReadPageError::PageNotFoundError) => {
-                // TODO: Ideally, I want to redirect, but I'm not sure how to do this with
-                // warp's filter system where some branches return HTML, and others redirect...
                 let ctx = NewPage {
                     title: Some(urlencoding::decode(&path).unwrap().into_owned()),
                     linkto: query_params.get("linkto"),
@@ -78,7 +73,10 @@ impl Runner {
                 };
                 Ok(ctx.render().await)
             }
-            _ => Err(ReadPageError::Unknown),
+            e => {
+                eprint!("{:?}", e);
+                Err(ReadPageError::Unknown)
+            }
         }
     }
     pub async fn render_new(query_params: HashMap<String, String>) -> String {
@@ -92,7 +90,6 @@ impl Runner {
 
     pub async fn edit(
         form_body: HashMap<String, String>,
-        wiki_location: String,
         queue: QueueHandle,
         query_params: HashMap<String, String>,
     ) -> Result<Uri, std::io::Error> {
@@ -128,7 +125,7 @@ impl Runner {
                 }
             }
         }
-        match write(&wiki_location, &parsed_data).await {
+        match write(&parsed_data).await {
             Ok(()) => {
                 queue
                     .push(Message::Patch { patch: parsed_data })
@@ -145,11 +142,10 @@ impl Runner {
 
     pub async fn append(
         form_body: HashMap<String, String>,
-        wiki_location: String,
         queue: QueueHandle,
     ) -> Result<Uri, std::io::Error> {
         let parsed_data = form_body.get("body").unwrap();
-        match create_journal_entry(&wiki_location, parsed_data.to_string()).await {
+        match create_journal_entry(parsed_data.to_string()).await {
             Ok(patch) => {
                 queue.push(Message::Patch { patch }).await.unwrap();
                 Ok("/".parse::<Uri>().unwrap())
@@ -177,7 +173,6 @@ impl Runner {
 
 pub struct WikiPageRouter {
     pub parts: RefHubParts,
-    pub wiki_location: Arc<String>,
 }
 
 impl WikiPageRouter {
@@ -211,16 +206,14 @@ impl WikiPageRouter {
             .and(with_auth())
             .and(warp::path::param())
             .and(with_links(links.clone()))
-            .and(with_location(self.wiki_location.clone()))
             .and(warp::query::<HashMap<String, String>>())
             .then(
                 |path: String,
                  reflinks: GlobalBacklinks,
-                 wiki_location: String,
                  query_params: HashMap<String, String>| async move {
                     let runner = Runner {};
                     let response = runner
-                        .render_file(path, reflinks, wiki_location, query_params)
+                        .render_file(path, reflinks, query_params)
                         .await;
                     warp::reply::html(response)
                 },
@@ -234,15 +227,11 @@ impl WikiPageRouter {
             .and(with_auth())
             .and(warp::path!(String / String))
             .and(with_links(links.to_owned()))
-            .and(with_location(self.wiki_location.clone()))
             .then(
-                |main_path: String,
-                 sub_path: String,
-                 reflinks: GlobalBacklinks,
-                 wiki_location: String| async move {
-                    let response =
-                        Runner::render_nested_file(main_path, sub_path, reflinks, wiki_location)
-                            .await;
+                |main_path: String, sub_path: String, reflinks: GlobalBacklinks| async move {
+                    let main_path = decode(&main_path).unwrap().to_string();
+                    let sub_path = decode(&sub_path).unwrap().to_string();
+                    let response = Runner::render_nested_file(main_path, sub_path, reflinks).await;
                     warp::reply::html(response)
                 },
             )
@@ -288,18 +277,14 @@ impl WikiPageRouter {
                 warp::path("edit").and(
                     warp::body::content_length_limit(MAX_BODY_SIZE)
                         .and(warp::body::form())
-                        .and(with_location(self.wiki_location.clone()))
                         .and(with_queue(queue.to_owned()))
                         .and(warp::query::<HashMap<String, String>>())
                         .then(
                             |form_body: HashMap<String, String>,
-                             wiki_location: String,
                              queue: QueueHandle,
                              query_params: HashMap<String, String>| async {
                                 let redir_url =
-                                    Runner::edit(form_body, wiki_location, queue, query_params)
-                                        .await
-                                        .unwrap();
+                                    Runner::edit(form_body, queue, query_params).await.unwrap();
                                 warp::redirect(redir_url)
                             },
                         ),
@@ -316,15 +301,10 @@ impl WikiPageRouter {
                 warp::path("quick-add").and(
                     warp::body::content_length_limit(MAX_BODY_SIZE)
                         .and(warp::body::form())
-                        .and(with_location(self.wiki_location.clone()))
                         .and(with_queue(queue.to_owned()))
                         .then(
-                            |form_body: HashMap<String, String>,
-                             wiki_location: String,
-                             queue: QueueHandle| async {
-                                let response = Runner::append(form_body, wiki_location, queue)
-                                    .await
-                                    .unwrap();
+                            |form_body: HashMap<String, String>, queue: QueueHandle| async {
+                                let response = Runner::append(form_body, queue).await.unwrap();
                                 warp::redirect(response)
                             },
                         ),

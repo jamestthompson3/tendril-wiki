@@ -1,13 +1,10 @@
+use persistance::fs::utils::parse_location;
+use rpassword::prompt_password;
 use std::{
     env::var,
-    fs,
     io::{stdin, stdout, Write},
     path::PathBuf,
 };
-
-use persistance::fs::{parse_location, utils::get_config_location};
-use rpassword::prompt_password;
-use serde_derive::{Deserialize, Serialize};
 
 pub type ConfigOptions = (
     PathBuf,
@@ -18,34 +15,12 @@ pub type ConfigOptions = (
     Option<String>,
 );
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct Sync {
-    pub use_git: bool,
-    pub sync_interval: u8,
-    pub branch: String,
-}
-
-#[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct General {
-    pub wiki_location: String,
-    pub port: u16,
-    pub user: String,
-    pub pass: String,
-    pub version: String,
-    pub media_location: String,
-}
-
-#[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct Config {
-    pub general: General,
-    pub sync: Sync,
-}
-
 fn prompt(f: Box<dyn Fn()>) -> String {
     let mut response = String::new();
     let stdin = stdin();
     f();
     stdout().flush().unwrap();
+
     stdin.read_line(&mut response).unwrap();
     response.trim().to_owned()
 }
@@ -114,12 +89,6 @@ pub fn gen_config_interactive() -> ConfigOptions {
         user,
         password,
     )
-}
-
-pub fn read_config() -> Config {
-    let (_, file) = get_config_location();
-    let config: Config = toml::from_str(&fs::read_to_string(file).unwrap()).unwrap();
-    config
 }
 
 fn get_user() -> String {

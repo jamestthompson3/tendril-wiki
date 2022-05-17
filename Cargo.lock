@@ -1031,12 +1031,15 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "directories",
+ "lazy_static",
  "markdown",
  "render",
+ "serde",
+ "serde_derive",
  "tasks",
  "thiserror",
  "tokio",
- "urlencoding",
+ "toml",
 ]
 
 [[package]]
@@ -2286,11 +2289,13 @@ dependencies = [
  "chrono",
  "futures",
  "jsonwebtoken",
+ "lazy_static",
  "log",
  "logging",
  "markdown",
  "persistance",
  "pretty_env_logger",
+ "regex",
  "render",
  "search-engine",
  "serde",

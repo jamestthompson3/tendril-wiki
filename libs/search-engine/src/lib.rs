@@ -1,6 +1,6 @@
 use indexer::notebook::{tokenize_note_meta, Notebook};
 use markdown::parsers::NoteMeta;
-use persistance::fs::{get_archive_location, utils::get_data_dir_location};
+use persistance::fs::utils::{get_data_dir_location, get_archive_location};
 use searcher::{highlight_matches, search};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, path::PathBuf, usize};

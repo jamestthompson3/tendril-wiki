@@ -1,19 +1,15 @@
-use std::{io::ErrorKind, str::FromStr, sync::Arc};
+use std::{io::ErrorKind, str::FromStr};
 
+use persistance::fs::utils::get_todo_location;
 use render::{tasks_page::TasksPage, Render};
 use serde::{Deserialize, Serialize};
 use todo::{Task, TaskUpdate, UpdateType};
 use tokio::fs;
 use warp::{filters::BoxedFilter, Filter, Reply};
 
-use super::{
-    filters::{with_auth, with_location},
-    MAX_BODY_SIZE,
-};
+use super::{filters::with_auth, MAX_BODY_SIZE};
 
-pub struct TaskPageRouter {
-    pub wiki_location: Arc<String>,
-}
+pub struct TaskPageRouter {}
 
 #[derive(Debug, Serialize, Deserialize)]
 struct NewTask {
@@ -24,8 +20,8 @@ struct NewTask {
 struct Runner {}
 
 impl Runner {
-    async fn render(location: String) -> String {
-        let todo_file_loc = format!("{}{}", location, "todo.txt");
+    async fn render() -> String {
+        let todo_file_loc = get_todo_location();
         let todo_file = match fs::read_to_string(&todo_file_loc).await {
             Ok(files) => files,
             Err(e) => match e.kind() {
@@ -46,8 +42,8 @@ impl Runner {
         ctx.render().await
     }
 
-    async fn update(location: String, idx: usize, update: TaskUpdate) -> String {
-        let file_location = format!("{}{}", location, "todo.txt");
+    async fn update(idx: usize, update: TaskUpdate) -> String {
+        let file_location = get_todo_location();
         let todo_file = fs::read_to_string(&file_location).await.unwrap();
         let mut tasks = todo_file.lines().collect::<Vec<&str>>();
         let mut targeted_task = Task::from_str(tasks[idx]).unwrap();
@@ -67,8 +63,8 @@ impl Runner {
         response.trim().into()
     }
 
-    pub async fn delete(location: String, idx: usize) -> usize {
-        let file_location = format!("{}{}", location, "todo.txt");
+    pub async fn delete(idx: usize) -> usize {
+        let file_location = get_todo_location();
         let todo_file = fs::read_to_string(&file_location).await.unwrap();
         let tasks = todo_file
             .lines()
@@ -83,9 +79,9 @@ impl Runner {
         fs::write(&file_location, tasks.join("\n")).await.unwrap();
         idx
     }
-    pub async fn create(location: String, new_task: NewTask) -> String {
+    pub async fn create(new_task: NewTask) -> String {
         let parsed_todo = Task::from_str(&new_task.content).unwrap();
-        let file_location = format!("{}{}", location, "todo.txt");
+        let file_location = get_todo_location();
         let todo_file = fs::read_to_string(&file_location).await.unwrap();
         let mut updated_todos = todo_file.lines().collect::<Vec<&str>>();
         updated_todos.insert(0, &parsed_todo.body);
@@ -97,8 +93,8 @@ impl Runner {
 }
 
 impl TaskPageRouter {
-    pub fn new(wiki_location: Arc<String>) -> Self {
-        Self { wiki_location }
+    pub fn new() -> Self {
+        Self {}
     }
     pub fn routes(&self) -> BoxedFilter<(impl Reply,)> {
         warp::any()
@@ -115,9 +111,8 @@ impl TaskPageRouter {
     fn get(&self) -> BoxedFilter<(impl Reply,)> {
         warp::get()
             .and(with_auth())
-            .and(with_location(self.wiki_location.clone()))
-            .then(|location: String| async {
-                let template: String = Runner::render(location).await;
+            .then(|| async {
+                let template: String = Runner::render().await;
                 warp::reply::html(template)
             })
             .boxed()
@@ -126,11 +121,10 @@ impl TaskPageRouter {
     fn create(&self) -> BoxedFilter<(impl Reply,)> {
         warp::post()
             .and(with_auth())
-            .and(with_location(self.wiki_location.clone()))
             .and(warp::body::content_length_limit(MAX_BODY_SIZE))
             .and(warp::body::json())
-            .then(|location: String, new_task: NewTask| async {
-                let response = Runner::create(location, new_task).await;
+            .then(|new_task: NewTask| async {
+                let response = Runner::create(new_task).await;
                 warp::reply::json(&response)
             })
             .boxed()
@@ -139,10 +133,9 @@ impl TaskPageRouter {
     fn delete(&self) -> BoxedFilter<(impl Reply,)> {
         warp::delete()
             .and(with_auth())
-            .and(with_location(self.wiki_location.clone()))
             .and(warp::path!("delete" / usize))
-            .then(|location: String, idx: usize| async move {
-                let response = Runner::delete(location, idx).await;
+            .then(|idx: usize| async move {
+                let response = Runner::delete(idx).await;
                 warp::reply::json(&response)
             })
             .boxed()
@@ -152,15 +145,18 @@ impl TaskPageRouter {
         warp::path!("update" / usize)
             .and(with_auth())
             .and(warp::put())
-            .and(with_location(self.wiki_location.clone()))
             .and(warp::body::content_length_limit(MAX_BODY_SIZE))
             .and(warp::body::json())
-            .then(
-                move |idx: usize, location: String, update: TaskUpdate| async move {
-                    let response = Runner::update(location, idx, update).await;
-                    warp::reply::json(&response)
-                },
-            )
+            .then(move |idx: usize, update: TaskUpdate| async move {
+                let response = Runner::update(idx, update).await;
+                warp::reply::json(&response)
+            })
             .boxed()
+    }
+}
+
+impl Default for TaskPageRouter {
+    fn default() -> Self {
+        Self::new()
     }
 }
