@@ -1,12 +1,13 @@
+pub mod config;
 pub mod utils;
 
 use std::{
-    io,
-    path::{Path, PathBuf, MAIN_SEPARATOR},
+    env, io,
+    path::{Path, PathBuf},
 };
 
 use chrono::{DateTime, FixedOffset, Local};
-use directories::{ProjectDirs, UserDirs};
+use directories::ProjectDirs;
 use markdown::{
     parsers::{parse_meta, NoteMeta, ParsedPages},
     processors::to_template,
@@ -14,11 +15,28 @@ use markdown::{
 use render::{index_page::IndexPage, wiki_page::WikiPage, GlobalBacklinks, Render};
 use tasks::messages::PatchData;
 use tokio::fs::{self, read_to_string};
-use urlencoding::decode;
 
 use thiserror::Error;
 
-use self::utils::get_data_dir_location;
+use crate::fs::{config::read_config, utils::get_file_path};
+
+use self::{
+    config::Config,
+    utils::{get_archive_file_path, get_archive_location},
+};
+
+lazy_static::lazy_static! {
+    static ref CONFIG: Config = read_config();
+    pub(crate) static ref WIKI_LOCATION: PathBuf = {
+        match env::var("TENDRIL_WIKI_DIR") {
+            Ok(val) => PathBuf::from(val),
+            _ => {
+                PathBuf::from(&CONFIG.general.wiki_location)
+            }
+        }
+    };
+    pub(crate) static ref MEDIA_LOCATION: PathBuf = PathBuf::from(&CONFIG.general.media_location);
+}
 
 #[derive(Error, Debug)]
 pub enum WriteWikiError {
@@ -44,29 +62,29 @@ pub enum ReadPageError {
 
 const DT_FORMAT: &str = "%Y%m%d%H%M%S";
 
-pub async fn write_media(file_location: &str, bytes: &[u8]) -> Result<(), io::Error> {
-    fs::write(file_location, bytes).await?;
+pub async fn write_media(filename: &str, bytes: &[u8]) -> Result<(), io::Error> {
+    let mut file_path = MEDIA_LOCATION.clone();
+    file_path.push(filename);
+    fs::write(file_path, bytes).await?;
     Ok(())
 }
 
-pub async fn write(wiki_location: &str, data: &PatchData) -> Result<(), WriteWikiError> {
-    let mut file_location = String::from(wiki_location);
-    let mut title_location = if data.old_title != data.title && !data.old_title.is_empty() {
+pub async fn write(data: &PatchData) -> Result<(), WriteWikiError> {
+    let current_title_on_disk = if data.old_title != data.title && !data.old_title.is_empty() {
         data.old_title.clone()
     } else {
         // wiki entires are stored by title + .md file ending
         data.title.clone()
     };
-    title_location.push_str(".md");
-    file_location.push_str(&title_location);
+    let file_path = get_file_path(&current_title_on_disk).unwrap();
     let mut note_meta = NoteMeta::from(data);
     let now = Local::now().format(DT_FORMAT).to_string();
     // In the case that we're creating a new file
-    if !PathBuf::from(&file_location).exists() {
+    if !file_path.exists() {
         note_meta.metadata.insert("created".into(), now.clone());
         note_meta.metadata.insert("id".into(), now);
         let note: String = note_meta.into();
-        return match fs::write(file_location, note).await {
+        return match fs::write(file_path, note).await {
             Ok(()) => Ok(()),
             Err(e) => {
                 eprintln!("Create new file err: {}", e);
@@ -95,9 +113,13 @@ pub async fn write(wiki_location: &str, data: &PatchData) -> Result<(), WriteWik
 
     let final_note: String = note_meta.into();
     if data.old_title != data.title && !data.old_title.is_empty() {
-        let new_location = file_location.replace(&data.old_title, &data.title);
+        let new_location = PathBuf::from(format!(
+            "{}{}",
+            WIKI_LOCATION.to_str().unwrap(),
+            data.old_title
+        ));
         // Rename the file to the new title
-        match fs::rename(&file_location, &new_location).await {
+        match fs::rename(&file_path, &new_location).await {
             Ok(()) => match fs::write(new_location, final_note).await {
                 Ok(()) => Ok(()),
                 Err(e) => {
@@ -108,66 +130,39 @@ pub async fn write(wiki_location: &str, data: &PatchData) -> Result<(), WriteWik
             Err(e) => Err(WriteWikiError::WriteError(e)),
         }
     } else {
-        match fs::write(file_location, final_note).await {
+        match fs::write(file_path, final_note).await {
             Ok(()) => Ok(()),
             Err(e) => Err(WriteWikiError::WriteError(e)),
         }
     }
 }
 
-pub async fn delete(wiki_location: &str, requested_file: &str) -> Result<(), io::Error> {
-    let mut file_location = String::from(wiki_location);
-    if let Ok(mut file) = decode(requested_file) {
-        file.to_mut().push_str(".md");
-        file_location.push_str(&file);
-        let file_path = PathBuf::from(file_location);
-        if !file_path.exists() {
-            return Err(io::Error::new(
-                io::ErrorKind::NotFound,
-                "Could not find requested file",
-            ));
-        }
-        fs::remove_file(file_path).await?;
-        Ok(())
-    } else {
-        Err(std::io::Error::new(
-            io::ErrorKind::InvalidInput,
-            "Could not decode file name",
-        ))
+pub async fn delete(requested_file: &str) -> Result<(), io::Error> {
+    let file_path = get_file_path(requested_file).unwrap();
+    if !file_path.exists() {
+        return Err(io::Error::new(
+            io::ErrorKind::NotFound,
+            "Could not find requested file",
+        ));
     }
+    fs::remove_file(file_path).await?;
+    Ok(())
 }
 
 pub async fn read(
-    wiki_location: &str,
     requested_file: String,
     backlinks: GlobalBacklinks,
 ) -> Result<String, ReadPageError> {
-    let file_path = get_file_path(wiki_location, &requested_file)?;
-    if let Ok(note) = path_to_data_structure(&file_path).await {
-        let templatted = to_template(&note);
-        let link_vals = backlinks.lock().await;
-        let links = link_vals.get(&templatted.page.title);
-        let output = WikiPage::new(&templatted.page, links).render().await;
-        Ok(output)
-    } else {
-        Err(ReadPageError::DeserializationError)
-    }
-}
-
-/// Returns the PathBuf if an entry exists, returns an error if the file isn't found or it couldn't
-/// parse the location.
-pub fn get_file_path(wiki_location: &str, requested_file: &str) -> Result<PathBuf, ReadPageError> {
-    let mut file_location = String::from(wiki_location);
-    if let Ok(mut file) = decode(requested_file) {
-        file.to_mut().push_str(".md");
-        file_location.push_str(&file);
-        let file_path = PathBuf::from(file_location);
-        if !file_path.exists() {
-            return Err(ReadPageError::PageNotFoundError);
+    let file_path = get_file_path(&requested_file)?;
+    match path_to_data_structure(&file_path).await {
+        Ok(note) => {
+            let templatted = to_template(&note);
+            let link_vals = backlinks.lock().await;
+            let links = link_vals.get(&templatted.page.title);
+            let output = WikiPage::new(&templatted.page, links).render().await;
+            Ok(output)
         }
-        Ok(file_path)
-    } else {
-        Err(ReadPageError::DecodeError)
+        Err(e) => Err(e),
     }
 }
 
@@ -201,7 +196,7 @@ pub async fn read_note_cache() -> String {
     let project_dir = ProjectDirs::from("", "", "tendril").unwrap();
     let mut data_dir = project_dir.data_dir().to_owned();
     data_dir.push("note_cache");
-    fs::read_to_string(&data_dir).await.unwrap()
+    read_to_string(&data_dir).await.unwrap()
 }
 
 pub async fn write_note_cache(cache: String) {
@@ -211,58 +206,15 @@ pub async fn write_note_cache(cache: String) {
     fs::write(data_dir, cache).await.unwrap();
 }
 
-pub fn parse_location(location: &str) -> PathBuf {
-    let mut loc: String;
-    if location.contains('~') {
-        if let Some(dirs) = UserDirs::new() {
-            let home_dir: String = dirs.home_dir().to_string_lossy().into();
-            loc = location.replace('~', &home_dir);
-        } else {
-            loc = location.replace('~', &std::env::var("HOME").unwrap());
-        }
-    } else {
-        loc = location.to_owned();
-    }
-    if !loc.ends_with(MAIN_SEPARATOR) {
-        loc.push(MAIN_SEPARATOR)
-    }
-    PathBuf::from(loc)
-}
-
-pub fn normalize_wiki_location(wiki_location: &str) -> String {
-    let location = parse_location(wiki_location);
-    // Stop the process if the wiki location doesn't exist
-    if !PathBuf::from(&location).exists() {
-        panic!("Could not find directory at location: {:?}", location);
-    }
-    location.to_string_lossy().into()
-}
-
-// TODO: this is really dependent on file system ops, won't be good if we change the storage
-// backend.
-pub async fn path_to_string<P: AsRef<Path> + ?Sized>(path: &P) -> Result<String, std::io::Error> {
-    read_to_string(&path).await
-}
-
-pub async fn path_to_data_structure(
-    path: &Path,
-) -> Result<NoteMeta, Box<dyn std::error::Error + Send + Sync>> {
-    let reader = path_to_string(path).await?;
-    let meta = parse_meta(reader.lines(), path.to_str().unwrap());
-    Ok(meta)
-}
-
-pub async fn create_journal_entry(
-    location: &str,
-    entry: String,
-) -> Result<PatchData, std::io::Error> {
+pub async fn create_journal_entry(entry: String) -> Result<PatchData, std::io::Error> {
     let now = Local::now();
     let daily_file = now.format("%Y-%m-%d").to_string();
-    if let Ok(exists) = get_file_path(location, &daily_file) {
-        let mut entry_file = fs::read_to_string(exists.clone()).await.unwrap();
+    let path = get_file_path(&daily_file).unwrap();
+    if path.exists() {
+        let mut entry_file = read_to_string(&path).await.unwrap();
         entry_file.push_str(&format!("\n\n[{}] {}", now.format("%H:%M"), entry));
         println!("\x1b[38;5;47mdaily journal updated\x1b[0m");
-        fs::write(exists, &entry_file).await?;
+        fs::write(path, &entry_file).await?;
         Ok(NoteMeta::from(entry_file).into())
     } else {
         let docstring = format!(
@@ -280,22 +232,14 @@ created: {:?}
             entry
         );
         println!("\x1b[38;5;47mdaily journal updated\x1b[0m");
-        fs::write(format!("{}{}.md", location, daily_file), docstring).await?;
+        fs::write(get_file_path(&daily_file).unwrap(), docstring).await?;
         Ok(NoteMeta::from(daily_file).into())
     }
 }
 
 pub async fn write_archive(compressed: Vec<u8>, title: &str) {
-    let project_dir = ProjectDirs::from("", "", "tendril").unwrap();
-    let mut dir_path = project_dir.data_dir().to_owned();
-    dir_path.push("archive");
-    dir_path.push(title);
-    fs::write(dir_path, compressed).await.unwrap();
-}
-
-pub fn get_archive_location() -> PathBuf {
-    let stored_location = get_data_dir_location();
-    stored_location.join("archive")
+    let location = get_archive_file_path(title);
+    fs::write(location, compressed).await.unwrap();
 }
 
 pub async fn move_archive(old_title: String, new_title: String) {
@@ -305,9 +249,32 @@ pub async fn move_archive(old_title: String, new_title: String) {
     fs::rename(old_location, new_location).await.unwrap();
 }
 
+// TODO: this is really dependent on file system ops, won't be good if we change the storage
+// backend.
+pub async fn path_to_string<P: AsRef<Path> + ?Sized>(path: &P) -> Result<String, std::io::Error> {
+    read_to_string(&path).await
+}
+
+pub async fn path_to_data_structure(path: &Path) -> Result<NoteMeta, ReadPageError> {
+    match path_to_string(path).await {
+        Ok(reader) => {
+            let meta = parse_meta(reader.lines(), path.to_str().unwrap());
+            Ok(meta)
+        }
+        Err(e) => match e.kind() {
+            io::ErrorKind::NotFound => Err(ReadPageError::PageNotFoundError),
+            e => {
+                println!("___ {:?}", e);
+                Err(ReadPageError::DeserializationError)
+            }
+        },
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::fs::utils::parse_location;
+
     use std::{env, path::PathBuf};
 
     #[test]

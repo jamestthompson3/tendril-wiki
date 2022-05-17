@@ -1,7 +1,7 @@
 use chrono::prelude::*;
 use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
 
-use build::read_config;
+use persistance::fs::config::read_config;
 use tasks::verify_password;
 
 use crate::handlers::filters::{AuthError, Claims};

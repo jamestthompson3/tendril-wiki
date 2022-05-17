@@ -6,11 +6,14 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-tasks = { path = "../tasks" }
-tokio = { version = "1.17.0", features = ["fs"] }
-markdown = { path = "../markdown" }
-render = { path = "../render" }
-urlencoding = "2.1.0"
-thiserror = "1.0.30"
 chrono = "0.4.19"
 directories = "4.0.1"
+lazy_static = "1.4.0"
+markdown = { path = "../markdown" }
+render = { path = "../render" }
+serde = "1.0.136"
+serde_derive = "1.0.136"
+tasks = { path = "../tasks" }
+thiserror = "1.0.30"
+tokio = { version = "1.17.0", features = ["fs"] }
+toml = "0.5.8"

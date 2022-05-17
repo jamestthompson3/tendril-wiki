@@ -15,9 +15,9 @@ use super::filters::{with_auth, with_user};
 struct Runner {}
 
 impl Runner {
-    pub async fn list_files(wiki_location: String) -> String {
+    pub async fn list_files(media_location: String) -> String {
         let mut entry_list = Vec::new();
-        let mut entries = read_dir(wiki_location).await.unwrap();
+        let mut entries = read_dir(media_location).await.unwrap();
         while let Ok(entry) = entries.next_entry().await {
             let entry = entry.unwrap();
             entry_list.push(entry.file_name().into_string().unwrap());

@@ -1,7 +1,8 @@
-use build::{build_tags_and_links, config::read_config, install, pages::Builder, update, RefHub};
+use build::{build_tags_and_links, install, pages::Builder, update, RefHub};
 use persistance::fs::{
-    create_journal_entry, normalize_wiki_location,
-    utils::{get_config_location, get_data_dir_location},
+    config::read_config,
+    create_journal_entry,
+    utils::{get_config_location, get_data_dir_location, normalize_wiki_location},
 };
 use search_engine::build_search_index;
 use std::{path::PathBuf, process::exit, sync::Arc, time::Instant};
@@ -35,9 +36,7 @@ async fn main() {
                 if !arg.is_empty() {
                     let config = read_config();
                     let location = normalize_wiki_location(&config.general.wiki_location);
-                    create_journal_entry(&location, args.join(" "))
-                        .await
-                        .unwrap();
+                    create_journal_entry(args.join(" ")).await.unwrap();
                     if config.sync.use_git {
                         git_update(&location, config.sync.branch);
                     }

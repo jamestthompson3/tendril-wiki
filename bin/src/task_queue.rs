@@ -9,7 +9,11 @@ use build::{
     update_mru_cache,
 };
 use futures::{stream, StreamExt};
-use persistance::fs::{get_file_path, move_archive, path_to_data_structure, write, write_archive};
+use persistance::fs::{
+    move_archive, path_to_data_structure,
+    utils::{archive_file_exists, get_file_path},
+    write, write_archive,
+};
 use regex::Regex;
 use search_engine::{
     delete_archived_file, delete_entry_from_update, patch_search_from_archive,
@@ -54,22 +58,17 @@ pub async fn process_tasks(
                         patch_search_from_update(&note).await;
 
                         if !patch.old_title.is_empty() && patch.old_title != patch.title {
-                            rename_in_global_store(
-                                &patch.title,
-                                &patch.old_title,
-                                &location,
-                                links.clone(),
-                            )
-                            .await;
+                            rename_in_global_store(&patch.title, &patch.old_title, links.clone())
+                                .await;
                         }
                         update_mru_cache(&patch.old_title, &patch.title).await;
                     }
                     Message::Delete { title } => {
-                        let path = get_file_path(&location, &title).unwrap_or_else(|_| {
+                        let path = get_file_path(&title).unwrap_or_else(|_| {
                             panic!("Failed to find file for deletion: {}", title)
                         });
                         let note = path_to_data_structure(&path).await.unwrap();
-                        persistance::fs::delete(&location, &title).await.unwrap();
+                        persistance::fs::delete(&title).await.unwrap();
                         delete_from_global_store(&title, &note, links.clone()).await;
                         delete_entry_from_update(&title).await;
                         delete_archived_file(&title).await;
@@ -77,8 +76,10 @@ pub async fn process_tasks(
                     Message::Archive { url, title } => {
                         let product = tokio::task::spawn_blocking(|| extract(url)).await.unwrap();
                         let compressed = compress(&product.text);
-                        write_archive(compressed, &title).await;
-                        patch_search_from_archive((title, product.text)).await;
+                        if !archive_file_exists(&title) {
+                            write_archive(compressed, &title).await;
+                            patch_search_from_archive((title, product.text)).await;
+                        }
                     }
                     Message::ArchiveMove {
                         old_title,
@@ -103,8 +104,16 @@ pub async fn process_tasks(
                             old_title: String::with_capacity(0),
                             metadata,
                         };
-                        write(&location, &patch).await.unwrap();
+                        write(&patch).await.unwrap();
+                        let note = patch.clone().into();
+                        update_global_store(&patch.title, &note, links.clone()).await;
+                        patch_search_from_update(&note).await;
                         update_mru_cache(&patch.old_title, &patch.title).await;
+                    }
+                    Message::ArchiveBody { title, body } => {
+                        let compressed = compress(&body);
+                        write_archive(compressed, &title).await;
+                        patch_search_from_archive((title.clone(), body)).await;
                     }
                 }
             })

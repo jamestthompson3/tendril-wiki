@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
-use build::read_config;
 use jsonwebtoken::{Algorithm, DecodingKey, Validation};
+use persistance::fs::config::read_config;
 use render::GlobalBacklinks;
 use serde::{Deserialize, Serialize};
 use tasks::JobQueue;

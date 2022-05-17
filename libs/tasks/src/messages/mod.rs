@@ -79,5 +79,9 @@ pub enum Message {
     NewFromUrl {
         url: String,
         tags: Vec<String>
+    },
+    ArchiveBody {
+        title: String,
+        body: String
     }
 }
