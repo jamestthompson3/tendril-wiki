@@ -110,6 +110,9 @@
       case "u":
         jump("upload");
         break;
+      case "b":
+        jump("new_bookmark");
+        break;
       default:
         break;
     }

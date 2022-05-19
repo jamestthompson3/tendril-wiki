@@ -1,13 +1,25 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, time::Duration};
 
+use persistance::fs::write;
+use regex::Regex;
 use render::{bookmark_page::BookmarkAddPage, Render};
-use tasks::{messages::Message, Queue};
+use tasks::{
+    archive::extract,
+    messages::{Message, PatchData},
+    Queue,
+};
+use tokio::time::timeout;
+use urlencoding::encode;
 use warp::{filters::BoxedFilter, hyper::Uri, Filter, Reply};
 
 use super::{
     filters::{with_auth, with_queue},
     QueueHandle, MAX_BODY_SIZE,
 };
+
+lazy_static! {
+    static ref TITLE_RGX: Regex = Regex::new(r"\?|\\|/|\||:|;|>|<|,|\.").unwrap();
+}
 
 pub struct BookmarkPageRouter {
     queue: QueueHandle,
@@ -21,6 +33,23 @@ impl Runner {
         ctx.render().await
     }
 
+    async fn new_from_url(url: String, tags: Vec<String>) -> (String, PatchData) {
+        let mut metadata = HashMap::new();
+        metadata.insert(String::from("url"), url.clone());
+        let product = tokio::task::spawn_blocking(move || extract(url))
+            .await
+            .unwrap();
+        let title = TITLE_RGX.replace(&product.title, "").to_string();
+        let patch = PatchData {
+            body: String::with_capacity(0),
+            tags,
+            title,
+            old_title: String::with_capacity(0),
+            metadata,
+        };
+        (product.text, patch)
+    }
+
     async fn create(form_body: HashMap<String, String>, queue: QueueHandle) -> Uri {
         let url = form_body.get("url").unwrap();
         let mut tags = form_body
@@ -30,14 +59,48 @@ impl Runner {
             .map(|s| s.to_owned())
             .collect::<Vec<String>>();
         tags.push(String::from("bookmark"));
-        queue
-            .push(Message::NewFromUrl {
-                url: url.to_string(),
-                tags,
-            })
-            .await
-            .unwrap();
-        let redir_uri = "/";
+        if let Ok((archive_body, patch)) = timeout(
+            Duration::from_millis(2000),
+            Runner::new_from_url(url.clone(), tags.clone()),
+        )
+        .await
+        {
+            match write(&patch).await {
+                Ok(()) => {
+                    queue
+                        .push(Message::Patch {
+                            patch: patch.clone(),
+                        })
+                        .await
+                        .unwrap();
+
+                    queue
+                        .push(Message::ArchiveBody {
+                            title: patch.title.clone(),
+                            body: archive_body,
+                        })
+                        .await
+                        .unwrap();
+                    let encoded_title = encode(&patch.title);
+                    let redirect_url = &format!("/{}", encoded_title);
+
+                    return redirect_url.parse::<Uri>().unwrap();
+                }
+                Err(e) => {
+                    eprintln!("  {}\n", e);
+                    return Uri::from_static("/error");
+                }
+            }
+        } else {
+            queue
+                .push(Message::NewFromUrl {
+                    url: url.to_string(),
+                    tags,
+                })
+                .await
+                .unwrap();
+        }
+        let redir_uri = "/bookmark";
         redir_uri.parse::<Uri>().unwrap()
     }
 }
