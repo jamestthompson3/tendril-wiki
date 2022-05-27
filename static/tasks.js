@@ -7,18 +7,19 @@
   // Event Listeners
   // =======================================================================================
   const headerRowSelector = "thead > tr >";
+  const taskRows = document.querySelectorAll(".task-list li");
   // const bodyRowSelector = "tbody tr >";
-  const statusHeader = document.querySelector(
-    `${headerRowSelector} th:nth-child(2)`
-  );
+  // const statusHeader = document.querySelector(
+  //   `${headerRowSelector} th:nth-child(2)`
+  // );
   const form = document.querySelector(".task-header form");
   form.addEventListener("submit", addTask);
-  statusHeader.addEventListener("click", sortBy(status));
-  const prioHeader = document.querySelector(
-    `${headerRowSelector} th:nth-child(3)`
-  );
-  prioHeader.addEventListener("click", sortBy(priority));
-  for (const row of document.querySelectorAll("tbody tr")) {
+  // statusHeader.addEventListener("click", sortBy(status));
+  // const prioHeader = document.querySelector(
+  //   `${headerRowSelector} th:nth-child(3)`
+  // );
+  // prioHeader.addEventListener("click", sortBy(priority));
+  for (const row of taskRows) {
     setupRowEventHandlers(row);
   }
 
@@ -73,8 +74,8 @@
   }
   function editCell(e) {
     if (e.target.tagName === "A") return;
-    const input = this.querySelector("input");
-    const display = this.querySelector("span");
+    const input = this.parentNode.querySelector("input");
+    const display = this;
     input.classList.remove("hidden");
     display.classList.add("hidden");
     if (document.activeElement !== input) {
@@ -90,7 +91,8 @@
   }
 
   async function deleteTask() {
-    const dataIdx = this.parentNode.getAttribute("data-idx");
+    const containerNode = this.parentNode.parentNode;
+    const dataIdx = containerNode.getAttribute("data-idx");
     if (!dataIdx) {
       throw new Error("All cells should render with a data index.");
     }
@@ -101,7 +103,7 @@
       });
       const response = await request.json();
 
-      for (const remainingRow of document.querySelectorAll("tbody tr")) {
+      for (const remainingRow of taskRows) {
         const idx = parseInt(remainingRow.getAttribute("data-idx"));
         if (idx === response) {
           remainingRow.parentNode.removeChild(remainingRow);
@@ -121,9 +123,10 @@
       target: { value },
     } = e;
     const display = this.parentNode.querySelector("span");
+    const containerNode = this.parentNode.parentNode.parentNode;
     if (value === display.innerText) return;
     if (alphaPattern.test(value)) {
-      const dataIdx = this.parentNode.parentNode.getAttribute("data-idx");
+      const dataIdx = containerNode.getAttribute("data-idx");
       if (!dataIdx) {
         throw new Error("All cells should render with a data index.");
       }
@@ -146,11 +149,12 @@
   }
 
   async function changeContent(e) {
+    const containerNode = this.parentNode.parentNode.parentNode;
     const {
       target: { value },
     } = e;
     const display = this.parentNode.querySelector("span");
-    const dataIdx = this.parentNode.parentNode.getAttribute("data-idx");
+    const dataIdx = containerNode.getAttribute("data-idx");
     if (!dataIdx) {
       throw new Error("All cells should render with a data index.");
     }
@@ -196,12 +200,13 @@
   }
 
   async function updateCellStatus() {
-    const dataIdx = this.parentNode.getAttribute("data-idx");
+    const containerNode = this.parentNode.parentNode;
+    const dataIdx = containerNode.getAttribute("data-idx");
     if (!dataIdx) {
       throw new Error("All cells should render with a data index.");
     }
-    const checkedStatus = this.getAttribute("aria-checked");
-    const data = getStatusPayload(checkedStatus);
+    const checked = this.checked;
+    const data = getStatusPayload(checked);
 
     try {
       const response = await updateTask({
@@ -209,17 +214,21 @@
         data,
       });
       const text = await response.json();
-      this.innerHTML = text;
-      checkedStatus === "true"
-        ? this.setAttribute("aria-checked", "false")
-        : this.setAttribute("aria-checked", "true");
+      const taskMeta = containerNode.querySelector(".task-meta");
+      const statusNode = taskMeta.querySelector(".status");
+      if (checked === false) {
+        this.setAttribute("aria-checked", "false");
+      } else {
+        this.setAttribute("aria-checked", "true");
+      }
+      statusNode.innerHTML = text;
     } catch (e) {
       console.error(e);
     }
   }
 
   function getStatusPayload(checkedStatus) {
-    if (checkedStatus === "true") {
+    if (checkedStatus === false) {
       return { completed: { done: false, date: undefined } };
     } else {
       return {
@@ -344,25 +353,25 @@
   }
 
   function setupRowEventHandlers(row) {
-    const deleteCell = row.querySelector("td:first-child");
+    const deleteCell = row.querySelector("#delete");
     deleteCell.addEventListener("click", deleteTask);
-    const statusCell = row.querySelector("td:nth-child(2)");
-    statusCell.addEventListener("click", updateCellStatus);
-    const prioCell = row.querySelector("td:nth-child(3)");
+    const statusCell = row.querySelector("input[type=checkbox]");
+    statusCell.addEventListener("change", updateCellStatus);
+    const prioCell = row.querySelector("div span:nth-of-type(2)");
     prioCell.addEventListener("click", editCell);
-    const contentCell = row.querySelector("td:nth-child(5)");
+    const contentCell = row.querySelector(".edit-text-button");
     contentCell.addEventListener("click", editCell);
-    const metadataCell = row.querySelector("td:nth-child(6)");
-    metadataCell.addEventListener("click", editCell);
+    // const metadataCell = row.querySelector("td:nth-child(6)");
+    // metadataCell.addEventListener("click", editCell);
 
-    const priorityInputCell = row.querySelector("td:nth-child(3) > input");
+    const priorityInputCell = prioCell.parentNode.querySelector("input");
     priorityInputCell.addEventListener("blur", blurCell);
     priorityInputCell.addEventListener("change", changePriority);
-    const contentInputCell = row.querySelector("td:nth-child(5) > input");
+    const contentInputCell = contentCell.parentNode.querySelector("input");
     contentInputCell.addEventListener("blur", blurCell);
     contentInputCell.addEventListener("change", changeContent);
-    const metadataInputCell = row.querySelector("td:nth-child(6) > input");
-    metadataInputCell.addEventListener("blur", blurCell);
-    metadataInputCell.addEventListener("change", changeMetadata);
+    // const metadataInputCell = row.querySelector("td:nth-child(6) > input");
+    // metadataInputCell.addEventListener("blur", blurCell);
+    // metadataInputCell.addEventListener("change", changeMetadata);
   }
 })();

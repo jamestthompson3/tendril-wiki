@@ -48,7 +48,7 @@ pub async fn server(config: General, parts: RefHubParts) {
                 .recover(handle_rejection),
         )
         .with(log);
-    let port: u16 = config.port;
+    let port: u16 = config.port + 22;
     println!("┌──────────────────────────────────────────────┐");
     println!("│Starting web backend @ http://127.0.0.1:{}  │", port);
     println!("└──────────────────────────────────────────────┘");

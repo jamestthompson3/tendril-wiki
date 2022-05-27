@@ -6,9 +6,8 @@
 }
 .priority {
   font-weight: bold;
-  background-color: var(--bg-darker);
   padding: 0.15rem;
-  border-radius: var(--rad);
+  color: var(--accent);
 }
 [aria-sort="ascending"]::after {
   content: " Δ";
@@ -23,6 +22,9 @@
   display: flex;
   flex-wrap: wrap;
 }
+.task-list li {
+  margin: 1rem 0rem;
+}
 .task-body {
   align-items: center;
   margin: 0.25rem 0rem;
@@ -32,12 +34,14 @@
   font-size: 1.15rem;
 }
 .task-body input {
+  background-color: var(--bg-darker);
+  border-radius: var(--rad);
+}
+.task-body input[type="checkbox"] {
   width: 25px;
   height: 25px;
   margin: 0px;
   cursor: pointer;
-  background-color: var(--bg-darker);
-  border-radius: var(--rad);
   appearance: none;
   margin-right: 10px;
   margin-bottom: 5px;
@@ -56,9 +60,9 @@
 .task-body input:checked ~ label {
   text-decoration: line-through;
 }
-.task-meta span:first-child {
+.task-meta span {
   font-size: small;
-  font-style: italic;
+  margin-right: 5px;
 }
 
 [aria-sort="descending"]::after {
@@ -68,11 +72,26 @@
 
 .edit-text-input {
   border: none;
-  background-color: transparent;
   color: var(--text-color);
-  height: 3rem;
   font-size: 16px;
-  width: 100%;
+  padding: 0.25rem;
+}
+.edit-text-button {
+  min-width: 1rem;
+  min-height: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 5px;
+}
+.edit-text-button.hidden {
+  display: none;
+}
+#priority-input {
+  width: 1.25rem;
+  height: 1.25rem;
+  text-transform: uppercase;
 }
 .priority .edit-text-input {
   font-size: 1rem;
@@ -85,14 +104,16 @@
   border: none;
 }
 
-.task-metadata {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: center;
+#delete::before {
+  content: "🗑️";
+  cursor: pointer;
 }
 
-.task-metadata.hidden {
+.task-meta {
+  align-items: center;
+}
+
+.task-meta.hidden {
   display: none;
 }
 .task-header {

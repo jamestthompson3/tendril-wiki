@@ -96,10 +96,10 @@ impl Task {
             .created
             .to_owned()
             .unwrap_or_else(|| String::with_capacity(0));
-        let formatted_priority = if priority.is_empty() {
-            priority.clone()
+        let created = if created.is_empty() {
+            created
         } else {
-            format!("<span class=\"edit-text-button priority\">{}</span>", priority)
+            format!("<span title=\"created on {}\">{}<span>", created, created)
         };
         let metadata = self.format_metadata();
         let body = self.format_body_context(self.format_body());
@@ -114,16 +114,21 @@ impl Task {
             r#"
 <li role="row" {}>
     <div class="task-body">
-        <input type="checkbox" {}>
-        <label>
-          <span class="edit-text-button">{}</span><input type="text" class="edit-text-input hidden" value="{}" />
-          {}<input maxlength="1" type="text" class="edit-text-input hidden" value="{}" />
-        </label>
+          <input id="status" type="checkbox" {}>
+          <span>
+            <span class="edit-text-button">{}</span>
+            <input type="text" class="edit-text-input hidden" value="{}" />
+          </span>
+        <span>
+            <span class="edit-text-button priority">{}</span>
+            <input maxlength="1" type="text" class="edit-text-input hidden" value="{}" />
+        </span>
     </div>
     <div class="task-meta">
-        <span>{}</span>
+    <span id="delete" aria-label="delete-task" title="delete task"></span>
+        {}
         <span class="task-metadata edit-text-button">{}</span><input type="text" class="edit-text-input hidden" value="{}" />
-        <span aria-label="delete-task" title="delete task"></span>
+        <span class="status">{}</span>
     </div>
 </li>
 "#,
@@ -131,7 +136,7 @@ impl Task {
             checked,
             body,
             self.format_body(),
-            formatted_priority,
+            priority,
             priority,
             created,
             metadata,
@@ -142,6 +147,7 @@ impl Task {
                     formatted_str.push_str(&ctx_string);
                     formatted_str
                 }),
+            self.format_status()
         );
         html.push_str(&table_html);
         html
@@ -251,10 +257,11 @@ impl Task {
             UpdateType::Content(text) => {
                 self.project = parse_project(&text);
                 let completed = if self.completed.0 { "x" } else { "" };
-                let priority = format!(
-                    "({})",
-                    self.priority.as_ref().unwrap_or(&String::with_capacity(0))
-                );
+                let priority = if self.priority.as_ref().is_some() {
+                    format!("({})", self.priority.as_ref().unwrap())
+                } else {
+                    String::with_capacity(0)
+                };
                 self.body = format!(
                     "{} {} {} {}",
                     completed,
