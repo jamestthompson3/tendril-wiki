@@ -18,7 +18,7 @@ use tokio::fs::{self, read_to_string};
 
 use thiserror::Error;
 
-use crate::fs::{config::read_config, utils::get_file_path};
+use crate::fs::{config::read_config, utils::{get_file_path, normalize_wiki_location}};
 
 use self::{
     config::Config,
@@ -31,7 +31,7 @@ lazy_static::lazy_static! {
         match env::var("TENDRIL_WIKI_DIR") {
             Ok(val) => PathBuf::from(val),
             _ => {
-                PathBuf::from(&CONFIG.general.wiki_location)
+                PathBuf::from(&normalize_wiki_location(&CONFIG.general.wiki_location))
             }
         }
     };
