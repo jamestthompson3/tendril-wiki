@@ -40,7 +40,18 @@
     }
   }
 
+  function populateSearch() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has("term")) {
+      const searchElement = document.getElementById("term");
+      if (searchElement) {
+        searchElement.value = params.get("term");
+      }
+    }
+  }
+
   replaceOGMeta();
+  populateSearch();
 
   function edit() {
     const editElement = document.getElementById("edit");

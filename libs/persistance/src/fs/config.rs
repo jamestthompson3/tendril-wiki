@@ -19,6 +19,7 @@ pub struct General {
     pub pass: String,
     pub version: String,
     pub media_location: String,
+    pub host: String,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]

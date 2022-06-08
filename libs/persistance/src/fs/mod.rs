@@ -185,8 +185,8 @@ pub async fn write_entries(pages: &ParsedPages, backlinks: &GlobalBacklinks) {
     }
 }
 
-pub async fn write_index_page(user: String) {
-    let ctx = IndexPage { user };
+pub async fn write_index_page(user: String, host: String) {
+    let ctx = IndexPage { user, host };
     fs::write("public/index.html", ctx.render().await)
         .await
         .unwrap();

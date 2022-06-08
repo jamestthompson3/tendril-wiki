@@ -45,7 +45,8 @@ impl Builder {
         let pages = Arc::clone(&self.pages);
         write_entries(&pages, &self.backlinks).await;
         write_backlinks(links).await;
-        write_index_page(read_config().general.user).await;
+        let config_general = read_config().general;
+        write_index_page(config_general.user, config_general.host).await;
         let mut config_dir = get_config_location().0;
         config_dir.push("userstyles.css");
         fs::create_dir("public/static").unwrap();

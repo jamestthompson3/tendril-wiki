@@ -63,10 +63,9 @@ impl Runner {
         write_media(&filename, bytes.as_ref()).await
     }
 
-    pub async fn note_search(form_body: HashMap<String, String>) -> String {
-        let term = form_body.get("term").unwrap();
+    pub async fn note_search(term: String) -> String {
         let now = Instant::now();
-        let found_pages = semantic_search(term).await;
+        let found_pages = semantic_search(&term).await;
         println!(
             "Search Time [{:?}]  Search Results [{}]",
             now.elapsed(),
@@ -95,6 +94,7 @@ impl APIRouter {
             .or(self.styles())
             .or(self.img())
             .or(self.files())
+            .or(self.search_from_qs())
             .or(self.search())
             .or(self.search_indicies())
     }
@@ -103,8 +103,9 @@ impl APIRouter {
             warp::path("search").and(
                 warp::body::content_length_limit(MAX_BODY_SIZE)
                     .and(warp::body::form())
-                    .then(|form_body| async {
-                        let results_page = Runner::note_search(form_body).await;
+                    .then(|form_body: HashMap<String, String>| async move {
+                        let term = form_body.get("term").unwrap();
+                        let results_page = Runner::note_search(term.clone()).await;
                         warp::reply::html(results_page)
                     }),
             ),
@@ -203,6 +204,17 @@ impl APIRouter {
                 )
                 .body("ok"))
         })
+    }
+    fn search_from_qs(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+        warp::path("search")
+            .and(warp::get())
+            .and(with_auth())
+            .and(warp::query::<HashMap<String, String>>())
+            .then(|query_params: HashMap<String, String>| async move {
+                let term = query_params.get("term").unwrap();
+                let results_page = Runner::note_search(term.clone()).await;
+                warp::reply::html(results_page)
+            })
     }
     fn styles(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
         warp::path("styles").and(warp::post().and(with_auth()).and(

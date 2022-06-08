@@ -4,11 +4,12 @@ use directories::ProjectDirs;
 
 pub struct IndexPage {
     pub user: String,
+    pub host: String,
 }
 
 impl IndexPage {
-    pub fn new(user: String) -> Self {
-        IndexPage { user }
+    pub fn new(user: String, host: String) -> Self {
+        IndexPage { user, host }
     }
     fn render_mru(&self, recent: String) -> String {
         recent
@@ -31,6 +32,7 @@ impl Render for IndexPage {
         let mut ctx = get_template_file("index").await.unwrap();
         ctx = ctx.replace("<%= user %>", &self.user);
         ctx = ctx.replace("<%= today %>", &now.format("%Y-%m-%d").to_string());
+        ctx = ctx.replace("<%= host %>", &self.host);
         ctx = ctx.replace(
             "<%= mru %>",
             &self.render_mru(recent.expect("Could not read cache file")),
