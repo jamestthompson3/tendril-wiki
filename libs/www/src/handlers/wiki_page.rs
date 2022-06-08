@@ -172,10 +172,13 @@ impl Runner {
 }
 
 pub struct WikiPageRouter {
-    pub parts: RefHubParts,
+    parts: RefHubParts,
 }
 
 impl WikiPageRouter {
+    pub fn new(parts: RefHubParts) -> Self {
+        Self { parts }
+    }
     pub fn routes(&self) -> BoxedFilter<(impl Reply,)> {
         self.get_nested()
             .or(self.delete())

@@ -24,15 +24,11 @@ pub async fn server(config: General, parts: RefHubParts) {
         media_location.clone(),
         Arc::new(config.host),
     );
-    let wiki_router = WikiPageRouter {
-        parts: parts.clone(),
-    };
+    let wiki_router = WikiPageRouter::new(parts.clone());
 
     let task_router = TaskPageRouter::new();
-    let static_files_router = StaticFileRouter {
-        media_location: media_location.clone(),
-    };
-    let api_router = APIRouter { media_location };
+    let static_files_router = StaticFileRouter::new(media_location.clone());
+    let api_router = APIRouter::new();
     let bookmark_router = bookmarks_page::BookmarkPageRouter::new(parts.1.clone());
     pretty_env_logger::init();
     // Order matters!!

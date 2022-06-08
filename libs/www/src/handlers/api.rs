@@ -2,7 +2,7 @@ use bytes::{BufMut, Bytes};
 use futures::TryStreamExt;
 use render::{search_results_page::SearchResultsPage, Render};
 use search_engine::{semantic_search, Indicies};
-use std::{collections::HashMap, io, sync::Arc, time::Instant};
+use std::{collections::HashMap, io, time::Instant};
 use thiserror::Error;
 
 use persistance::fs::{utils::get_config_location, write_media};
@@ -21,7 +21,6 @@ use super::{
 };
 
 pub struct APIRouter {
-    pub media_location: Arc<String>,
 }
 
 struct Runner {}
@@ -88,6 +87,9 @@ impl Runner {
 }
 
 impl APIRouter {
+    pub fn new() -> Self {
+        Self { }
+    }
     pub fn routes(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
         self.login()
             .or(self.logout())

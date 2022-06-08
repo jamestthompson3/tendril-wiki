@@ -6,10 +6,13 @@ use warp::{filters::BoxedFilter, Filter, Reply};
 use crate::get_static_dir;
 
 pub struct StaticFileRouter {
-    pub media_location: Arc<String>,
+    media_location: Arc<String>,
 }
 
 impl StaticFileRouter {
+    pub fn new(media_location: Arc<String>) -> Self {
+        Self { media_location }
+    }
     pub fn routes(&self) -> BoxedFilter<(impl Reply,)> {
         self.files().or(self.styles()).boxed()
     }
