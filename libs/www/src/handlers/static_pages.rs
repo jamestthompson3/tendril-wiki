@@ -94,7 +94,12 @@ impl StaticPageRouter {
             .and(with_host(host.to_string()))
             .then(|user: String, host: String| async {
                 let idx_ctx = OpenSearchPage { user, host };
-                warp::reply::with_header(idx_ctx.render().await, "Content-Type", "application/opensearchdescription+xml").into_response()
+                warp::reply::with_header(
+                    idx_ctx.render().await,
+                    "Content-Type",
+                    "application/opensearchdescription+xml",
+                )
+                .into_response()
             })
             .boxed()
     }

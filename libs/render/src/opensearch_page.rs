@@ -15,7 +15,9 @@ impl OpenSearchPage {
 #[async_trait]
 impl Render for OpenSearchPage {
     async fn render(&self) -> String {
-        let mut ctx = get_template_file("opensearchdescription.xml").await.unwrap();
+        let mut ctx = get_template_file("opensearchdescription.xml")
+            .await
+            .unwrap();
         ctx = ctx.replace("<%= user %>", &self.user);
         ctx = ctx.replace("<%= host %>", &self.host);
         render_includes(ctx, None).await

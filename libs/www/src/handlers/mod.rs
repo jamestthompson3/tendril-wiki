@@ -1,8 +1,8 @@
 pub mod api;
+pub mod bookmarks_page;
 pub mod filters;
 pub mod static_files;
 pub mod static_pages;
-pub mod bookmarks_page;
 pub mod tasks_page;
 pub mod wiki_page;
 
