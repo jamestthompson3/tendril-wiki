@@ -15,7 +15,6 @@ impl BookmarkAddPage {
     }
 }
 
-
 #[async_trait]
 impl Render for BookmarkAddPage {
     async fn render(&self) -> String {

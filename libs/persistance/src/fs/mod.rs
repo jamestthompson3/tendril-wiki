@@ -18,7 +18,10 @@ use tokio::fs::{self, read_to_string};
 
 use thiserror::Error;
 
-use crate::fs::{config::read_config, utils::{get_file_path, normalize_wiki_location}};
+use crate::fs::{
+    config::read_config,
+    utils::{get_file_path, normalize_wiki_location},
+};
 
 use self::{
     config::Config,
