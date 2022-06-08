@@ -3,14 +3,15 @@ use std::sync::Arc;
 use persistance::fs::utils::get_config_location;
 use render::{
     file_upload_page::FileUploader, help_page::HelpPage, index_page::IndexPage,
-    styles_page::StylesPage, uploaded_files_page::UploadedFilesPage, Render,
+    opensearch_page::OpenSearchPage, styles_page::StylesPage,
+    uploaded_files_page::UploadedFilesPage, Render,
 };
 use tokio::fs::{self, read_dir};
 use warp::{filters::BoxedFilter, Filter, Reply};
 
 use crate::handlers::filters::with_location;
 
-use super::filters::{with_auth, with_user};
+use super::filters::{with_auth, with_host, with_user};
 
 struct Runner {}
 
@@ -38,15 +39,24 @@ impl Runner {
 }
 
 pub struct StaticPageRouter {
-    pub user: Arc<String>,
-    pub media_location: Arc<String>,
+    user: Arc<String>,
+    media_location: Arc<String>,
+    host: Arc<String>,
 }
 
 impl StaticPageRouter {
+    pub fn new(user: Arc<String>, media_location: Arc<String>, host: Arc<String>) -> Self {
+        Self {
+            user,
+            media_location,
+            host,
+        }
+    }
     pub fn routes(&self) -> BoxedFilter<(impl Reply,)> {
         self.file_list()
             .or(self.upload())
             .or(self.help())
+            .or(self.open_search())
             .or(self.styles())
             .boxed()
     }
@@ -63,12 +73,28 @@ impl StaticPageRouter {
     }
     pub fn index(&self) -> BoxedFilter<(impl Reply,)> {
         let user = self.user.clone();
+        let host = self.host.clone();
         warp::get()
             .and(with_auth())
             .and(with_user(user.to_string()))
-            .then(|user: String| async {
-                let idx_ctx = IndexPage { user };
+            .and(with_host(host.to_string()))
+            .then(|user: String, host: String| async {
+                let idx_ctx = IndexPage { user, host };
                 warp::reply::html(idx_ctx.render().await)
+            })
+            .boxed()
+    }
+    fn open_search(&self) -> BoxedFilter<(impl Reply,)> {
+        let user = self.user.clone();
+        let host = self.host.clone();
+        warp::get()
+            .and(warp::path("opensearchdescription.xml"))
+            .and(with_auth())
+            .and(with_user(user.to_string()))
+            .and(with_host(host.to_string()))
+            .then(|user: String, host: String| async {
+                let idx_ctx = OpenSearchPage { user, host };
+                warp::reply::with_header(idx_ctx.render().await, "Content-Type", "application/opensearchdescription+xml").into_response()
             })
             .boxed()
     }

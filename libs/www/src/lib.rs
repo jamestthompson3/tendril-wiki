@@ -19,10 +19,11 @@ pub(crate) type RefHubParts = (GlobalBacklinks, Arc<JobQueue>);
 
 pub async fn server(config: General, parts: RefHubParts) {
     let media_location = Arc::new(normalize_wiki_location(&config.media_location));
-    let static_page_router = StaticPageRouter {
-        user: Arc::new(config.user),
-        media_location: media_location.clone(),
-    };
+    let static_page_router = StaticPageRouter::new(
+        Arc::new(config.user),
+        media_location.clone(),
+        Arc::new(config.host),
+    );
     let wiki_router = WikiPageRouter {
         parts: parts.clone(),
     };

@@ -46,6 +46,12 @@ pub fn with_user(
     warp::any().map(move || user.clone())
 }
 
+pub fn with_host(
+    host: String,
+) -> impl Filter<Extract = (String,), Error = std::convert::Infallible> + Clone {
+    warp::any().map(move || host.clone())
+}
+
 pub fn with_queue(
     queue: Arc<JobQueue>,
 ) -> impl Filter<Extract = (Arc<JobQueue>,), Error = std::convert::Infallible> + Clone {

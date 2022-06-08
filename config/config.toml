@@ -3,9 +3,10 @@ wiki_location = "~/wiki"
 port = 6683
 user = ""
 pass = ""
-version = "0.0.1"
+version = "0.0.2"
 # directory where images / pdfs / other files are stored
 media_location = "~/wiki_media"
+host = "http://localhost:6683"
 
 [sync]
 use_git = true

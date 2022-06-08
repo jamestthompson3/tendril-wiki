@@ -12,13 +12,14 @@ use link_page::LinkPage;
 use markdown::parsers::TemplattedPage;
 use tokio::{fs, sync::Mutex};
 
-pub mod file_upload_page;
 pub mod bookmark_page;
+pub mod file_upload_page;
 pub mod help_page;
 pub mod index_page;
 pub mod link_page;
 pub mod login_page;
 pub mod new_page;
+pub mod opensearch_page;
 pub mod search_results_page;
 pub mod styles_page;
 pub mod tasks_page;
@@ -150,6 +151,9 @@ pub async fn get_template_file(requested_file: &str) -> Result<String, io::Error
 
 #[cfg(debug_assertions)]
 fn get_template_location(requested_file: &str) -> String {
+    if requested_file.contains('.') {
+        return format!("templates/{}", requested_file);
+    }
     format!("templates/{}.html", requested_file)
 }
 
@@ -157,6 +161,11 @@ fn get_template_location(requested_file: &str) -> String {
 fn get_template_location(requested_file: &str) -> String {
     let project_dir = ProjectDirs::from("", "", "tendril").unwrap();
     let mut data_dir = project_dir.data_dir().to_owned();
-    data_dir.push(format!("templates/{}.html", requested_file));
+
+    if requested_file.contains('.') {
+        data_dir.push(format!("templates/{}", requested_file));
+    } else {
+        data_dir.push(format!("templates/{}.html", requested_file));
+    }
     data_dir.to_string_lossy().into()
 }

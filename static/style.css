@@ -396,6 +396,9 @@ details {
   height: 25px;
 }
 .result {
+  /* only for safari */
+  overflow: hidden;
+  /* modern browsers provide this, but safari does not :( */
   overflow: clip;
   max-height: 15rem;
   border: 1px solid var(--text-color);
