@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
-<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/">
- <ShortName><%= user %>'s notebook</ShortName>
- <Description>Search the wiki</Description>
+<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/" xmlns:moz="http://www.mozilla.org/2006/browser">
+ <ShortName>Tendril Wiki</ShortName>
+ <Description>Search <%= user %>'s notebook.</Description>
+ <InputEncoding>UTF-8</InputEncoding>
+ <Tags>knowledge-base wiki</Tags>
  <Image width="16" height="16" type="image/x-icon"><%= host %>/static/favicon.ico</Image>
- <Url type="text/html" template="<%= host %>/?term={searchTerms}"/>
+ <Url type="text/html" template="<%= host %>/search?term={searchTerms}" />
+ <Url type="application/opensearchdescription+xml" rel="self" template="<%= host %>/opensearchdescription.xml" />
+ <Query role="example" searchTerms="cat"></Query>
 </OpenSearchDescription>

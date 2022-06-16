@@ -89,7 +89,6 @@ impl StaticPageRouter {
         let host = self.host.clone();
         warp::get()
             .and(warp::path("opensearchdescription.xml"))
-            .and(with_auth())
             .and(with_user(user.to_string()))
             .and(with_host(host.to_string()))
             .then(|user: String, host: String| async {
