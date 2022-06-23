@@ -235,8 +235,8 @@ created: {:?}
             entry
         );
         println!("\x1b[38;5;47mdaily journal updated\x1b[0m");
-        fs::write(get_file_path(&daily_file).unwrap(), docstring).await?;
-        Ok(NoteMeta::from(daily_file).into())
+        fs::write(get_file_path(&daily_file).unwrap(), docstring.clone()).await?;
+        Ok(NoteMeta::from(docstring).into())
     }
 }
 
