@@ -20,8 +20,12 @@ impl Runner {
         let mut entry_list = Vec::new();
         let mut entries = read_dir(media_location).await.unwrap();
         while let Ok(entry) = entries.next_entry().await {
-            let entry = entry.unwrap();
-            entry_list.push(entry.file_name().into_string().unwrap());
+            if entry.is_some() {
+                let entry = entry.unwrap();
+                entry_list.push(entry.file_name().into_string().unwrap());
+            } else {
+                break;
+            }
         }
         let ctx = UploadedFilesPage {
             entries: entry_list,
