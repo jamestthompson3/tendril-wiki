@@ -43,9 +43,11 @@ pub async fn server(config: General, parts: RefHubParts) {
                 .or(task_router.routes())
                 .or(wiki_router.routes())
                 .or(static_page_router.index())
-                .recover(handle_rejection),
+                .recover(handle_rejection)
+                .boxed(),
         )
-        .with(log);
+        .with(log)
+        .boxed();
     let port: u16 = config.port;
     println!("┌──────────────────────────────────────────────┐");
     println!("│Starting web backend @ http://127.0.0.1:{}  │", port);
