@@ -9,6 +9,7 @@ use parse::{
 };
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, str::FromStr};
+use std::fmt::Write as _;
 use thiserror::Error;
 
 const FORBIDDEN_TAGS: [&str; 10] = [
@@ -53,7 +54,7 @@ pub enum TaskParseErr {
     StrParseFail,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Task {
     pub priority: Option<String>,
     pub project: Vec<String>,
@@ -115,29 +116,29 @@ impl Task {
 <li role="row" {}>
     <div class="task-body">
           <input id="status" type="checkbox" {}>
+           <span>
+                <span class="priority">{}</span>
+                {}
+           </span>
           <span>
             <span class="edit-text-button">{}</span>
             <input type="text" class="edit-text-input hidden" value="{}" />
           </span>
-        <span>
-            <span class="edit-text-button priority">{}</span>
-            <input maxlength="1" type="text" class="edit-text-input hidden" value="{}" />
-        </span>
     </div>
     <div class="task-meta">
-    <span id="delete" aria-label="delete-task" title="delete task"></span>
         {}
         <span class="task-metadata edit-text-button">{}</span><input type="text" class="edit-text-input hidden" value="{}" />
         <span class="status">{}</span>
+        <span id="delete" aria-label="delete-task" title="delete task"></span>
     </div>
 </li>
 "#,
             str_idx,
             checked,
+            priority,
+            construct_priority_input(&priority),
             body,
             self.format_body(),
-            priority,
-            priority,
             created,
             metadata,
             self.metadata
@@ -152,6 +153,7 @@ impl Task {
         html.push_str(&table_html);
         html
     }
+    // <input maxlength="1" type="text" class="edit-text-input hidden" value="{}" />
     // FIXME: This is a bit of a dumpster fire, but let's getting working and then make it better
     // ;)
     pub fn patch(&mut self, update: UpdateType) -> String {
@@ -282,7 +284,7 @@ impl Task {
                 }
                 self.metadata = parse_meta(&metadata);
                 for (key, value) in &self.metadata {
-                    self.body.push_str(&format!(" {}:{}", key, value));
+                    write!(self.body, " {}:{}", key, value).unwrap();
                 }
                 self.format_metadata()
             }
@@ -372,4 +374,21 @@ impl Task {
                 formatted_str
             })
     }
+}
+
+const ALPHA_STRING: &str = "abcdefghijklmnopqrstuvwxyz";
+fn construct_priority_input(priority: &str) -> String {
+    let prio_opts = ALPHA_STRING
+        .chars()
+        .map(|c| format!("<option value=\"{}\">{}</option>", c, c.to_uppercase()))
+        .collect::<Vec<String>>()
+        .join("");
+    format!(
+        r#"
+<select name="priority" class="hidden" id="priority-select">
+    <option value="{}">{}</option>
+    {}
+</select>"#,
+        priority, priority, prio_opts
+    )
 }

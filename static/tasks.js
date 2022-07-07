@@ -6,7 +6,7 @@
 
   // Event Listeners
   // =======================================================================================
-  const headerRowSelector = "thead > tr >";
+  // const headerRowSelector = "thead > tr >";
   const taskRows = document.querySelectorAll(".task-list li");
   // const bodyRowSelector = "tbody tr >";
   // const statusHeader = document.querySelector(
@@ -46,11 +46,11 @@
       });
       if (request.status === 200) {
         const response = await request.json();
-        const rowParser = document.createElement("tbody");
+        const rowParser = document.createElement("div");
         rowParser.innerHTML = response;
-        const rowWrapper = document.querySelector("tbody");
+        const rowWrapper = document.querySelector(".task-list");
         const firstRow = rowWrapper.querySelector(":first-child");
-        for (const row of document.querySelectorAll("tbody tr")) {
+        for (const row of rowWrapper.querySelectorAll("li")) {
           const idx = parseInt(row.getAttribute("data-idx"));
           row.setAttribute("data-idx", idx + 1);
         }
@@ -72,12 +72,19 @@
       this.parentNode.appendChild(errorMsg);
     }
   }
+
+  function showPrioPicker(_) {
+    const select = this.parentNode.querySelector("select");
+    select.classList.remove("hidden");
+    this.querySelector(".priority").classList.add("hidden");
+    select.focus();
+  }
+
   function editCell(e) {
     if (e.target.tagName === "A") return;
     const input = this.parentNode.querySelector("input");
-    const display = this;
     input.classList.remove("hidden");
-    display.classList.add("hidden");
+    this.classList.add("hidden");
     if (document.activeElement !== input) {
       input.focus();
       input.selectionStart = input.selectionEnd = input.value.length;
@@ -91,7 +98,11 @@
   }
 
   async function deleteTask() {
-    const containerNode = this.parentNode.parentNode;
+    let containerNode = this.parentNode;
+    // Recurse until we hit the parent that contains the data index.
+    while (containerNode.tagName !== "LI") {
+      containerNode = containerNode.parentNode;
+    }
     const dataIdx = containerNode.getAttribute("data-idx");
     if (!dataIdx) {
       throw new Error("All cells should render with a data index.");
@@ -118,6 +129,7 @@
   }
 
   const alphaPattern = /[a-zA-Z]/;
+
   async function changePriority(e) {
     const {
       target: { value },
@@ -139,6 +151,7 @@
         });
         const text = await response.json();
         display.innerText = text;
+        e.target.blur();
       } catch (e) {
         console.error(e);
         e.target.value = display.innerText;
@@ -272,7 +285,7 @@
           this.setAttribute("aria-sort", SORT_DIR.DESC);
           break;
       }
-      const rowWrapper = document.querySelector("tbody");
+      const rowWrapper = document.querySelector(".task-list");
       const taskList = Array.from(
         document.querySelectorAll("[role='row']").values()
       ).sort(sortFn(dir));
@@ -357,14 +370,14 @@
     deleteCell.addEventListener("click", deleteTask);
     const statusCell = row.querySelector("input[type=checkbox]");
     statusCell.addEventListener("change", updateCellStatus);
-    const prioCell = row.querySelector("div span:nth-of-type(2)");
-    prioCell.addEventListener("click", editCell);
+    const prioCell = row.querySelector("div span:nth-of-type(1)");
+    prioCell.addEventListener("click", showPrioPicker);
     const contentCell = row.querySelector(".edit-text-button");
     contentCell.addEventListener("click", editCell);
     // const metadataCell = row.querySelector("td:nth-child(6)");
     // metadataCell.addEventListener("click", editCell);
 
-    const priorityInputCell = prioCell.parentNode.querySelector("input");
+    const priorityInputCell = prioCell.querySelector("select");
     priorityInputCell.addEventListener("blur", blurCell);
     priorityInputCell.addEventListener("change", changePriority);
     const contentInputCell = contentCell.parentNode.querySelector("input");
