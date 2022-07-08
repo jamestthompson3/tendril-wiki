@@ -6,12 +6,7 @@
 
   // Event Listeners
   // =======================================================================================
-  // const headerRowSelector = "thead > tr >";
   const taskRows = document.querySelectorAll(".task-list li");
-  // const bodyRowSelector = "tbody tr >";
-  // const statusHeader = document.querySelector(
-  //   `${headerRowSelector} th:nth-child(2)`
-  // );
   const form = document.querySelector(".task-header form");
   form.addEventListener("submit", addTask);
   // statusHeader.addEventListener("click", sortBy(status));
@@ -374,8 +369,8 @@
     prioCell.addEventListener("click", showPrioPicker);
     const contentCell = row.querySelector(".edit-text-button");
     contentCell.addEventListener("click", editCell);
-    // const metadataCell = row.querySelector("td:nth-child(6)");
-    // metadataCell.addEventListener("click", editCell);
+    const metadataCell = row.querySelector(".task-metadata");
+    metadataCell.addEventListener("click", editCell);
 
     const priorityInputCell = prioCell.querySelector("select");
     priorityInputCell.addEventListener("blur", blurCell);
@@ -383,8 +378,8 @@
     const contentInputCell = contentCell.parentNode.querySelector("input");
     contentInputCell.addEventListener("blur", blurCell);
     contentInputCell.addEventListener("change", changeContent);
-    // const metadataInputCell = row.querySelector("td:nth-child(6) > input");
-    // metadataInputCell.addEventListener("blur", blurCell);
-    // metadataInputCell.addEventListener("change", changeMetadata);
+    const metadataInputCell = row.querySelector(".task-metadata ~ input");
+    metadataInputCell.addEventListener("blur", blurCell);
+    metadataInputCell.addEventListener("change", changeMetadata);
   }
 })();

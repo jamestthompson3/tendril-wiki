@@ -125,11 +125,13 @@ impl Task {
             <input type="text" class="edit-text-input hidden" value="{}" />
           </span>
     </div>
-    <div class="task-meta">
-        {}
+    <div>
         <span class="task-metadata edit-text-button">{}</span><input type="text" class="edit-text-input hidden" value="{}" />
-        <span class="status">{}</span>
-        <span id="delete" aria-label="delete-task" title="delete task"></span>
+        <div class="task-meta">
+            {}
+            <span class="status">{}</span>
+            <span id="delete" aria-label="delete-task" title="delete task"></span>
+        </div>
     </div>
 </li>
 "#,
@@ -139,7 +141,6 @@ impl Task {
             construct_priority_input(&priority),
             body,
             self.format_body(),
-            created,
             metadata,
             self.metadata
                 .iter()
@@ -148,12 +149,12 @@ impl Task {
                     formatted_str.push_str(&ctx_string);
                     formatted_str
                 }),
+            created,
             self.format_status()
         );
         html.push_str(&table_html);
         html
     }
-    // <input maxlength="1" type="text" class="edit-text-input hidden" value="{}" />
     // FIXME: This is a bit of a dumpster fire, but let's getting working and then make it better
     // ;)
     pub fn patch(&mut self, update: UpdateType) -> String {

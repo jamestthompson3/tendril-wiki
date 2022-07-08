@@ -42,10 +42,11 @@
   margin: 0rem 0.25rem;
   font-size: 1.15rem;
 }
-.task-body input {
+input {
   background-color: var(--bg-darker);
   border-radius: var(--rad);
 }
+
 .task-body input[type="checkbox"] {
   width: 2rem;
   height: 2rem;
@@ -83,10 +84,11 @@
   color: var(--text-color);
   font-size: 16px;
   padding: 0.25rem;
+  background-color: var(--bg-darker);
 }
 .edit-text-button {
-  min-width: 1rem;
-  min-height: 1rem;
+  min-width: 2rem;
+  min-height: 1.25rem;
   display: inline-block;
   cursor: pointer;
   margin: 5px;
