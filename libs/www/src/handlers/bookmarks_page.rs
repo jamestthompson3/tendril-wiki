@@ -33,21 +33,23 @@ impl Runner {
         ctx.render().await
     }
 
-    async fn new_from_url(url: String, tags: Vec<String>) -> (String, PatchData) {
+    async fn new_from_url(url: String, tags: Vec<String>) -> Result<(String, PatchData), ()> {
         let mut metadata = HashMap::new();
         metadata.insert(String::from("url"), url.clone());
-        let product = tokio::task::spawn_blocking(move || extract(url))
-            .await
-            .unwrap();
-        let title = TITLE_RGX.replace_all(&product.title, "").to_string();
-        let patch = PatchData {
-            body: String::with_capacity(0),
-            tags,
-            title,
-            old_title: String::with_capacity(0),
-            metadata,
-        };
-        (product.text, patch)
+        if let Ok(product) = tokio::task::spawn_blocking(move || extract(url)).await {
+            let title = TITLE_RGX.replace_all(&product.title, "").to_string();
+            let patch = PatchData {
+                body: String::with_capacity(0),
+                tags,
+                title,
+                old_title: String::with_capacity(0),
+                metadata,
+            };
+            Ok((product.text, patch))
+        } else {
+            eprintln!("Error in archiving url");
+            Err(())
+        }
     }
 
     async fn create(form_body: HashMap<String, String>, queue: QueueHandle) -> Uri {
@@ -64,6 +66,7 @@ impl Runner {
             Runner::new_from_url(url.clone(), tags.clone()),
         )
         .await
+        .unwrap()
         {
             match write(&patch).await {
                 Ok(()) => {
