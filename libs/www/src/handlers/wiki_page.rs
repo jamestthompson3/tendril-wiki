@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fmt::Write as _;
 
 use build::purge_mru_cache;
 use persistance::fs::{create_journal_entry, read, write, ReadPageError};
@@ -47,7 +48,7 @@ impl Runner {
     ) -> String {
         // I don't know why warp doesn't decode the sub path here...
         let sub_path_decoded = decode(&sub_path).unwrap();
-        main_path.push_str(&format!("/{}", sub_path_decoded));
+        write!(main_path, "/{}", sub_path_decoded).unwrap();
         let page = read(main_path.clone(), reflinks).await;
         if page.is_ok() {
             page.unwrap()

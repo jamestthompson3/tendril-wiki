@@ -1,6 +1,7 @@
 use async_trait::async_trait;
 use chrono::{DateTime, FixedOffset};
 use markdown::parsers::{format_links, TemplattedPage};
+use std::fmt::Write as _;
 
 use crate::{get_template_file, render_includes, Render};
 
@@ -39,15 +40,15 @@ impl<'a> WikiPage<'a> {
     fn render_page_metadata(&self) -> String {
         let mut metadata_html = String::new();
         for (key, value) in self.page.metadata.iter() {
-            metadata_html.push_str(&format!("<dt><strong>{}:</strong></dt>", key));
+            write!(metadata_html, "<dt><strong>{}:</strong></dt>", key).unwrap();
             // TODO: Add "created" date here as well
             // TODO: Modify dates to be compliant with DT parsing
             if key == "modified" || key == "created" {
                 if let Ok(val) = value.parse::<DateTime<FixedOffset>>() {
                     let val = val.format("%Y-%m-%d %H:%M").to_string();
-                    metadata_html.push_str(&format!("\n<dd>{}</dd>", val));
+                    write!(metadata_html, "\n<dd>{}</dd>", val).unwrap();
                 } else {
-                    metadata_html.push_str(&format!("\n<dd>{}</dd>", value));
+                    write!(metadata_html, "\n<dd>{}</dd>", value).unwrap();
                 }
                 continue;
             }
@@ -58,15 +59,15 @@ impl<'a> WikiPage<'a> {
                             "<img src=\"{}\" style=\"max-height: 200px; max-width: 200px;\">",
                             value
                         );
-                        metadata_html.push_str(&format!("\n<dd>{}</dd>", val));
+                        write!(metadata_html, "\n<dd>{}</dd>", val).unwrap();
                     }
                     _ => {
                         let val = format!("<a href=\"{}\">{}</a>", value, value);
-                        metadata_html.push_str(&format!("\n<dd>{}</dd>", val));
+                        write!(metadata_html, "\n<dd>{}</dd>", val).unwrap();
                     }
                 }
             } else {
-                metadata_html.push_str(&format!("\n<dd>{}</dd>", &value));
+                write!(metadata_html, "\n<dd>{}</dd>", &value).unwrap();
             }
         }
         metadata_html

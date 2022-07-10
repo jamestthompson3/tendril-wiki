@@ -35,7 +35,12 @@ pub(crate) async fn search(query: &str, index_location: PathBuf) -> Vec<Doc> {
             }
         }
     });
-    rank_docs(relevant_docs, tokens_for_scoring, doc_idx.keys().len(), query)
+    rank_docs(
+        relevant_docs,
+        tokens_for_scoring,
+        doc_idx.keys().len(),
+        query,
+    )
 }
 
 /// use term frequency-inverse document frequency to rank the search results.
@@ -47,13 +52,20 @@ pub(crate) async fn search(query: &str, index_location: PathBuf) -> Vec<Doc> {
 ///
 /// A document is a `Doc` data structure which can be derived from multiple sources (though at the
 /// moment it is only derived from wiki notes).
-fn rank_docs(mut relevant_docs: Vec<Doc>, tokens: Vec<String>, total_docs: usize, query: &str) -> Vec<Doc> {
+fn rank_docs(
+    mut relevant_docs: Vec<Doc>,
+    tokens: Vec<String>,
+    total_docs: usize,
+    query: &str,
+) -> Vec<Doc> {
     let inverse_document_frequency =
         (total_docs as f32 / relevant_docs.len() as f32 + 1.0).ln() + 1.0;
 
     relevant_docs.sort_by(|a, b| {
-        let processed_a = term_frequency(a, &tokens) * inverse_document_frequency + (a.content.match_indices(query).count() as f32 * 1.5);
-        let processed_b = term_frequency(b, &tokens) * inverse_document_frequency + (b.content.match_indices(query).count() as f32 * 1.5);
+        let processed_a = term_frequency(a, &tokens) * inverse_document_frequency
+            + (a.content.match_indices(query).count() as f32 * 1.5);
+        let processed_b = term_frequency(b, &tokens) * inverse_document_frequency
+            + (b.content.match_indices(query).count() as f32 * 1.5);
         processed_b.partial_cmp(&processed_a).unwrap()
     });
     relevant_docs

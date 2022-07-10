@@ -20,8 +20,7 @@ use super::{
     MAX_BODY_SIZE,
 };
 
-pub struct APIRouter {
-}
+pub struct APIRouter {}
 
 struct Runner {}
 
@@ -82,13 +81,14 @@ impl Runner {
         let (path, _) = get_config_location();
         let style_location = path.join("userstyles.css");
         let body = form_body.get("body").unwrap();
-        Ok(tokio::fs::write(style_location, body).await?)
+        tokio::fs::write(style_location, body).await
     }
 }
 
+#[allow(clippy::new_without_default)]
 impl APIRouter {
     pub fn new() -> Self {
-        Self { }
+        Self {}
     }
     pub fn routes(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
         self.login()

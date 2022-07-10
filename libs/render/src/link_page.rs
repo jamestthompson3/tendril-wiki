@@ -1,5 +1,6 @@
 use async_trait::async_trait;
 use std::collections::BTreeMap;
+use std::fmt::Write as _;
 
 use crate::{get_template_file, render_includes, Render};
 use markdown::parsers::format_links;
@@ -16,17 +17,19 @@ impl LinkPage {
         let mut link_content: Vec<String> = Vec::with_capacity(self.links.len());
         for key in self.links.keys() {
             let mut html = String::new();
-            html.push_str(&format!("<h2>{}</h2><ul>", key));
+            write!(html, "<h2>{}</h2><ul>", key).unwrap();
             let mut links = self.links.get(key).unwrap().to_owned();
             links.dedup();
             for link in links {
-                html.push_str(&format!(
+                write!(
+                    html,
                     "<li><a href=\"{}\">{}</a></li>",
                     format_links(&link),
                     link
-                ));
+                )
+                .unwrap();
             }
-            html.push_str("</ul>");
+            write!(html, "</ul>").unwrap();
             link_content.push(html);
         }
         link_content.join("")

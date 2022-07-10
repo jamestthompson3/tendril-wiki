@@ -1,5 +1,6 @@
 use crate::{get_template_file, render_includes, Render};
 use async_trait::async_trait;
+use std::fmt::Write as _;
 
 pub struct UploadedFilesPage {
     pub entries: Vec<String>,
@@ -12,7 +13,7 @@ impl UploadedFilesPage {
     fn render_entries(&self) -> String {
         let mut entry_list = String::new();
         for entry in &self.entries {
-            entry_list.push_str(&format!("<a href=\"/files/{}\">{}</a>", entry, entry));
+            write!(entry_list, "<a href=\"/files/{}\">{}</a>", entry, entry).unwrap();
         }
         entry_list
     }

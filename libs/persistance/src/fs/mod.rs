@@ -1,6 +1,7 @@
 pub mod config;
 pub mod utils;
 
+use std::fmt::Write as _;
 use std::{
     env, io,
     path::{Path, PathBuf},
@@ -215,7 +216,7 @@ pub async fn create_journal_entry(entry: String) -> Result<PatchData, std::io::E
     let path = get_file_path(&daily_file).unwrap();
     if path.exists() {
         let mut entry_file = read_to_string(&path).await.unwrap();
-        entry_file.push_str(&format!("\n\n[{}] {}", now.format("%H:%M"), entry));
+        write!(entry_file, "\n\n[{}] {}", now.format("%H:%M"), entry).unwrap();
         println!("\x1b[38;5;47mdaily journal updated\x1b[0m");
         fs::write(path, &entry_file).await?;
         Ok(NoteMeta::from(entry_file).into())

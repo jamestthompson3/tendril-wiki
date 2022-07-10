@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fmt::Write as _;
 
 use tasks::messages::PatchData;
 
@@ -124,7 +125,7 @@ pub fn parse_meta<'a>(lines: impl Iterator<Item = &'a str>, debug_marker: &str) 
                     notemeta.metadata.insert(values[0].into(), vals);
                 }
                 MetaParserState::End => {
-                    notemeta.content.push_str(&format!("\n{}", line));
+                    write!(notemeta.content, "\n{}", line).unwrap();
                 }
                 _ => {}
             },

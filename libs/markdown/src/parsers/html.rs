@@ -179,7 +179,7 @@ fn transform_cp_url(text: CowStr) -> CowStr {
         let link = text.replace("/pen/", "/embed/");
         return format!(r#"{} src="{}"></iframe>"#, CP_FMT_STRING, link).into();
     }
-    return format!(r#"{} src="{}"></iframe>"#, CP_FMT_STRING, text).into();
+    format!(r#"{} src="{}"></iframe>"#, CP_FMT_STRING, text).into()
 }
 
 fn transform_spotify_url(text: CowStr) -> CowStr {
@@ -187,7 +187,7 @@ fn transform_spotify_url(text: CowStr) -> CowStr {
         let link = text.replace(".com/track", ".com/embed/track");
         return format!(r#"{} src="{}"></iframe>"#, MEDIA_FMT_STRING, link).into();
     }
-    return format!(r#"{} src="{}"></iframe>"#, MEDIA_FMT_STRING, text).into();
+    format!(r#"{} src="{}"></iframe>"#, MEDIA_FMT_STRING, text).into()
 }
 
 fn transform_youtube_url(link: CowStr) -> CowStr {
@@ -216,7 +216,7 @@ fn transform_vimeo_url(text: CowStr) -> CowStr {
         let link = text.replace("vimeo.com", "player.vimeo.com/video");
         return format!(r#"{} src="{}"></iframe>"#, MEDIA_FMT_STRING, link).into();
     }
-    return format!(r#"{} src="{}"></iframe>"#, MEDIA_FMT_STRING, text).into();
+    format!(r#"{} src="{}"></iframe>"#, MEDIA_FMT_STRING, text).into()
 }
 #[cfg(test)]
 mod tests {

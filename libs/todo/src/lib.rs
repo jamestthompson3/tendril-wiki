@@ -8,8 +8,8 @@ use parse::{
     META_RGX, PRIO_RGX,
 };
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, str::FromStr};
 use std::fmt::Write as _;
+use std::{collections::HashMap, str::FromStr};
 use thiserror::Error;
 
 const FORBIDDEN_TAGS: [&str; 10] = [

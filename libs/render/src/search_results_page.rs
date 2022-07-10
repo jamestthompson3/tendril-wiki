@@ -1,5 +1,6 @@
 use async_trait::async_trait;
 use markdown::parsers::format_links;
+use std::fmt::Write as _;
 
 use crate::{get_template_file, render_includes, Render};
 
@@ -23,11 +24,13 @@ impl SearchResultsPage {
         }
         let mut page_list = String::new();
         for (page, matched_text) in self.pages.iter() {
-            page_list.push_str(&format!(
+            write!(
+                page_list,
                 "<li><div class=\"result\"><h2><a href=\"{}\">{}</a></h2>",
                 format_links(page),
                 page,
-            ));
+            )
+            .unwrap();
             page_list.push_str(matched_text);
             page_list.push_str("</div></li>");
         }
