@@ -30,7 +30,7 @@ use tokio::time::sleep;
 const NUM_JOBS: u32 = 50;
 
 lazy_static! {
-    static ref TITLE_RGX: Regex = Regex::new(r"\?|\\|/|\||:|;|>|<|,|\.").unwrap();
+    static ref TITLE_RGX: Regex = Regex::new(r"\?|\\|/|\||:|;|>|<|,|\.|\n|\$|&").unwrap();
 }
 pub async fn process_tasks(
     queue: Arc<JobQueue>,
@@ -93,7 +93,7 @@ pub async fn process_tasks(
                         let product = tokio::task::spawn_blocking(move || extract(url))
                             .await
                             .unwrap();
-                        let note_title = TITLE_RGX.replace(&product.title, "").to_string();
+                        let note_title = TITLE_RGX.replace_all(&product.title, "").to_string();
                         let compressed = compress(&product.text);
                         write_archive(compressed, &note_title).await;
                         patch_search_from_archive((note_title.clone(), product.text)).await;

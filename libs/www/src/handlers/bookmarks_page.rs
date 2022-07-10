@@ -18,7 +18,7 @@ use super::{
 };
 
 lazy_static! {
-    static ref TITLE_RGX: Regex = Regex::new(r"\?|\\|/|\||:|;|>|<|,|\.").unwrap();
+    static ref TITLE_RGX: Regex = Regex::new(r"\?|\\|/|\||:|;|>|<|,|\.|\n|\$|&").unwrap();
 }
 
 pub struct BookmarkPageRouter {
@@ -39,7 +39,7 @@ impl Runner {
         let product = tokio::task::spawn_blocking(move || extract(url))
             .await
             .unwrap();
-        let title = TITLE_RGX.replace(&product.title, "").to_string();
+        let title = TITLE_RGX.replace_all(&product.title, "").to_string();
         let patch = PatchData {
             body: String::with_capacity(0),
             tags,
