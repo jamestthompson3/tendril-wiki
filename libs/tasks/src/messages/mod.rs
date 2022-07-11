@@ -37,13 +37,15 @@ impl From<HashMap<String, String>> for PatchData {
                 "body" => body = form_body.get(key).unwrap().to_owned(),
                 "metadata" => {
                     let stringified_meta = form_body.get(key).unwrap().to_owned();
-                    let kv_pairs = stringified_meta.split('\n');
-                    for pair_string in kv_pairs {
-                        // Support metadata attributes with the : character.
-                        let unpaired: Vec<&str> = pair_string.split(':').collect();
-                        let key = unpaired[0].to_owned();
-                        let value = unpaired[1..].join(":");
-                        metadata.insert(key, value);
+                    if !stringified_meta.is_empty() {
+                        let kv_pairs = stringified_meta.split('\n');
+                        for pair_string in kv_pairs {
+                            // Support metadata attributes with the : character.
+                            let unpaired: Vec<&str> = pair_string.split(':').collect();
+                            let key = unpaired[0].to_owned();
+                            let value = unpaired[1..].join(":");
+                            metadata.insert(key, value);
+                        }
                     }
                 }
                 _ => {}
