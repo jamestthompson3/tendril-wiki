@@ -39,7 +39,7 @@ lazy_static::lazy_static! {
             }
         }
     };
-    pub(crate) static ref MEDIA_LOCATION: PathBuf = PathBuf::from(&CONFIG.general.media_location);
+    pub(crate) static ref MEDIA_LOCATION: PathBuf = PathBuf::from(&normalize_wiki_location(&CONFIG.general.media_location));
 }
 
 #[derive(Error, Debug)]
