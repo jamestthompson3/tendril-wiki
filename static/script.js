@@ -55,9 +55,31 @@
 
   function edit() {
     const editElement = document.getElementById("edit");
-    if (editElement) {
+    const editLabel = document.querySelector(
+      ".content-container > label:nth-child(1)"
+    );
+    if (editElement && editLabel) {
       // sometimes the page might not be editable
       editElement.checked = true;
+      editLabel.textContent = "Cancel";
+    }
+  }
+
+  const editCheckBox = document.getElementById("edit");
+  if (editCheckBox) {
+    editCheckBox.addEventListener("click", clickEdit);
+  }
+
+  function clickEdit(e) {
+    const editLabel = document.querySelector(
+      ".content-container > label:nth-child(1)"
+    );
+    if (editLabel) {
+      if (!e.target.checked) {
+        editLabel.textContent = "Edit";
+      } else {
+        editLabel.textContent = "Cancel";
+      }
     }
   }
 
