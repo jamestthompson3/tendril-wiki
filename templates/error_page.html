@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en-US" prefix="og:http://ogp.me/ns#">
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon" />
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    <meta name="description" content="Something has gone wrong" />
+    <meta property="og:title" content="Error" />
+    <meta property="og:type" content="website" />
+    <%= include "styles" %>
+    <title>Error</title>
+  </head>
+  <body>
+    <div class="content-container">
+      <div class="content">
+        <h1 class="title">Error</h1>
+        <main class="content-body backlinks">
+          <p class="error-msg"><%= msg %></p>
+        </main>
+      </div>
+    </div>
+    <%= include "footer" %>
+  </body>
+</html>

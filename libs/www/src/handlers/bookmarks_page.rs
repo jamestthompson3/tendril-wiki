@@ -97,7 +97,8 @@ impl Runner {
                 }
                 Err(e) => {
                     eprintln!("  {}\n", e);
-                    return Uri::from_static("/error");
+                    let redir_url = format!("/error?msg={}", encode(&format!("{:?}", e)));
+                    return redir_url.parse::<Uri>().unwrap();
                 }
             }
         } else {

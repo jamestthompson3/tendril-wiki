@@ -171,6 +171,10 @@ pre code {
   display: none;
 }
 
+.error-msg {
+  color: red;
+}
+
 #title-edit:invalid ~ .title-error-msg {
   display: inline;
   color: red;

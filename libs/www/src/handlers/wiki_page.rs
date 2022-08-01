@@ -95,7 +95,7 @@ impl Runner {
         query_params: HashMap<String, String>,
     ) -> Result<Uri, std::io::Error> {
         let parsed_data = PatchData::from(form_body);
-        let redir_uri = if let Some(redirect_addition) = query_params.get("redir_to") {
+        let redir_url = if let Some(redirect_addition) = query_params.get("redir_to") {
             format!("/{}/{}", redirect_addition, encode(&parsed_data.title))
         } else {
             format!("/{}", encode(&parsed_data.title))
@@ -132,11 +132,12 @@ impl Runner {
                     .push(Message::Patch { patch: parsed_data })
                     .await
                     .unwrap();
-                Ok(redir_uri.parse::<Uri>().unwrap())
+                Ok(redir_url.parse::<Uri>().unwrap())
             }
             Err(e) => {
                 eprintln!("{}", e);
-                Ok(Uri::from_static("/error"))
+                let redir_url = format!("/error?msg={}", encode(&format!("{}",e)));
+                Ok(redir_url.parse::<Uri>().unwrap())
             }
         }
     }
@@ -153,7 +154,8 @@ impl Runner {
             }
             Err(e) => {
                 eprintln!("{}", e);
-                Ok(Uri::from_static("/error"))
+                let redir_url = format!("/error?msg={}", encode(&format!("{:?}",e)));
+                Ok(redir_url.parse::<Uri>().unwrap())
             }
         }
     }

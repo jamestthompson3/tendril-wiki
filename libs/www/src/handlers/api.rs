@@ -4,6 +4,7 @@ use render::{search_results_page::SearchResultsPage, Render};
 use search_engine::{semantic_search, Indicies};
 use std::{collections::HashMap, io, time::Instant};
 use thiserror::Error;
+use urlencoding::encode;
 
 use persistance::fs::{utils::get_config_location, write_media};
 use warp::{
@@ -152,7 +153,8 @@ impl APIRouter {
                     Ok(()) => warp::redirect(Uri::from_static("/")),
                     Err(e) => {
                         eprintln!("{}", e);
-                        warp::redirect(Uri::from_static("/error"))
+                        let redir_url = format!("/error?msg={}", encode(&format!("{:?}", e)));
+                        warp::redirect(redir_url.parse::<Uri>().unwrap())
                     }
                 }
             })
@@ -226,7 +228,8 @@ impl APIRouter {
                         Ok(()) => warp::redirect(Uri::from_static("/")),
                         Err(e) => {
                             eprintln!("{}", e);
-                            warp::redirect(Uri::from_static("/error"))
+                            let redir_url = format!("/error?msg={}", encode(&format!("{:?}", e)));
+                            warp::redirect(redir_url.parse::<Uri>().unwrap())
                         }
                     }
                 },

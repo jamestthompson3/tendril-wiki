@@ -1,9 +1,9 @@
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use persistance::fs::utils::get_config_location;
 use render::{
-    file_upload_page::FileUploader, help_page::HelpPage, index_page::IndexPage,
-    opensearch_page::OpenSearchPage, styles_page::StylesPage,
+    error_page::ErrorPage, file_upload_page::FileUploader, help_page::HelpPage,
+    index_page::IndexPage, opensearch_page::OpenSearchPage, styles_page::StylesPage,
     uploaded_files_page::UploadedFilesPage, Render,
 };
 use tokio::fs::{self, read_dir};
@@ -40,6 +40,14 @@ impl Runner {
         let ctx = StylesPage { body };
         ctx.render().await
     }
+    pub async fn show_error(params: HashMap<String, String>) -> String {
+        let msg = params
+            .get("msg")
+            .unwrap_or(&String::from("Error could not be determined."))
+            .to_string();
+        let ctx = ErrorPage { msg };
+        ctx.render().await
+    }
 }
 
 pub struct StaticPageRouter {
@@ -62,6 +70,7 @@ impl StaticPageRouter {
             .or(self.help())
             .or(self.open_search())
             .or(self.styles())
+            .or(self.error())
             .boxed()
     }
 
@@ -132,6 +141,16 @@ impl StaticPageRouter {
             .and(with_location(self.media_location.clone()))
             .then(move |location: String| async move {
                 let response = Runner::list_files(location).await;
+                warp::reply::html(response)
+            })
+            .boxed()
+    }
+    fn error(&self) -> BoxedFilter<(impl Reply,)> {
+        warp::get()
+            .and(warp::path("error"))
+            .and(warp::query::<HashMap<String, String>>())
+            .then(move |params: HashMap<String, String>| async move {
+                let response = Runner::show_error(params).await;
                 warp::reply::html(response)
             })
             .boxed()
