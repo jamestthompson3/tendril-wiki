@@ -37,11 +37,17 @@ impl Runner {
         let mut metadata = HashMap::new();
         metadata.insert(String::from("url"), url.clone());
         if let Ok(product) = tokio::task::spawn_blocking(move || extract(url)).await {
-            let title = TITLE_RGX.replace_all(&product.title, "").to_string();
+            let normalized_title = TITLE_RGX.replace_all(&product.title, "");
+            let (shortened_title, rest) = normalized_title.split_at(50);
+            let title = if rest.len() > 10 {
+                format!("{}...", shortened_title)
+            } else {
+                normalized_title.to_string()
+            };
             let patch = PatchData {
                 body: String::with_capacity(0),
                 tags,
-                title,
+                title: normalized_title.to_string(),
                 old_title: String::with_capacity(0),
                 metadata,
             };
