@@ -8,10 +8,11 @@ use urlencoding::encode;
 
 use persistance::fs::{utils::get_config_location, write_media};
 use warp::{
+    filters::BoxedFilter,
     http::{header, HeaderValue, Response},
     hyper::{StatusCode, Uri},
     multipart::{self, Part},
-    Filter, Rejection, Reply,
+    Filter, Reply,
 };
 
 use crate::services::{create_jwt, MONTH};
@@ -91,7 +92,7 @@ impl APIRouter {
     pub fn new() -> Self {
         Self {}
     }
-    pub fn routes(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+    pub fn routes(&self) -> BoxedFilter<(impl Reply,)> {
         self.login()
             .or(self.logout())
             .or(self.styles())
@@ -100,50 +101,58 @@ impl APIRouter {
             .or(self.search_from_qs())
             .or(self.search())
             .or(self.search_indicies())
+            .boxed()
     }
-    fn search(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-        warp::post().and(with_auth()).and(
-            warp::path("search").and(
-                warp::body::content_length_limit(MAX_BODY_SIZE)
-                    .and(warp::body::form())
-                    .then(|form_body: HashMap<String, String>| async move {
-                        let term = form_body.get("term").unwrap();
-                        let results_page = Runner::note_search(term.clone()).await;
-                        warp::reply::html(results_page)
-                    }),
-            ),
-        )
+    fn search(&self) -> BoxedFilter<(impl Reply,)> {
+        warp::post()
+            .and(with_auth())
+            .and(
+                warp::path("search").and(
+                    warp::body::content_length_limit(MAX_BODY_SIZE)
+                        .and(warp::body::form())
+                        .then(|form_body: HashMap<String, String>| async move {
+                            let term = form_body.get("term").unwrap();
+                            let results_page = Runner::note_search(term.clone()).await;
+                            warp::reply::html(results_page)
+                        }),
+                ),
+            )
+            .boxed()
     }
-    fn search_indicies(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+    fn search_indicies(&self) -> BoxedFilter<(impl Reply,)> {
         warp::get()
             .and(with_auth())
             .and(warp::path("search-idx").then(|| async {
                 let indicies = Runner::dump_search_index().await;
                 warp::reply::json(&indicies)
             }))
+            .boxed()
     }
-    fn img(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-        warp::post().and(with_auth()).and(
-            warp::path("files").and(
-                warp::body::content_length_limit(MAX_BODY_SIZE)
-                    .and(warp::header::<String>("filename"))
-                    .and(warp::body::bytes())
-                    .then(|filename, bytes| async {
-                        match Runner::process_image(filename, bytes).await {
-                            Ok(()) => warp::reply::with_status("ok", StatusCode::OK),
-                            Err(e) => {
-                                eprintln!("{}", e);
-                                warp::reply::with_status(
-                                    "internal server error",
-                                    StatusCode::INTERNAL_SERVER_ERROR,
-                                )
+    fn img(&self) -> BoxedFilter<(impl Reply,)> {
+        warp::post()
+            .and(with_auth())
+            .and(
+                warp::path("files").and(
+                    warp::body::content_length_limit(MAX_BODY_SIZE)
+                        .and(warp::header::<String>("filename"))
+                        .and(warp::body::bytes())
+                        .then(|filename, bytes| async {
+                            match Runner::process_image(filename, bytes).await {
+                                Ok(()) => warp::reply::with_status("ok", StatusCode::OK),
+                                Err(e) => {
+                                    eprintln!("{}", e);
+                                    warp::reply::with_status(
+                                        "internal server error",
+                                        StatusCode::INTERNAL_SERVER_ERROR,
+                                    )
+                                }
                             }
-                        }
-                    }),
-            ),
-        )
+                        }),
+                ),
+            )
+            .boxed()
     }
-    fn files(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+    fn files(&self) -> BoxedFilter<(impl Reply,)> {
         warp::post()
             .and(with_auth())
             .and(warp::body::content_length_limit(MAX_BODY_SIZE))
@@ -158,58 +167,65 @@ impl APIRouter {
                     }
                 }
             })
+            .boxed()
     }
-    fn login(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-        warp::post().and(warp::path("login")).and(
-            warp::body::content_length_limit(MAX_BODY_SIZE)
-                .and(warp::body::form())
-                .then(|form_body: HashMap<String, String>| async move {
-                    let username = form_body.get("username").unwrap();
-                    let pwd = form_body.get("password").unwrap();
-                    match create_jwt(username, pwd) {
-                        Ok(token) => Ok(Response::builder()
-                            .status(StatusCode::MOVED_PERMANENTLY)
-                            .header(header::LOCATION, HeaderValue::from_static("/"))
-                            .header(
-                                header::SET_COOKIE,
-                                format!(
-                                    "token={}; Secure; HttpOnly; Max-Age={}; Path=/",
-                                    token, MONTH
-                                ),
-                            )
-                            .body("ok")),
-                        Err(e) => {
-                            let status: StatusCode;
-                            let body: &str;
-                            if let AuthError::JWTDecodeError = e {
-                                status = StatusCode::BAD_REQUEST;
-                                body = "Could not process request";
-                            } else {
-                                status = StatusCode::FORBIDDEN;
-                                body = "Invalid username or password";
-                            }
-                            Ok(Response::builder()
-                                .status(status)
+    fn login(&self) -> BoxedFilter<(impl Reply,)> {
+        warp::post()
+            .and(warp::path("login"))
+            .and(
+                warp::body::content_length_limit(MAX_BODY_SIZE)
+                    .and(warp::body::form())
+                    .then(|form_body: HashMap<String, String>| async move {
+                        let username = form_body.get("username").unwrap();
+                        let pwd = form_body.get("password").unwrap();
+                        match create_jwt(username, pwd) {
+                            Ok(token) => Ok(Response::builder()
+                                .status(StatusCode::MOVED_PERMANENTLY)
                                 .header(header::LOCATION, HeaderValue::from_static("/"))
-                                .body(body))
+                                .header(
+                                    header::SET_COOKIE,
+                                    format!(
+                                        "token={}; Secure; HttpOnly; Max-Age={}; Path=/",
+                                        token, MONTH
+                                    ),
+                                )
+                                .body("ok")),
+                            Err(e) => {
+                                let status: StatusCode;
+                                let body: &str;
+                                if let AuthError::JWTDecodeError = e {
+                                    status = StatusCode::BAD_REQUEST;
+                                    body = "Could not process request";
+                                } else {
+                                    status = StatusCode::FORBIDDEN;
+                                    body = "Invalid username or password";
+                                }
+                                Ok(Response::builder()
+                                    .status(status)
+                                    .header(header::LOCATION, HeaderValue::from_static("/"))
+                                    .body(body))
+                            }
                         }
-                    }
-                }),
-        )
+                    }),
+            )
+            .boxed()
     }
-    fn logout(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-        warp::get().and(warp::path("logout")).then(|| async {
-            Ok(Response::builder()
-                .status(StatusCode::MOVED_PERMANENTLY)
-                .header(header::LOCATION, HeaderValue::from_static("/"))
-                .header(
-                    header::SET_COOKIE,
-                    "token=; Secure; HttpOnly; Max-Age=0; Path=/",
-                )
-                .body("ok"))
-        })
+    fn logout(&self) -> BoxedFilter<(impl Reply,)> {
+        warp::get()
+            .and(warp::path("logout"))
+            .then(|| async {
+                Ok(Response::builder()
+                    .status(StatusCode::MOVED_PERMANENTLY)
+                    .header(header::LOCATION, HeaderValue::from_static("/"))
+                    .header(
+                        header::SET_COOKIE,
+                        "token=; Secure; HttpOnly; Max-Age=0; Path=/",
+                    )
+                    .body("ok"))
+            })
+            .boxed()
     }
-    fn search_from_qs(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+    fn search_from_qs(&self) -> BoxedFilter<(impl Reply,)> {
         warp::path("search")
             .and(warp::get())
             .and(with_auth())
@@ -219,21 +235,25 @@ impl APIRouter {
                 let results_page = Runner::note_search(term.clone()).await;
                 warp::reply::html(results_page)
             })
+            .boxed()
     }
-    fn styles(&self) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-        warp::path("styles").and(warp::post().and(with_auth()).and(
-            warp::body::content_length_limit(MAX_BODY_SIZE).and(warp::body::form().then(
-                |form_body| async {
-                    match Runner::update_styles(form_body).await {
-                        Ok(()) => warp::redirect(Uri::from_static("/")),
-                        Err(e) => {
-                            eprintln!("{}", e);
-                            let redir_url = format!("/error?msg={}", encode(&format!("{:?}", e)));
-                            warp::redirect(redir_url.parse::<Uri>().unwrap())
+    fn styles(&self) -> BoxedFilter<(impl Reply,)> {
+        warp::path("styles")
+            .and(warp::post().and(with_auth()).and(
+                warp::body::content_length_limit(MAX_BODY_SIZE).and(warp::body::form().then(
+                    |form_body| async {
+                        match Runner::update_styles(form_body).await {
+                            Ok(()) => warp::redirect(Uri::from_static("/")),
+                            Err(e) => {
+                                eprintln!("{}", e);
+                                let redir_url =
+                                    format!("/error?msg={}", encode(&format!("{:?}", e)));
+                                warp::redirect(redir_url.parse::<Uri>().unwrap())
+                            }
                         }
-                    }
-                },
-            )),
-        ))
+                    },
+                )),
+            ))
+            .boxed()
     }
 }

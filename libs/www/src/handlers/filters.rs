@@ -36,32 +36,28 @@ pub struct Claims {
 
 pub fn with_location(
     wiki_location: Arc<String>,
-) -> impl Filter<Extract = (String,), Error = std::convert::Infallible> + Clone {
-    warp::any().map(move || (*wiki_location).to_owned())
+) -> impl Filter<Extract = (String,), Error = Rejection> + Clone {
+    warp::any().map(move || (*wiki_location).to_owned()).boxed()
 }
 
-pub fn with_user(
-    user: String,
-) -> impl Filter<Extract = (String,), Error = std::convert::Infallible> + Clone {
-    warp::any().map(move || user.clone())
+pub fn with_user(user: String) -> impl Filter<Extract = (String,), Error = Rejection> + Clone {
+    warp::any().map(move || user.clone()).boxed()
 }
 
-pub fn with_host(
-    host: String,
-) -> impl Filter<Extract = (String,), Error = std::convert::Infallible> + Clone {
-    warp::any().map(move || host.clone())
+pub fn with_host(host: String) -> impl Filter<Extract = (String,), Error = Rejection> + Clone {
+    warp::any().map(move || host.clone()).boxed()
 }
 
 pub fn with_queue(
     queue: Arc<JobQueue>,
-) -> impl Filter<Extract = (Arc<JobQueue>,), Error = std::convert::Infallible> + Clone {
-    warp::any().map(move || queue.clone())
+) -> impl Filter<Extract = (Arc<JobQueue>,), Error = Rejection> + Clone {
+    warp::any().map(move || queue.clone()).boxed()
 }
 
 pub fn with_links(
     links: GlobalBacklinks,
-) -> impl Filter<Extract = (GlobalBacklinks,), Error = std::convert::Infallible> + Clone {
-    warp::any().map(move || links.clone())
+) -> impl Filter<Extract = (GlobalBacklinks,), Error = Rejection> + Clone {
+    warp::any().map(move || links.clone()).boxed()
 }
 
 pub fn with_auth() -> impl Filter<Extract = (), Error = Rejection> + Clone {
@@ -69,6 +65,7 @@ pub fn with_auth() -> impl Filter<Extract = (), Error = Rejection> + Clone {
         .and(warp::filters::cookie::optional("token"))
         .and_then(check_auth)
         .untuple_one()
+        .boxed()
 }
 
 pub async fn check_auth(token: Option<String>) -> AuthResult<()> {
