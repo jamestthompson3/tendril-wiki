@@ -7,23 +7,11 @@ use parse::{
     parse_completed, parse_context, parse_created, parse_meta, parse_priority, parse_project,
     META_RGX, PRIO_RGX,
 };
+use render::sanitize_html;
 use serde::{Deserialize, Serialize};
 use std::fmt::Write as _;
 use std::{collections::HashMap, str::FromStr};
 use thiserror::Error;
-
-const FORBIDDEN_TAGS: [&str; 10] = [
-    "<noscript>",
-    "</noscript>",
-    "<script>",
-    "</script>",
-    "<object>",
-    "</object>",
-    "<embed>",
-    "</embed>",
-    "<link>",
-    "</link>",
-];
 
 // use this to prevent a million if let(Some) = ...  code branches in the `patch` method
 #[derive(Debug, Serialize, Deserialize)]
@@ -292,19 +280,8 @@ impl Task {
         }
     }
 
-    fn sanitize_body(&self) -> String {
-        let mut sanitized = self.body.clone();
-        for tag in FORBIDDEN_TAGS {
-            sanitized = sanitized.replace(tag, &cleaned(tag))
-        }
-        fn cleaned(tag: &str) -> String {
-            tag.replace('>', "&gt;").replace('<', "&lt;")
-        }
-        sanitized
-    }
-
     fn format_body(&self) -> String {
-        let mut formatted = self.sanitize_body();
+        let mut formatted = sanitize_html(&self.body);
         if let Some(prio) = &self.priority {
             formatted = formatted.replace(&format!("({})", prio), "");
         }

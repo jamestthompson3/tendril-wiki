@@ -1,22 +1,16 @@
-use todo::Task;
-
 use crate::{get_template_file, render_includes, Render};
 use async_trait::async_trait;
 
 pub struct TasksPage {
-    pub tasks: Vec<Task>,
+    pub tasks: Vec<String>,
 }
 
 impl TasksPage {
-    pub fn new(entries: Vec<Task>) -> Self {
+    pub fn new(entries: Vec<String>) -> Self {
         Self { tasks: entries }
     }
     fn render_tasks(&self) -> String {
-        let mut html = String::new();
-        for (idx, entry) in self.tasks.iter().enumerate() {
-            html.push_str(&entry.to_html(Some(idx)));
-        }
-        html
+        self.tasks.join("")
     }
 }
 

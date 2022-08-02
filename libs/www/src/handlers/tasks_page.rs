@@ -37,7 +37,9 @@ impl Runner {
         let tasks = todo_file
             .lines()
             .map(|l| Task::from_str(l).unwrap())
-            .collect::<Vec<Task>>();
+            .enumerate()
+            .map(|(i, task)| task.to_html(Some(i)))
+            .collect::<Vec<String>>();
         let ctx = TasksPage { tasks };
         ctx.render().await
     }
