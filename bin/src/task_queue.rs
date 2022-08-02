@@ -15,6 +15,7 @@ use persistance::fs::{
     write, write_archive,
 };
 use regex::Regex;
+use render::sanitize_html;
 use search_engine::{
     delete_archived_file, delete_entry_from_update, patch_search_from_archive,
     patch_search_from_update,
@@ -94,11 +95,12 @@ pub async fn process_tasks(
                             .await
                             .unwrap();
                         let note_title = TITLE_RGX.replace_all(&product.title, "").to_string();
+                        let sanitized_content = sanitize_html(&product.content);
                         let compressed = compress(&product.text);
                         write_archive(compressed, &note_title).await;
                         patch_search_from_archive((note_title.clone(), product.text)).await;
                         let patch = PatchData {
-                            body: String::with_capacity(0),
+                            body: sanitized_content,
                             tags,
                             title: note_title.clone(),
                             old_title: String::with_capacity(0),

@@ -13,6 +13,7 @@ lazy_static = "1.4.0"
 logging = { path = "../libs/logging" }
 markdown = { path = "../libs/markdown" }
 persistance = { path = "../libs/persistance" }
+render = { path = "../libs/render" }
 regex = "1.5.5"
 search-engine = { path = "../libs/search-engine" }
 tasks = { path = "../libs/tasks" }

@@ -2,7 +2,7 @@ use std::{collections::HashMap, time::Duration};
 
 use persistance::fs::write;
 use regex::Regex;
-use render::{bookmark_page::BookmarkAddPage, Render};
+use render::{bookmark_page::BookmarkAddPage, Render, sanitize_html};
 use tasks::{
     archive::extract,
     messages::{Message, PatchData},
@@ -37,17 +37,11 @@ impl Runner {
         let mut metadata = HashMap::new();
         metadata.insert(String::from("url"), url.clone());
         if let Ok(product) = tokio::task::spawn_blocking(move || extract(url)).await {
-            let normalized_title = TITLE_RGX.replace_all(&product.title, "");
-            let (shortened_title, rest) = normalized_title.split_at(50);
-            let title = if rest.len() > 10 {
-                format!("{}...", shortened_title)
-            } else {
-                normalized_title.to_string()
-            };
+            let title = normalize_title(&product.title);
             let patch = PatchData {
-                body: String::with_capacity(0),
+                body: sanitize_html(&product.content),
                 tags,
-                title: normalized_title.to_string(),
+                title,
                 old_title: String::with_capacity(0),
                 metadata,
             };
@@ -144,5 +138,37 @@ impl BookmarkPageRouter {
                 warp::redirect(response)
             })
             .boxed()
+    }
+}
+
+fn normalize_title(title: &str) -> String {
+    let normalized_title = TITLE_RGX.replace_all(title, "");
+    // OS file systems don't like really long names, so we can split off bits from the page
+    // title if it is too long.
+    let mut title = normalized_title.to_string();
+    if normalized_title.len() > 50 {
+        let (shortened_title, rest) = normalized_title.split_at(50);
+        // If it's really long, then we append ellipses. If not, we can just keep the
+        // original title.
+        if rest.len() > 10 {
+            title = format!("{}...", shortened_title.trim());
+        }
+    }
+    title
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn normalizes_wiki_title() {
+        let mut test_title = "testing: a neat thing";
+        let result = normalize_title(test_title);
+        assert_ne!(String::from(test_title), result);
+        assert_eq!(String::from("testing a neat thing"), result);
+        test_title = "lots of characters. A really long title. Maybe with some / and \\ and -- chars";
+        let result = normalize_title(test_title);
+        assert_ne!(String::from(test_title), result);
+        assert_eq!(String::from("lots of characters A really long title Maybe with..."), result);
     }
 }

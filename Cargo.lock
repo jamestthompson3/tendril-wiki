@@ -1587,6 +1587,7 @@ dependencies = [
  "markdown",
  "persistance",
  "regex",
+ "render",
  "search-engine",
  "tasks",
  "tokio",
