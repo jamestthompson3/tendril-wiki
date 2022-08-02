@@ -84,7 +84,7 @@ pub async fn write(data: &PatchData) -> Result<(), WriteWikiError> {
     let mut note_meta = NoteMeta::from(data);
     let now = Local::now().format(DT_FORMAT).to_string();
     // In the case that we're creating a new file
-    if !file_path.exists() {
+    if !file_path.exists() && data.old_title.is_empty() {
         note_meta.metadata.insert("created".into(), now.clone());
         note_meta.metadata.insert("id".into(), now);
         let note: String = note_meta.into();
@@ -118,9 +118,9 @@ pub async fn write(data: &PatchData) -> Result<(), WriteWikiError> {
     let final_note: String = note_meta.into();
     if data.old_title != data.title && !data.old_title.is_empty() {
         let new_location = PathBuf::from(format!(
-            "{}{}",
+            "{}{}.md",
             WIKI_LOCATION.to_str().unwrap(),
-            data.old_title
+            data.title
         ));
         // Rename the file to the new title
         match fs::rename(&file_path, &new_location).await {
@@ -131,6 +131,7 @@ pub async fn write(data: &PatchData) -> Result<(), WriteWikiError> {
                     Err(WriteWikiError::WriteError(e))
                 }
             },
+
             Err(e) => Err(WriteWikiError::WriteError(e)),
         }
     } else {
