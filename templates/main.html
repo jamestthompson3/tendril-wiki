@@ -13,26 +13,35 @@
   </head>
   <body>
     <%= include "nav" %>
-    <div class="content-container">
-      <%= include "edit" %>
+    <noscript>
+      <div class="content-container">
+        <%= include "edit" %>
 
+        <div class="content">
+          <h1 class="title"><%= title %></h1>
+          <div>
+            <ul class="tags">
+              <%= tags %>
+            </ul>
+          </div>
+          <main class="content-body"><%= body %></main>
+          <details class="metadata">
+            <summary>Metadata</summary>
+            <div>
+              <dl><%= metadata %></dl>
+            </div>
+          </details>
+          <%= links %>
+        </div>
+      </div>
+    </noscript>
+    <div class="content-container">
       <div class="content">
         <h1 class="title"><%= title %></h1>
-        <div>
-          <ul class="tags">
-            <%= tags %>
-          </ul>
-        </div>
-        <main class="content-body"><%= body %></main>
-        <details class="metadata">
-          <summary>Metadata</summary>
-          <div>
-            <dl><%= metadata %></dl>
-          </div>
-        </details>
-        <%= links %>
+        <div id="content-block" class="content-body"><%= body %></div>
       </div>
     </div>
     <%= include "footer" %>
   </body>
+  <script src="static/editor.js" type="text/javascript"></script>
 </html>

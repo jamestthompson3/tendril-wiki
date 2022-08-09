@@ -36,6 +36,20 @@ impl<'a> WikiPage<'a> {
             String::with_capacity(0)
         }
     }
+    fn render_body(&self) -> String {
+        self.page
+            .body
+            .split('\n')
+            .filter_map(|line| {
+                if line.is_empty() {
+                    None
+                } else {
+                    Some(format!("<div class=\"text-block\">{}</div>", line))
+                }
+            })
+            .collect::<Vec<String>>()
+            .join("\n")
+    }
 
     fn render_page_metadata(&self) -> String {
         let mut metadata_html = String::new();
@@ -93,7 +107,7 @@ impl<'a> Render for WikiPage<'a> {
         let mut ctx = get_template_file("main").await.unwrap();
         ctx = ctx
             .replace("<%= title %>", &page.title)
-            .replace("<%= body %>", &page.body)
+            .replace("<%= body %>", &self.render_body())
             .replace("<%= tags %>", &tag_string)
             .replace("<%= links %>", &self.render_page_backlinks(&backlinks))
             .replace("<%= metadata %>", &self.render_page_metadata());

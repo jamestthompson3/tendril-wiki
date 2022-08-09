@@ -239,15 +239,15 @@ form.editor div {
   min-width: 70px;
 }
 
-.editor textarea {
-  width: 80%;
+textarea {
+  width: 100%;
   margin: auto;
-  height: 500px;
   padding: 0.5rem;
   color: var(--text-color);
   background-color: var(--bg-darker);
   border: none;
   border-radius: var(--rad);
+  resize: none;
 }
 .editor input[type="text"],
 .editor input[type="url"],
