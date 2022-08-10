@@ -7,8 +7,10 @@ import { textToHtml, htmlToText } from "./utils/parsing.js";
     el.addEventListener("click", setupEditor);
   });
 
-  function setupEditor() {
+  function setupEditor(e) {
+    if (!e.target.classList.contains(".text-block")) return;
     const textArea = document.createElement("textarea");
+    htmlToText(this);
     textArea.textContent = this.textContent;
     textArea.addEventListener("keyup", handleInput);
     textArea.addEventListener("keydown", (e) => updateInputHeight(e.target));
@@ -50,7 +52,7 @@ import { textToHtml, htmlToText } from "./utils/parsing.js";
     }
     e.target.replaceWith(div);
   }
-  function addBlock(e) {
+  function addBlock() {
     const textblock = document.createElement("textarea");
     textblock.addEventListener("blur", setupViewer);
     textblock.addEventListener("keyup", handleInput);
