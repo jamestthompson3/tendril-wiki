@@ -1,3 +1,5 @@
+import { textToHtml, htmlToText } from "./utils/parsing.js";
+
 (function () {
   let currentFocusedElement;
   const content = document.getElementById("content-block");
@@ -86,31 +88,14 @@
     }
     return true;
   }
+})();
 
-  function textToHtml(text) {
-    const linkedText = parseWikiLinks(text);
-    console.log(linkedText);
-    return linkedText;
-  }
+/* TESTING */
+const shouldRunTests = false;
 
-  const WIKI_LINK_REGEXP = /\[\[([a-zA-Z0-9\s?\-?(\|)?]+)\]\]/g;
-  function parseWikiLinks(text) {
-    let finalString = text;
-    for (const match of text.matchAll(WIKI_LINK_REGEXP)) {
-      const alias = match[1].split("|");
-      // handle aliased links: [[alias|actual page]]
-      if (alias.length > 1) {
-        finalString = finalString.replaceAll(
-          match[0],
-          `<a href="/${encodeURIComponent(alias[1])}">${alias[0]}</a>`
-        );
-      } else {
-        finalString = finalString.replaceAll(
-          match[0],
-          `<a href="/${encodeURIComponent(match[1])}">${match[1]}</a>`
-        );
-      }
-    }
-    return finalString;
+(async () => {
+  if (shouldRunTests) {
+    // import testing module for side effects
+    await import("/static/tests.js");
   }
 })();
