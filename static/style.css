@@ -248,6 +248,7 @@ textarea {
   border: none;
   border-radius: var(--rad);
   resize: none;
+  font-size: 1.2rem;
 }
 .editor input[type="text"],
 .editor input[type="url"],
