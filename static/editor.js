@@ -8,7 +8,8 @@ import { textToHtml, htmlToText } from "./utils/parsing.js";
   });
 
   function setupEditor(e) {
-    // if (!e.target.classList.contains(".text-block")) return;
+    // don't try to edit the block when we're clicking a link
+    if (e.target.nodeName === "A") return;
     const textArea = document.createElement("textarea");
     htmlToText(this);
     textArea.textContent = this.textContent;
@@ -93,7 +94,7 @@ import { textToHtml, htmlToText } from "./utils/parsing.js";
 })();
 
 /* TESTING */
-const shouldRunTests = false;
+const shouldRunTests = true;
 
 (async () => {
   if (shouldRunTests) {
