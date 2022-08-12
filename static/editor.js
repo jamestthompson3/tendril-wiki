@@ -45,7 +45,6 @@ import { textToHtml, htmlToText } from "./utils/parsing.js";
   function setupViewer(e) {
     const div = document.createElement("div");
     div.addEventListener("click", setupEditor);
-    // div.textContent = e.target.value;
     div.innerHTML = textToHtml(e.target.value);
     div.classList.add("text-block");
     if (this.value !== "" && attributesNotSet(e.target)) {
@@ -53,11 +52,15 @@ import { textToHtml, htmlToText } from "./utils/parsing.js";
     }
     e.target.replaceWith(div);
   }
-  function addBlock() {
+  function addBlock(e) {
     const textblock = document.createElement("textarea");
     textblock.addEventListener("blur", setupViewer);
     textblock.addEventListener("keyup", handleInput);
-    content.appendChild(textblock);
+    // insert the new block directly after the current block
+    const {
+      target: { parentNode, nextSibling },
+    } = e;
+    parentNode.insertBefore(textblock, nextSibling);
     setAsFocused(textblock);
   }
   function setAsFocused(el) {
