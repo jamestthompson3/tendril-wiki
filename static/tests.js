@@ -1,5 +1,5 @@
 /* Unit Tests */
-import { textToHtml } from "./utils/parsing.js";
+import { textToHtml } from "./mods/parsing.js";
 
 // Parsing
 // ==================
