@@ -239,6 +239,16 @@ form.editor div {
   min-width: 70px;
 }
 
+*[data-indent="1"] {
+  margin-left: 1rem;
+}
+*[data-indent="2"] {
+  margin-left: 2rem;
+}
+*[data-indent="3"] {
+  margin-left: 3rem;
+}
+
 textarea {
   width: 100%;
   margin: auto;
