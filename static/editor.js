@@ -8,7 +8,7 @@ import { textToHtml, htmlToText } from "./utils/parsing.js";
   });
 
   function setupEditor(e) {
-    if (!e.target.classList.contains(".text-block")) return;
+    // if (!e.target.classList.contains(".text-block")) return;
     const textArea = document.createElement("textarea");
     htmlToText(this);
     textArea.textContent = this.textContent;
