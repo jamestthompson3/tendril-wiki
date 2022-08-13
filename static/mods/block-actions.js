@@ -81,6 +81,7 @@ function attributesNotSet(el) {
 export function handleInput(e) {
   switch (e.key) {
     case "Backspace": {
+      // TODO handle indenting back one level.
       if (e.target.value === "") {
         deleteBlock(e.target);
         break;
@@ -89,7 +90,8 @@ export function handleInput(e) {
     }
     case "Enter": {
       if (!e.shiftKey) {
-        addBlock.bind(this)();
+        const indentation = this.dataset.indent;
+        addBlock.bind(this)(indentation && Number(indentation));
         break;
       }
       break;
@@ -102,16 +104,15 @@ export function handleInput(e) {
 export function handleKeydown(e) {
   if (e.key === "Tab") {
     e.preventDefault();
-    const boundBlock = addBlock.bind(this);
     const indentation = this.dataset.indent;
     if (indentation) {
       // Max indent is 3 levels, min is 0
       const indentationLevel = e.shiftKey
         ? Math.max(Number(indentation) - 1, 0)
         : Math.min(Number(indentation) + 1, 3);
-      boundBlock(indentationLevel);
-    } else {
-      !e.shiftKey && boundBlock(1);
+      this.dataset.indent = indentationLevel;
+    } else if (!e.shiftKey) {
+      this.dataset.indent = 1;
     }
   } else {
     updateInputHeight(this);

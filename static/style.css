@@ -240,13 +240,28 @@ form.editor div {
 }
 
 *[data-indent="1"] {
-  margin-left: 1rem;
+  margin-left: 0.5rem;
+}
+*[data-indent="1"]::before {
+  content: "";
+  margin-right: 0.5rem;
+  border-right: 1.5px solid var(--variant-muted);
 }
 *[data-indent="2"] {
-  margin-left: 2rem;
+  margin-left: 1rem;
+}
+*[data-indent="2"]::before {
+  content: "";
+  margin-right: 1rem;
+  border-right: 1.5px solid var(--variant-muted);
 }
 *[data-indent="3"] {
-  margin-left: 3rem;
+  margin-left: 1.5rem;
+}
+*[data-indent="3"]::before {
+  content: "";
+  margin-right: 1.5rem;
+  border-right: 1.5px solid var(--variant-muted);
 }
 
 textarea {
