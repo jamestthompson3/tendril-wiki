@@ -35,6 +35,14 @@ export function parseWikiLinks(text) {
   return finalString;
 }
 
+export function parseHeadings(text) {
+  if (/^#\s?/.test(text)) {
+    return `<h2>${text.slice(1).trim()}</h2>`;
+  } else {
+    return text;
+  }
+}
+
 export function parseURLs(text) {
   for (const match of text.matchAll(URL_REGEXP)) {
     const [url, _] = match;
@@ -59,7 +67,7 @@ export function parseEmails(text) {
 export function textToHtml(text) {
   return text
     .split("\n")
-    .map((line) => parseEmails(parseURLs(parseWikiLinks(line))))
+    .map((line) => parseHeadings(parseEmails(parseURLs(parseWikiLinks(line)))))
     .join("<br>");
 }
 
@@ -84,6 +92,9 @@ export function htmlToText(el) {
   }
   for (const image of el.querySelectorAll("img")) {
     image.replaceWith(image.src);
+  }
+  for (const header of el.querySelectorAll("h1,h2,h3,h4,h5,h6")) {
+    header.replaceWith(`# ${header.innerText}`);
   }
 }
 
