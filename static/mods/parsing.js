@@ -10,6 +10,10 @@ const EMAIL_REGEXP = new RegExp(
   /[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*/,
   "igm"
 );
+const IMAGE_REGEXP = new RegExp(
+  /.*\.(jpg|jpeg|png|gif|webp|apng|avif|jfif|pjpeg|pjp)$/,
+  "i"
+);
 
 export function parseWikiLinks(text) {
   let finalString = text;
@@ -34,7 +38,12 @@ export function parseWikiLinks(text) {
 export function parseURLs(text) {
   for (const match of text.matchAll(URL_REGEXP)) {
     const [url, _] = match;
-    text = text.replace(url, `<a href="${url}">${url}</a>`);
+    if (isSpecialtyUrl(url)) {
+      const specialParsed = parseSpecialtyUrl(url);
+      text = text.replace(url, specialParsed);
+    } else {
+      text = text.replace(url, `<a href="${url}">${url}</a>`);
+    }
   }
   return text;
 }
@@ -56,14 +65,34 @@ export function textToHtml(text) {
 
 export function htmlToText(el) {
   for (const anchor of el.querySelectorAll("a")) {
-    const path = decodeURIComponent(anchor.pathname).slice(1);
-    const linkedPage = anchor.innerText;
-    if (URL_REGEXP.test(linkedPage)) {
-      anchor.replaceWith(linkedPage);
-    } else if (path === linkedPage) {
-      anchor.replaceWith(`[[${linkedPage}]]`);
+    if (anchor.href.includes("mailto:")) {
+      anchor.replaceWith(anchor.innerText);
     } else {
-      anchor.replaceWith(`[[${linkedPage}|${href}]]`);
+      const path = decodeURIComponent(anchor.pathname).slice(1);
+      const linkedPage = anchor.innerText;
+      if (URL_REGEXP.test(linkedPage)) {
+        anchor.replaceWith(linkedPage);
+        return;
+      }
+      if (path === linkedPage) {
+        anchor.replaceWith(`[[${linkedPage}]]`);
+        return;
+      } else {
+        anchor.replaceWith(`[[${linkedPage}|${path}]]`);
+      }
     }
   }
+  for (const image of el.querySelectorAll("img")) {
+    image.replaceWith(image.src);
+  }
+}
+
+function isSpecialtyUrl(url) {
+  return IMAGE_REGEXP.test(url);
+}
+function parseSpecialtyUrl(url) {
+  if (IMAGE_REGEXP.test(url)) {
+    return `<img src="${url}">`;
+  }
+  return "";
 }

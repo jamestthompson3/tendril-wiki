@@ -123,4 +123,42 @@ function setupTextblockListeners(textblock) {
   textblock.addEventListener("blur", setupViewer);
   textblock.addEventListener("keyup", handleInput);
   textblock.addEventListener("keydown", handleKeydown);
+  textblock.addEventListener("paste", detectImagePaste);
+}
+
+function detectImagePaste(event) {
+  const items = (event.clipboardData || event.originalEvent.clipboardData)
+    .items;
+  for (let index in items) {
+    const item = items[index];
+    if (item.kind === "file") {
+      // we need to get the filename, and `getAsFile` clobbers this with a generic name
+      // so we can just use FormData here.
+      const formData = new FormData();
+      const file = item.getAsFile();
+      const extension = file.type.split("image/").find(Boolean);
+      formData.append(
+        "file",
+        item.getAsFile(),
+        `image-${new Date().valueOf()}.${extension}`
+      );
+      const blob = formData.get("file");
+      fetch("/files", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/octet-stream",
+          Filename: `${blob.name}`,
+        },
+        body: blob,
+      })
+        .then(() => {
+          // TODO figure out alt text...
+          event.target.value += `${window.location.origin}/files/${blob.name}`;
+        })
+        .catch((e) => {
+          console.error(e);
+          event.target.value += "Failed to upload image";
+        });
+    }
+  }
 }
