@@ -22,7 +22,8 @@ pub fn get_config_location() -> (PathBuf, PathBuf) {
 pub fn get_file_path(requested_file: &str) -> Result<PathBuf, ReadPageError> {
     let mut file_path = WIKI_LOCATION.clone();
     file_path.push(requested_file);
-    file_path.set_extension("md");
+    file_path.set_extension("txt");
+
     Ok(file_path)
 }
 

@@ -7,7 +7,6 @@ use crate::processors::tags::TagsArray;
 
 #[derive(Copy, Clone, PartialEq, Debug)]
 enum MetaParserState {
-    Ready,
     Parsing,
     End,
 }
@@ -26,7 +25,7 @@ struct MetaParserMachine {
 impl MetaParserMachine {
     pub fn new() -> Self {
         MetaParserMachine {
-            state: MetaParserState::Ready,
+            state: MetaParserState::Parsing,
         }
     }
 
@@ -90,14 +89,14 @@ impl From<String> for NoteMeta {
 #[allow(clippy::from_over_into)]
 impl Into<String> for NoteMeta {
     fn into(self) -> String {
-        let mut formatted_string = String::from("---\n");
+        let mut formatted_string = String::new();
         for key in self.metadata.keys() {
             formatted_string.push_str(key);
             formatted_string.push_str(": ");
             formatted_string.push_str(self.metadata.get(key).unwrap());
             formatted_string.push('\n');
         }
-        formatted_string.push_str("---\n");
+        formatted_string.push('\n');
         formatted_string.push_str(&self.content);
         formatted_string
     }
@@ -107,13 +106,12 @@ pub fn parse_meta<'a>(lines: impl Iterator<Item = &'a str>, debug_marker: &str) 
     let mut parser = MetaParserMachine::new();
     let mut notemeta = NoteMeta::default();
     for line in lines {
-        match line {
-            "---" => match parser.current_state() {
-                MetaParserState::Ready => parser.send(MetaParserState::Parsing),
-                MetaParserState::Parsing => parser.send(MetaParserState::End),
-                _ => {}
-            },
-            _ => match parser.current_state() {
+        if line.is_empty() {
+            if parser.current_state() == MetaParserState::Parsing {
+                parser.send(MetaParserState::End);
+            }
+        } else {
+            match parser.current_state() {
                 MetaParserState::Parsing => {
                     let values: Vec<&str> = line.split(": ").collect();
                     assert!(values.len() > 1, "{}", debug_marker);
@@ -127,8 +125,7 @@ pub fn parse_meta<'a>(lines: impl Iterator<Item = &'a str>, debug_marker: &str) 
                 MetaParserState::End => {
                     write!(notemeta.content, "\n{}", line).unwrap();
                 }
-                _ => {}
-            },
+            }
         }
     }
     notemeta
