@@ -72,7 +72,9 @@ export function textToHtml(text) {
 }
 
 export function htmlToText(el) {
-  for (const anchor of el.querySelectorAll("a")) {
+  const shadow = document.createElement(el.nodeName);
+  shadow.innerHTML = el.innerHTML;
+  for (const anchor of shadow.querySelectorAll("a")) {
     if (anchor.href.includes("mailto:")) {
       anchor.replaceWith(anchor.innerText);
     } else {
@@ -80,22 +82,20 @@ export function htmlToText(el) {
       const linkedPage = anchor.innerText;
       if (URL_REGEXP.test(linkedPage)) {
         anchor.replaceWith(linkedPage);
-        return;
-      }
-      if (path === linkedPage) {
+      } else if (path === linkedPage) {
         anchor.replaceWith(`[[${linkedPage}]]`);
-        return;
       } else {
         anchor.replaceWith(`[[${linkedPage}|${path}]]`);
       }
     }
   }
-  for (const image of el.querySelectorAll("img")) {
+  for (const image of shadow.querySelectorAll("img")) {
     image.replaceWith(image.src);
   }
-  for (const header of el.querySelectorAll("h1,h2,h3,h4,h5,h6")) {
+  for (const header of shadow.querySelectorAll("h1,h2,h3,h4,h5,h6")) {
     header.replaceWith(`# ${header.innerText}`);
   }
+  return shadow.textContent;
 }
 
 function isSpecialtyUrl(url) {

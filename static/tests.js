@@ -41,8 +41,7 @@ function testParsing() {
   html.forEach((str, idx) => {
     const parsedContainer = document.createElement("div");
     parsedContainer.innerHTML = str;
-    htmlToText(parsedContainer);
-    const parsed = parsedContainer.innerText;
+    const parsed = htmlToText(parsedContainer);
     if (parsed !== wikitext[idx]) {
       const content = document.querySelector(".content");
       const errMsg = document.createElement("p");

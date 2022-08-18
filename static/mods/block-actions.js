@@ -18,8 +18,31 @@ export function deleteBlock(el) {
   el.remove();
 }
 
-export function saveBlock(el, type) {
-  el.dataset.type = type;
+export function saveBlock() {
+  let fullBody;
+  const pageContent = document.getElementById("content-block");
+  for (let i = 0; i < pageContent.children.length; i++) {
+    const child = pageContent.children[i];
+    const text = htmlToText(child);
+    if (fullBody) {
+      fullBody = `${fullBody}\n${text}`;
+    } else {
+      fullBody = text;
+    }
+  }
+  fullBody = fullBody.slice(0, fullBody.length - 1);
+
+  const title = document.getElementsByClassName("title")[0].innerText;
+  // TODO parse out and save metadata, tags
+  fetch("/edit", {
+    method: "POST",
+    body: `body=${encodeURIComponent(
+      fullBody
+    )}&title=${title}&old_title=${title}`,
+    headers: {
+      "content-type": "application/x-www-form-urlencoded",
+    },
+  }).catch(console.error);
 }
 
 export function setAsFocused(el) {
@@ -48,21 +71,22 @@ export function setupViewer(e) {
   div.addEventListener("click", setupEditor);
   div.innerHTML = textToHtml(e.target.value);
   div.classList.add("text-block");
-  if (this.value !== "" && attributesNotSet(e.target)) {
-    saveBlock(div, "text/wikitext");
-  }
+  console.log({ val: this.value });
   for (const datapoint in this.dataset) {
     div.dataset[datapoint] = this.dataset[datapoint];
   }
   e.target.replaceWith(div);
+  if (this.value !== "" && this.value !== "\n") {
+    saveBlock();
+  }
 }
 
 export function setupEditor(e) {
   // don't try to edit the block when we're clicking a link
   if (e.target.nodeName === "A") return;
   const textblock = document.createElement("textarea");
-  htmlToText(this);
-  textblock.textContent = this.textContent;
+
+  textblock.textContent = htmlToText(this);
   for (const datapoint in this.dataset) {
     textblock.dataset[datapoint] = this.dataset[datapoint];
   }
@@ -71,18 +95,10 @@ export function setupEditor(e) {
   setAsFocused(textblock);
 }
 
-function attributesNotSet(el) {
-  if (el.dataset.type) {
-    return false;
-  }
-  return true;
-}
-
 export function handleInput(e) {
   switch (e.key) {
     case "Backspace": {
-      // TODO handle indenting back one level.
-      if (e.target.value === "") {
+      if (e.target.value === "" && e.target.parentNode.children.length > 1) {
         deleteBlock(e.target);
         break;
       }

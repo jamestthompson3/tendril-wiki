@@ -26,11 +26,6 @@
           </div>
           <main class="content-body"><%= body %></main>
           <details class="metadata">
-            <summary>Metadata</summary>
-            <div>
-              <dl><%= metadata %></dl>
-            </div>
-          </details>
           <%= links %>
         </div>
       </div>
@@ -40,6 +35,12 @@
         <h1 class="title"><%= title %></h1>
         <div id="content-block" class="content-body"><%= body %></div>
       </div>
+      <details>
+        <summary>Metadata</summary>
+        <div>
+          <dl id="metadata"><%= metadata %></dl>
+        </div>
+      </details>
     </div>
     <%= include "footer" %>
   </body>
