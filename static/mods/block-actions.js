@@ -71,7 +71,6 @@ export function setupViewer(e) {
   div.addEventListener("click", setupEditor);
   div.innerHTML = textToHtml(e.target.value);
   div.classList.add("text-block");
-  console.log({ val: this.value });
   for (const datapoint in this.dataset) {
     div.dataset[datapoint] = this.dataset[datapoint];
   }
@@ -106,6 +105,7 @@ export function handleInput(e) {
     }
     case "Enter": {
       if (!e.shiftKey) {
+        this.value = this.value.slice(0, this.value.length - 1);
         const indentation = this.dataset.indent;
         addBlock.bind(this)(indentation && Number(indentation));
         break;
