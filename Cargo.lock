@@ -693,8 +693,10 @@ name = "markdown"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "lazy_static",
  "logging",
  "pulldown-cmark",
+ "regex",
  "tasks",
  "thiserror",
  "tokio",

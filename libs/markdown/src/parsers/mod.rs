@@ -1,7 +1,7 @@
 pub mod html;
-pub mod meta;
+pub mod headers;
 pub mod templates;
 
 pub use self::html::*;
-pub use self::meta::*;
+pub use self::headers::*;
 pub use self::templates::*;

@@ -1,11 +1,16 @@
-use pulldown_cmark::{html, CowStr, Event, Options, Parser};
+use pulldown_cmark::CowStr;
+use regex::Regex;
+// use pulldown_cmark::{html, CowStr, Event, Options, Parser};
 use urlencoding::encode;
 
-#[derive(Copy, Clone, PartialEq, Debug)]
+lazy_static! {
+    pub(crate) static ref WIKI_LINK_END: Regex =
+        Regex::new(r#"(.*)(\]\])([[:punct:]]?$)"#).unwrap();
+}
+
+#[derive(Clone, PartialEq, Debug)]
 enum ParserState {
-    LinkStart,
-    LocationParsing,
-    LinkEnd,
+    LocationParsing(String),
     Accept,
 }
 
@@ -14,138 +19,160 @@ pub struct Html {
     pub body: String,
 }
 
-#[derive(Copy, Clone)]
-struct ParserMachine {
-    state: ParserState,
-}
-
-impl ParserMachine {
-    pub fn new() -> Self {
-        ParserMachine {
-            state: ParserState::Accept,
-        }
-    }
-
-    pub fn current_state(self) -> ParserState {
-        self.state
-    }
-
-    pub fn send(&mut self, state: ParserState) {
-        self.state = state;
-    }
-}
-
+// TODO maybe this can take ownership and mutate the string.
 pub fn to_html(md: &str) -> Html {
-    // TODO maybe don't allocate...
-    let mut wiki_link_location = String::new();
+    let mut final_rendered_output: Vec<String> = Vec::new();
 
-    let mut parser_machine = ParserMachine::new();
     let mut outlinks = Vec::new();
-    let parser = Parser::new_ext(md, Options::all()).map(|event| match event {
-        Event::Text(text) => match &*text {
-            "[" => match parser_machine.current_state() {
-                ParserState::Accept => {
-                    parser_machine.send(ParserState::LinkStart);
-                    Event::Text("".into())
-                }
-                ParserState::LinkStart => {
-                    parser_machine.send(ParserState::LocationParsing);
-                    Event::Text("".into())
-                }
-                _ => {
-                    println!("{}\n\n{:?}", md, parser_machine.current_state());
-                    panic!("Impossible state reached for `[`");
-                }
-            },
-            "]" => match parser_machine.current_state() {
-                ParserState::LinkEnd => {
-                    let link_text = wiki_link_location.clone();
-                    let location: &str;
-                    let text: &str;
-                    if link_text.contains('|') {
-                        let split_vals: Vec<&str> = link_text.split('|').collect();
-                        assert!(
-                            split_vals.len() < 3,
-                            "Malformed wiki link: {} ---> {:?}",
-                            link_text,
-                            split_vals
-                        );
-                        location = split_vals[1];
-                        text = split_vals[0];
-                    } else {
-                        location = &link_text;
-                        text = &link_text;
+    let lines = md.split('\n');
+    for line in lines {
+        if line.starts_with('#') {
+            final_rendered_output.push(format_text_block(format!(
+                "<h2>{}</h2>",
+                line.strip_prefix('#').unwrap().trim()
+            )));
+            continue;
+        }
+        println!("{}", line);
+        let mut parsed_line = Vec::new();
+        let mut parser_state = ParserState::Accept;
+        for word in line.split(' ') {
+            if word.starts_with("[[") && WIKI_LINK_END.is_match(word) {
+                let aliases = word
+                    .strip_prefix("[[")
+                    .unwrap()
+                    .split('|')
+                    .collect::<Vec<&str>>();
+                let caps = WIKI_LINK_END.captures(word).unwrap();
+                let wiki_link_end = caps.get(2).unwrap().as_str();
+                let wiki_link_punct = match caps.get(3) {
+                    Some(punct) => punct.as_str(),
+                    None => "",
+                };
+                if aliases.len() > 1 {
+                    if !aliases[1].starts_with("http") {
+                        outlinks.push(aliases[1].to_string());
                     }
-                    let link_location = format_links(location);
-                    outlinks.push(location.to_string());
-                    wiki_link_location.clear();
-                    parser_machine.send(ParserState::Accept);
-                    Event::Html(
-                        format!(r#"<a href="{}">{}</a>"#, link_location.trim(), text).into(),
-                    )
+                    construct_wiki_link(&mut parsed_line, (&format_links(aliases[1]), aliases[0]));
+                } else {
+                    if !aliases[0].starts_with("http") {
+                        outlinks.push(aliases[0].to_string());
+                    }
+                    construct_wiki_link(&mut parsed_line, (&format_links(aliases[0]), aliases[0]));
                 }
-                ParserState::LocationParsing => {
-                    parser_machine.send(ParserState::LinkEnd);
-                    Event::Text("".into())
+                continue;
+            }
+            if word.starts_with("[[") {
+                parser_state =
+                    ParserState::LocationParsing(word.strip_prefix("[[").unwrap().into());
+                continue;
+            }
+            if WIKI_LINK_END.is_match(word) {
+                println!("{} --> {:?}", word, parser_state);
+                match parser_state {
+                    ParserState::Accept => {
+                        parsed_line.push(word.into());
+                    }
+                    ParserState::LocationParsing(prev_word) => {
+                        let caps = WIKI_LINK_END.captures(word).unwrap();
+                        let wiki_link_end = caps.get(2).unwrap().as_str();
+                        let wiki_link_punct = match caps.get(3) {
+                            Some(punct) => punct.as_str(),
+                            None => "",
+                        };
+                        if prev_word.ends_with('|') {
+                            if !word.starts_with("http") {
+                                outlinks.push(prev_word.clone());
+                            }
+                            let trimmed_word = prev_word.strip_suffix('|').unwrap();
+                            construct_wiki_link(
+                                &mut parsed_line,
+                                (&format_links(trimmed_word), word),
+                            );
+                        } else {
+                            let caps = WIKI_LINK_END.captures(word).unwrap();
+                            let wiki_link_end = caps.get(2).unwrap().as_str();
+                            let wiki_link_punct = match caps.get(3) {
+                                Some(punct) => punct.as_str(),
+                                None => "",
+                            };
+                            let second_half =
+                                word.replace(wiki_link_end, "").replace(wiki_link_punct, "");
+                            let constructed_word = format!("{} {}", prev_word, second_half);
+                            println!("  {}", constructed_word);
+                            if !word.starts_with("http") {
+                                outlinks.push(constructed_word.clone());
+                            }
+                            construct_wiki_link(
+                                &mut parsed_line,
+                                (
+                                    &format_links(&constructed_word),
+                                    &format!("{} {}", prev_word, word),
+                                ),
+                            );
+                        }
+                        parser_state = ParserState::Accept;
+                    }
                 }
-                ParserState::Accept => Event::Text(text),
-                _ => {
-                    println!("{:?}", parser_machine.current_state());
-                    panic!("Impossible statereached for `]`");
-                }
-            },
-            _ => match parser_machine.current_state() {
-                ParserState::LocationParsing => {
-                    wiki_link_location.push_str(&text);
-                    Event::Text("".into())
-                }
-                ParserState::LinkEnd => {
-                    parser_machine.send(ParserState::LocationParsing);
-                    Event::Text(format!("]{}", text).into())
-                }
-                ParserState::LinkStart => {
-                    parser_machine.send(ParserState::Accept);
-                    Event::Text(format!("[{}", text).into())
-                }
-                _ => {
-                    // TODO: custom url schemas?
-                    if text.starts_with("http") {
-                        if text.contains("youtube.com") || text.contains("youtu.be") {
-                            return Event::Html(transform_youtube_url(text));
-                        }
-                        if text.contains("codesandbox.io") {
-                            return Event::Html(transform_cs_url(text));
-                        }
-                        if text.contains("codepen.io") {
-                            return Event::Html(transform_cp_url(text));
-                        }
-                        if text.ends_with(".mp3")
-                            || text.ends_with(".ogg")
-                            || text.ends_with(".flac")
-                        {
-                            return Event::Html(transform_audio_url(text));
-                        }
-                        if text.contains("vimeo.com") {
-                            return Event::Html(transform_vimeo_url(text));
-                        }
-                        if text.contains("spotify.com") {
-                            return Event::Html(transform_spotify_url(text));
-                        }
+                continue;
+            }
+            parsed_line.push(word.into());
+        }
+        final_rendered_output.push(format_text_block(parsed_line.join(" ")));
 
-                        return Event::Html(format!(r#"<a href="{}">{}</a>"#, text, text).into());
-                    }
-                    Event::Text(text)
-                }
-            },
-        },
-        _ => event,
-    });
-    let mut output = String::new();
-    html::push_html(&mut output, parser);
+        // TODO: custom url schemas?
+        // if text.starts_with("http") {
+        //     if text.contains("youtube.com") || text.contains("youtu.be") {
+        //         return Event::Html(transform_youtube_url(text));
+        //     }
+        //     if text.contains("codesandbox.io") {
+        //         return Event::Html(transform_cs_url(text));
+        //     }
+        //     if text.contains("codepen.io") {
+        //         return Event::Html(transform_cp_url(text));
+        //     }
+        //     if text.ends_with(".mp3")
+        //         || text.ends_with(".ogg")
+        //         || text.ends_with(".flac")
+        //     {
+        //         return Event::Html(transform_audio_url(text));
+        //     }
+        //     if text.contains("vimeo.com") {
+        //         return Event::Html(transform_vimeo_url(text));
+        //     }
+        //     if text.contains("spotify.com") {
+        //         return Event::Html(transform_spotify_url(text));
+        //     }
+
+        //     return Event::Html(format!(r#"<a href="{}">{}</a>"#, text, text).into());
+        // }
+        // Event::Text(text)
+        // }
+        // },
+        // },
+        // }
+    }
     Html {
-        body: output,
+        body: final_rendered_output.join(""),
         outlinks,
     }
+}
+
+fn construct_wiki_link(string_collection: &mut Vec<String>, parts: (&str, &str)) {
+    let caps = WIKI_LINK_END.captures(parts.1).unwrap();
+    let wiki_link_punct = match caps.get(3) {
+        Some(punct) => punct.as_str(),
+        None => "",
+    };
+    let formatted_link_content = parts.1.replace("]]", "").replace(wiki_link_punct, "");
+    string_collection.push(format!(
+        "<a href=\"{}\">{}</a>{}",
+        parts.0, formatted_link_content, wiki_link_punct
+    ));
+}
+
+fn format_text_block(inner: String) -> String {
+    format!("<div class=\"text-block\">{}</div>", inner)
 }
 
 fn transform_audio_url(text: CowStr) -> CowStr {
@@ -231,10 +258,19 @@ mod tests {
     }
     #[test]
     fn parses_md_to_html_with_wikilinks() {
-        let test_string = "# Title\n [[Some Page]]. Another thing\n * Hi\n * List\n * Output";
+        let test_string = "[[Some Page]]";
         let test_html = Html {
             outlinks: vec!["Some Page".into()],
-            body: "<h1>Title</h1>\n<p><a href=\"/Some%20Page\">Some Page</a>. Another thing</p>\n<ul>\n<li>Hi</li>\n<li>List</li>\n<li>Output</li>\n</ul>\n".into()
+            body: "<div class=\"text-block\"><a href=\"/Some%20Page\">Some Page</a></div>".into(),
+        };
+        let parsed = to_html(test_string);
+        assert_eq!(parsed.outlinks, test_html.outlinks);
+        assert_eq!(parsed.body, test_html.body);
+
+        let test_string = "# Title\n[[Some Page]]. Another thing\n * Hi\n * List\n * Output";
+        let test_html = Html {
+            outlinks: vec!["Some Page".into()],
+            body: "<div class=\"text-block\"><h2>Title</h2></div><div class=\"text-block\"><a href=\"/Some%20Page\">Some Page</a>. Another thing</div><div class=\"text-block\"> * Hi</div><div class=\"text-block\"> * List</div><div class=\"text-block\"> * Output</div>".into()
         };
         let parsed = to_html(test_string);
         assert_eq!(parsed.outlinks, test_html.outlinks);
