@@ -2,7 +2,7 @@ use std::{fs::read_dir, path::Path};
 
 use async_trait::async_trait;
 use futures::{stream, StreamExt};
-use markdown::parsers::{to_html, NoteMeta};
+use markdown::parsers::{to_html, NoteHeader};
 use persistance::fs::path_to_data_structure;
 
 use crate::{tokenizer::tokenize, Doc};
@@ -50,7 +50,7 @@ impl Proccessor for Notebook {
     }
 }
 
-pub(crate) fn tokenize_note_meta(content: &NoteMeta) -> Doc {
+pub(crate) fn tokenize_note_meta(content: &NoteHeader) -> Doc {
     let mut tokeniziable_content = content.content.clone();
     let tags = content.metadata.get("tags");
     let title = content.metadata.get("title");

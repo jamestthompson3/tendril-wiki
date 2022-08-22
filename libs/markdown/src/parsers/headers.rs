@@ -12,19 +12,19 @@ enum MetaParserState {
 }
 
 #[derive(Debug, Default)]
-pub struct NoteMeta {
+pub struct NoteHeader {
     pub metadata: HashMap<String, String>,
     pub content: String,
 }
 
 #[derive(Copy, Clone)]
-struct MetaParserMachine {
+struct HeaderParserMachine {
     state: MetaParserState,
 }
 
-impl MetaParserMachine {
+impl HeaderParserMachine {
     pub fn new() -> Self {
-        MetaParserMachine {
+        HeaderParserMachine {
             state: MetaParserState::Parsing,
         }
     }
@@ -38,13 +38,13 @@ impl MetaParserMachine {
     }
 }
 
-impl From<PatchData> for NoteMeta {
+impl From<PatchData> for NoteHeader {
     fn from(data: PatchData) -> Self {
         let mut metadata: HashMap<String, String> = data.metadata;
         metadata.insert("title".into(), data.title);
         let tags = TagsArray::from(data.tags);
         metadata.insert("tags".into(), tags.write());
-        NoteMeta {
+        NoteHeader {
             metadata,
             content: data.body,
         }
@@ -52,7 +52,7 @@ impl From<PatchData> for NoteMeta {
 }
 
 #[allow(clippy::from_over_into)]
-impl Into<PatchData> for NoteMeta {
+impl Into<PatchData> for NoteHeader {
     fn into(self) -> PatchData {
         let title = self.metadata.get("title").unwrap().to_owned();
         let tags = self.metadata.get("tags").unwrap().to_owned();
@@ -67,27 +67,27 @@ impl Into<PatchData> for NoteMeta {
     }
 }
 
-impl From<&PatchData> for NoteMeta {
+impl From<&PatchData> for NoteHeader {
     fn from(data: &PatchData) -> Self {
         let mut metadata: HashMap<String, String> = data.metadata.clone();
         metadata.insert("title".into(), data.title.clone());
         let tags = TagsArray::from(data.tags.clone());
         metadata.insert("tags".into(), tags.write());
-        NoteMeta {
+        NoteHeader {
             metadata,
             content: data.body.clone(),
         }
     }
 }
 
-impl From<String> for NoteMeta {
+impl From<String> for NoteHeader {
     fn from(stringified: String) -> Self {
         parse_meta(stringified.lines(), "raw_string") // mark that we've parsed from a passed string instead of a file
     }
 }
 
 #[allow(clippy::from_over_into)]
-impl Into<String> for NoteMeta {
+impl Into<String> for NoteHeader {
     fn into(self) -> String {
         let mut formatted_string = String::new();
         for key in self.metadata.keys() {
@@ -102,9 +102,9 @@ impl Into<String> for NoteMeta {
     }
 }
 
-pub fn parse_meta<'a>(lines: impl Iterator<Item = &'a str>, debug_marker: &str) -> NoteMeta {
-    let mut parser = MetaParserMachine::new();
-    let mut notemeta = NoteMeta::default();
+pub fn parse_meta<'a>(lines: impl Iterator<Item = &'a str>, debug_marker: &str) -> NoteHeader {
+    let mut parser = HeaderParserMachine::new();
+    let mut notemeta = NoteHeader::default();
     for line in lines {
         if line.is_empty() {
             if parser.current_state() == MetaParserState::Parsing {
@@ -114,7 +114,7 @@ pub fn parse_meta<'a>(lines: impl Iterator<Item = &'a str>, debug_marker: &str) 
             match parser.current_state() {
                 MetaParserState::Parsing => {
                     let values: Vec<&str> = line.split(": ").collect();
-                    assert!(values.len() > 1, "{}", debug_marker);
+                    assert!(values.len() > 1, "{} --> {:?}", debug_marker, values);
                     let vals = if values.len() > 2 {
                         values[1..].join(": ")
                     } else {

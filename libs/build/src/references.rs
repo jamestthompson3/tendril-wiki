@@ -2,7 +2,7 @@ use std::{collections::BTreeMap, fs::read_dir, io, path::PathBuf, sync::Arc};
 
 use async_recursion::async_recursion;
 use futures::{stream, StreamExt};
-use markdown::{parsers::NoteMeta, processors::to_template};
+use markdown::{parsers::NoteHeader, processors::to_template};
 use persistance::fs::{
     path_to_data_structure, read_note_cache, utils::get_file_path, write_note_cache,
 };
@@ -110,7 +110,7 @@ pub async fn build_tags_and_links(wiki_location: &str, links: GlobalBacklinks) {
     parse_entries(PathBuf::from(wiki_location), links.clone()).await;
 }
 
-pub async fn update_global_store(current_title: &str, note: &NoteMeta, links: GlobalBacklinks) {
+pub async fn update_global_store(current_title: &str, note: &NoteHeader, links: GlobalBacklinks) {
     let mut links = links.lock().await;
     let templatted = to_template(note);
     for link in templatted.outlinks {
@@ -143,7 +143,7 @@ pub async fn update_global_store(current_title: &str, note: &NoteMeta, links: Gl
     }
 }
 
-pub async fn delete_from_global_store(title: &str, note: &NoteMeta, links: GlobalBacklinks) {
+pub async fn delete_from_global_store(title: &str, note: &NoteHeader, links: GlobalBacklinks) {
     let mut links = links.lock().await;
     let templatted = to_template(note);
     for link in templatted.outlinks {

@@ -44,7 +44,7 @@ impl<'a> WikiPage<'a> {
                 if line.is_empty() {
                     None
                 } else {
-                    Some(format!("<div class=\"text-block\">{}</div>", line))
+                    Some(line.to_owned())
                 }
             })
             .collect::<Vec<String>>()

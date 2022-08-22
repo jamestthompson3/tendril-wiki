@@ -1,4 +1,3 @@
----
 created: 20201123105644661
 creator: taylor@teukka.tech
 modified: 20201123202524363
@@ -7,7 +6,7 @@ revision: 0
 tags: [Reality Building,Article]
 title: Reality shaping thoughts
 type: text/vnd.tiddlywiki
----
+
 > we think by the laws of nature, and thus do our reflections converge on understanding these laws when we consider how we think. [[Eidomorphism The Philosophy of Ontological Mathematics]] pg 16
 
 Very much related to [[Logical reality]], the idea that our ability to reason about and comprehend concepts, ideas, phenomena is limited to the reality in which we inhabit.

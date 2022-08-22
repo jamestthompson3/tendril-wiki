@@ -10,7 +10,7 @@ use std::{
 use chrono::{DateTime, FixedOffset, Local};
 use directories::ProjectDirs;
 use markdown::{
-    parsers::{parse_meta, NoteMeta, ParsedPages},
+    parsers::{parse_meta, NoteHeader, ParsedPages},
     processors::to_template,
 };
 use render::{index_page::IndexPage, wiki_page::WikiPage, GlobalBacklinks, Render};
@@ -81,7 +81,7 @@ pub async fn write(data: &PatchData) -> Result<(), WriteWikiError> {
         data.title.clone()
     };
     let file_path = get_file_path(&current_title_on_disk).unwrap();
-    let mut note_meta = NoteMeta::from(data);
+    let mut note_meta = NoteHeader::from(data);
     let now = Local::now().format(DT_FORMAT).to_string();
     // In the case that we're creating a new file
     if !file_path.exists() && data.old_title.is_empty() {
@@ -220,7 +220,7 @@ pub async fn create_journal_entry(entry: String) -> Result<PatchData, std::io::E
         write!(entry_file, "\n\n[{}] {}", now.format("%H:%M"), entry).unwrap();
         println!("\x1b[38;5;47mdaily journal updated\x1b[0m");
         fs::write(path, &entry_file).await?;
-        Ok(NoteMeta::from(entry_file).into())
+        Ok(NoteHeader::from(entry_file).into())
     } else {
         let docstring = format!(
             r#"
@@ -238,7 +238,7 @@ created: {:?}
         );
         println!("\x1b[38;5;47mdaily journal updated\x1b[0m");
         fs::write(get_file_path(&daily_file).unwrap(), docstring.clone()).await?;
-        Ok(NoteMeta::from(docstring).into())
+        Ok(NoteHeader::from(docstring).into())
     }
 }
 
@@ -260,10 +260,11 @@ pub async fn path_to_string<P: AsRef<Path> + ?Sized>(path: &P) -> Result<String,
     read_to_string(&path).await
 }
 
-pub async fn path_to_data_structure(path: &Path) -> Result<NoteMeta, ReadPageError> {
+pub async fn path_to_data_structure(path: &Path) -> Result<NoteHeader, ReadPageError> {
     match path_to_string(path).await {
         Ok(reader) => {
-            let meta = parse_meta(reader.lines(), path.to_str().unwrap());
+            let lines = reader.lines();
+            let meta = parse_meta(lines, path.to_str().unwrap());
             Ok(meta)
         }
         Err(e) => match e.kind() {

@@ -1,10 +1,10 @@
-use crate::parsers::{to_html, NoteMeta, ParsedPages, ParsedTemplate, TemplattedPage};
+use crate::parsers::{to_html, NoteHeader, ParsedPages, ParsedTemplate, TemplattedPage};
 
 pub mod tags;
 
 use self::tags::*;
 
-pub fn to_template(note: &NoteMeta) -> ParsedTemplate {
+pub fn to_template(note: &NoteHeader) -> ParsedTemplate {
     let html = to_html(&note.content);
     let default_title = "Untitled".to_string();
     let title = note

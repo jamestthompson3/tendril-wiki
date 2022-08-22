@@ -1,5 +1,5 @@
 use indexer::notebook::{tokenize_note_meta, Notebook};
-use markdown::parsers::NoteMeta;
+use markdown::parsers::NoteHeader;
 use persistance::fs::utils::{get_archive_location, get_data_dir_location};
 use searcher::{highlight_matches, search};
 use serde::{Deserialize, Serialize};
@@ -125,7 +125,7 @@ pub(crate) async fn read_search_index() -> SearchIdx {
     search_idx
 }
 
-pub async fn patch_search_from_update(note: &NoteMeta) {
+pub async fn patch_search_from_update(note: &NoteHeader) {
     let search_idx = read_search_index().await;
     let doc_idx = read_doc_index().await;
     let doc = tokenize_note_meta(note);

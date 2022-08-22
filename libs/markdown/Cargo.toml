@@ -8,10 +8,7 @@ edition = "2021"
 
 [dependencies]
 chrono = "0.4.19"
-lazy_static = "1.4.0"
-logging = { path = "../logging" }
-pulldown-cmark = { version = "0.9.1", default-features = false, features = ["simd"] }
-regex = "1.5.5"
+tendril = "0.4.3"
 tasks = { path = "../tasks" }
 thiserror = "1.0.30"
 tokio = { version = "1.17.0", features = ["fs"], default-features = false }
