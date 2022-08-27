@@ -145,9 +145,9 @@ fn parse_link(slice: &StrTendril) -> BlockResult {
     Ok((BlockElement::PageLink(content), link.len() + 3))
 }
 fn parse_quote(slice: &StrTendril) -> BlockResult {
-    let mut iter = slice.char_indices().peekable();
     let mut elements = Vec::new();
-    // Advance iterator to skip # character
+    let mut iter = slice.char_indices().peekable();
+    // Advance iterator to skip > character
     iter.next();
     while let Some(&(index, token)) = iter.peek() {
         match token {
@@ -160,6 +160,7 @@ fn parse_quote(slice: &StrTendril) -> BlockResult {
             }
         }
     }
+
     Ok((BlockElement::Quote(elements), slice.len()))
 }
 fn parse_text(slice: &StrTendril) -> BlockResult {
@@ -191,7 +192,13 @@ fn iterate_slice(input: &StrTendril) -> Vec<BlockElement> {
             }
             '[' => parse_link,
             ' ' | '\t' => parse_empty_space,
-            '>' => parse_quote,
+            '>' => {
+                if index == 0 {
+                    parse_quote
+                } else {
+                    parse_text
+                }
+            }
             _ => parse_text,
         };
 
@@ -346,14 +353,28 @@ mod tests {
 
     #[test]
     fn parses_quotes() {
-        let test_string = "> testing examples";
-        let block = parse_block(test_string.as_bytes());
+        let mut test_string = "> testing examples";
+        let mut block = parse_block(test_string.as_bytes());
         assert_eq!(block.len(), 1);
-        let matching_block = BlockElement::Quote(vec![
+        let mut matching_block = BlockElement::Quote(vec![
             BlockElement::Text(StrTendril::from_slice("testing")),
             BlockElement::EmptySpace(StrTendril::from_char(' ')),
             BlockElement::Text(StrTendril::from_slice("examples")),
         ]);
-        assert_eq!(block[0], matching_block)
+        assert_eq!(block[0], matching_block);
+
+        test_string = "> be invented-according to";
+
+        block = parse_block(test_string.as_bytes());
+        assert_eq!(block.len(), 1);
+        matching_block = BlockElement::Quote(vec![
+            BlockElement::Text(StrTendril::from_slice("be")),
+            BlockElement::EmptySpace(StrTendril::from_char(' ')),
+            BlockElement::Text(StrTendril::from_slice("invented-according")),
+            BlockElement::EmptySpace(StrTendril::from_char(' ')),
+            BlockElement::Text(StrTendril::from_slice("to")),
+        ]);
+
+        assert_eq!(block[0], matching_block);
     }
 }

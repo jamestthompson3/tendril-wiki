@@ -14,6 +14,8 @@ function testParsing() {
     "[[alias|actual-link]]",
     "http://127.0.0.1:6683/files/image-1660379904659.png",
     "# some topic",
+    "testing #again",
+    "# a title\nsome text",
   ];
   const html = [
     '<a href="/A%20Schoolman%E2%80%99s%20Guide%20to%20Marshall%20McLuhan">A Schoolman’s Guide to Marshall McLuhan</a>',
@@ -23,6 +25,8 @@ function testParsing() {
     '<a href="/actual-link">alias</a>',
     '<img src="http://127.0.0.1:6683/files/image-1660379904659.png">',
     "<h2>some topic</h2>",
+    "testing #again",
+    "<h2>a title</h2><br>some text",
   ];
   wikitext.forEach((str, idx) => {
     const parsed = textToHtml(str);

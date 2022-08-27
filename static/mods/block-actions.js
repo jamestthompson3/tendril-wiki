@@ -119,17 +119,18 @@ export function handleInput(e) {
 
 export function handleKeydown(e) {
   if (e.key === "Tab") {
-    e.preventDefault();
-    const indentation = this.dataset.indent;
-    if (indentation) {
-      // Max indent is 3 levels, min is 0
-      const indentationLevel = e.shiftKey
-        ? Math.max(Number(indentation) - 1, 0)
-        : Math.min(Number(indentation) + 1, 3);
-      this.dataset.indent = indentationLevel;
-    } else if (!e.shiftKey) {
-      this.dataset.indent = 1;
-    }
+    // TODO: Figure out if I want to deal with indentation like an outliner.
+    // e.preventDefault();
+    // const indentation = this.dataset.indent;
+    // if (indentation) {
+    //   // Max indent is 3 levels, min is 0
+    //   const indentationLevel = e.shiftKey
+    //     ? Math.max(Number(indentation) - 1, 0)
+    //     : Math.min(Number(indentation) + 1, 3);
+    //   this.dataset.indent = indentationLevel;
+    // } else if (!e.shiftKey) {
+    //   this.dataset.indent = 1;
+    // }
   } else {
     updateInputHeight(this);
   }

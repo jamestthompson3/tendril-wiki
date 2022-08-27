@@ -95,6 +95,9 @@ export function htmlToText(el) {
   for (const header of shadow.querySelectorAll("h1,h2,h3,h4,h5,h6")) {
     header.replaceWith(`# ${header.innerText}`);
   }
+  for (const linebreak of shadow.querySelectorAll("br")) {
+    linebreak.replaceWith("\n");
+  }
   return shadow.textContent;
 }
 
