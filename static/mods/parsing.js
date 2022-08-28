@@ -15,7 +15,7 @@ const IMAGE_REGEXP = new RegExp(
   "i"
 );
 
-export function parseWikiLinks(text) {
+function parseWikiLinks(text) {
   let finalString = text;
   for (const match of text.matchAll(WIKI_LINK_REGEXP)) {
     const alias = match[1].split("|");
@@ -35,7 +35,7 @@ export function parseWikiLinks(text) {
   return finalString;
 }
 
-export function parseHeadings(text) {
+function parseHeadings(text) {
   if (/^#\s?/.test(text)) {
     return `<h2>${text.slice(1).trim()}</h2>`;
   } else {
@@ -43,7 +43,15 @@ export function parseHeadings(text) {
   }
 }
 
-export function parseURLs(text) {
+function parseQuotes(text) {
+  if (/^>\s?/.test(text)) {
+    return `<blockquote>${text.slice(1).trim()}</blockquote>`;
+  } else {
+    return text;
+  }
+}
+
+function parseURLs(text) {
   for (const match of text.matchAll(URL_REGEXP)) {
     const [url, _] = match;
     if (isSpecialtyUrl(url)) {
@@ -56,7 +64,7 @@ export function parseURLs(text) {
   return text;
 }
 
-export function parseEmails(text) {
+function parseEmails(text) {
   for (const match of text.matchAll(EMAIL_REGEXP)) {
     const [email, _] = match;
     text = text.replace(email, `<a href="mailto:${email}">${email}</a>`);
@@ -67,7 +75,9 @@ export function parseEmails(text) {
 export function textToHtml(text) {
   return text
     .split("\n")
-    .map((line) => parseHeadings(parseEmails(parseURLs(parseWikiLinks(line)))))
+    .map((line) =>
+      parseQuotes(parseHeadings(parseEmails(parseURLs(parseWikiLinks(line)))))
+    )
     .join("<br>");
 }
 
@@ -97,6 +107,9 @@ export function htmlToText(el) {
   }
   for (const linebreak of shadow.querySelectorAll("br")) {
     linebreak.replaceWith("\n");
+  }
+  for (const quote of shadow.querySelectorAll("blockquote")) {
+    quote.replaceWith(`> ${quote.innerText}`);
   }
   return shadow.textContent;
 }

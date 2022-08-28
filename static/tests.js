@@ -16,6 +16,7 @@ function testParsing() {
     "# some topic",
     "testing #again",
     "# a title\nsome text",
+    "> testing a quote-that ends",
   ];
   const html = [
     '<a href="/A%20Schoolman%E2%80%99s%20Guide%20to%20Marshall%20McLuhan">A Schoolman’s Guide to Marshall McLuhan</a>',
@@ -27,6 +28,7 @@ function testParsing() {
     "<h2>some topic</h2>",
     "testing #again",
     "<h2>a title</h2><br>some text",
+    "<blockquote>testing a quote-that ends</blockquote>",
   ];
   wikitext.forEach((str, idx) => {
     const parsed = textToHtml(str);
