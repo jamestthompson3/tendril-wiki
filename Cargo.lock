@@ -124,7 +124,6 @@ dependencies = [
  "chrono",
  "directories",
  "futures",
- "markdown",
  "persistance",
  "render",
  "rpassword",
@@ -133,6 +132,7 @@ dependencies = [
  "tasks",
  "tokio",
  "toml",
+ "wikitext",
 ]
 
 [[package]]
@@ -689,18 +689,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c41e0c4fef86961ac6d6f8a82609f55f31b05e4fce149ac5710e439df7619ba4"
 
 [[package]]
-name = "markdown"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "tasks",
- "tendril 0.4.3",
- "thiserror",
- "tokio",
- "urlencoding",
-]
-
-[[package]]
 name = "markup5ever"
 version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -927,7 +915,6 @@ dependencies = [
  "chrono",
  "directories",
  "lazy_static",
- "markdown",
  "render",
  "serde",
  "serde_derive",
@@ -935,6 +922,7 @@ dependencies = [
  "thiserror",
  "tokio",
  "toml",
+ "wikitext",
 ]
 
 [[package]]
@@ -1230,8 +1218,8 @@ dependencies = [
  "directories",
  "futures",
  "lazy_static",
- "markdown",
  "tokio",
+ "wikitext",
 ]
 
 [[package]]
@@ -1363,13 +1351,13 @@ dependencies = [
  "compression",
  "futures",
  "lazy_static",
- "markdown",
  "persistance",
  "regex",
  "serde",
  "serde_json",
  "stem",
  "tokio",
+ "wikitext",
 ]
 
 [[package]]
@@ -1572,13 +1560,13 @@ dependencies = [
  "futures",
  "lazy_static",
  "logging",
- "markdown",
  "persistance",
  "regex",
  "render",
  "search-engine",
  "tasks",
  "tokio",
+ "wikitext",
  "www",
 ]
 
@@ -2088,6 +2076,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "wikitext"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "tasks",
+ "tendril 0.4.3",
+ "thiserror",
+ "tokio",
+ "urlencoding",
+]
+
+[[package]]
 name = "winapi"
 version = "0.3.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2183,7 +2183,6 @@ dependencies = [
  "lazy_static",
  "log",
  "logging",
- "markdown",
  "persistance",
  "pretty_env_logger",
  "regex",
@@ -2196,6 +2195,7 @@ dependencies = [
  "tokio",
  "urlencoding",
  "warp",
+ "wikitext",
 ]
 
 [[package]]

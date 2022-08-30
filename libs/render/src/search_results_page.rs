@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use markdown::parsers::format_links;
+use wikitext::parsers::format_links;
 use std::fmt::Write as _;
 
 use crate::{get_template_file, render_includes, Render};

@@ -1,5 +1,5 @@
 [package]
-name = "markdown"
+name = "wikitext"
 version = "0.1.0"
 authors = ["taylor <taylor@teukka.tech>"]
 edition = "2021"

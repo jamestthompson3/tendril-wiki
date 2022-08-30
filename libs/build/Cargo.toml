@@ -11,7 +11,7 @@ async-recursion = "1.0.0"
 chrono = "0.4.19"
 directories = "4.0.1"
 futures = "0.3.21"
-markdown = { path = "../markdown" }
+wikitext = { path = "../wikitext" }
 persistance = { path = "../persistance" }
 render = { path = "../render" }
 rpassword = "6.0.1"

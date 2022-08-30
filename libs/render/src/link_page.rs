@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use std::fmt::Write as _;
 
 use crate::{get_template_file, render_includes, Render};
-use markdown::parsers::format_links;
+use wikitext::parsers::format_links;
 
 pub struct LinkPage {
     pub links: BTreeMap<String, Vec<String>>,

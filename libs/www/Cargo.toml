@@ -14,7 +14,7 @@ jsonwebtoken = "8.0.1"
 lazy_static = "1.4.0"
 logging = { path = "../logging" }
 log = "0.4.16"
-markdown = { path = "../markdown" }
+wikitext = { path = "../wikitext" }
 persistance = { path = "../persistance" }
 pretty_env_logger = "0.4.0"
 render = { path = "../render" }

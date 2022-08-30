@@ -9,7 +9,7 @@ edition = "2021"
 chrono = "0.4.19"
 directories = "4.0.1"
 lazy_static = "1.4.0"
-markdown = { path = "../markdown" }
+wikitext = { path = "../wikitext" }
 render = { path = "../render" }
 serde = "1.0.136"
 serde_derive = "1.0.136"

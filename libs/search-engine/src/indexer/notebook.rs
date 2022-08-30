@@ -2,7 +2,7 @@ use std::{fs::read_dir, path::Path};
 
 use async_trait::async_trait;
 use futures::{stream, StreamExt};
-use markdown::parsers::{to_html, NoteHeader};
+use wikitext::parsers::{to_html, NoteHeader};
 use persistance::fs::path_to_data_structure;
 
 use crate::{tokenizer::tokenize, Doc};

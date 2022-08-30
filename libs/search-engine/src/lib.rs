@@ -1,5 +1,5 @@
 use indexer::notebook::{tokenize_note_meta, Notebook};
-use markdown::parsers::NoteHeader;
+use wikitext::parsers::NoteHeader;
 use persistance::fs::utils::{get_archive_location, get_data_dir_location};
 use searcher::{highlight_matches, search};
 use serde::{Deserialize, Serialize};

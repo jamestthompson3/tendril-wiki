@@ -9,7 +9,7 @@ use std::{
 
 use chrono::{DateTime, FixedOffset, Local};
 use directories::ProjectDirs;
-use markdown::{
+use wikitext::{
     parsers::{parse_meta, NoteHeader, ParsedPages},
     processors::to_template,
 };

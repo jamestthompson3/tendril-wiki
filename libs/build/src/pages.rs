@@ -1,8 +1,8 @@
 use async_recursion::async_recursion;
 use futures::{stream, StreamExt};
-use markdown::parsers::ParsedPages;
+use wikitext::parsers::ParsedPages;
 
-use markdown::processors::{to_template, update_templatted_pages};
+use wikitext::processors::{to_template, update_templatted_pages};
 use persistance::fs::config::read_config;
 use persistance::fs::utils::get_config_location;
 use persistance::fs::{path_to_data_structure, write_entries, write_index_page};

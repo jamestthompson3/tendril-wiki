@@ -2,7 +2,7 @@ use std::{collections::BTreeMap, fs::read_dir, io, path::PathBuf, sync::Arc};
 
 use async_recursion::async_recursion;
 use futures::{stream, StreamExt};
-use markdown::{parsers::NoteHeader, processors::to_template};
+use wikitext::{parsers::NoteHeader, processors::to_template};
 use persistance::fs::{
     path_to_data_structure, read_note_cache, utils::get_file_path, write_note_cache,
 };
@@ -246,7 +246,7 @@ mod tests {
     fn init_temp_wiki(namespace: &str) {
         env::set_var("TENDRIL_WIKI_DIR", TEST_DIR);
         fs::create_dir_all(format!("{}{}", TEST_DIR, namespace)).unwrap();
-        for entry in fs::read_dir("../markdown/fixtures").unwrap() {
+        for entry in fs::read_dir("../wikitext/fixtures").unwrap() {
             let mut dest = PathBuf::from(TEST_DIR);
             let entry = entry.unwrap();
             let path = entry.path();

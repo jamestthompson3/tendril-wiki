@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use chrono::{DateTime, FixedOffset};
-use markdown::parsers::{format_links, TemplattedPage};
+use wikitext::parsers::{format_links, TemplattedPage};
 use std::fmt::Write as _;
 
 use crate::{get_template_file, render_includes, Render};

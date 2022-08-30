@@ -9,7 +9,7 @@ use directories::ProjectDirs;
 use async_trait::async_trait;
 use futures::{stream, StreamExt};
 use link_page::LinkPage;
-use markdown::parsers::TemplattedPage;
+use wikitext::parsers::TemplattedPage;
 use tokio::{fs, sync::Mutex};
 
 pub mod bookmark_page;
