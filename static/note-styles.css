@@ -1,0 +1,308 @@
+blockquote {
+  font-family: monospace;
+  background-color: var(--bg-darker);
+  border-left: 4px solid var(--accent);
+  padding: 0rem 0.5rem;
+}
+
+table {
+  border-spacing: 0px 3px;
+}
+
+table,
+th,
+td {
+  padding: 4px;
+}
+
+td {
+  border: 1px solid var(--table-border-color);
+}
+
+thead {
+  background-color: var(--variant-muted);
+  border-spacing: 6px;
+}
+
+th {
+  border-left: 2px solid var(--table-border-color);
+}
+
+th:nth-child(1) {
+  border-left: 0px;
+}
+
+tbody tr:nth-child(odd) {
+  background-color: var(--bg-darker);
+}
+
+code {
+  background: var(--bg-darker);
+  padding: 3px;
+  display: block;
+}
+
+pre code {
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 20px;
+}
+
+.tags {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0px;
+  padding: 0px;
+}
+
+.tags li {
+  background-color: var(--accent);
+  box-shadow: 0 3px 1px -2px rgba(0, 0, 0, 0.2), 0 2px 2px 0 rgba(0, 0, 0, 0.14),
+    0 1px 5px 0 rgba(0, 0, 0, 0.12);
+  border-radius: var(--rad);
+  margin: 0.25rem;
+  padding: 0.25rem;
+}
+
+.tags li a {
+  color: var(--bg);
+  text-decoration: none;
+}
+
+/**
+   * Main content
+   */
+
+#edit:checked ~ .content {
+  display: none;
+}
+
+#edit:checked ~ * > .danger {
+  display: none;
+}
+
+#edit:checked ~ .editor {
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+}
+
+#edit {
+  display: none;
+}
+
+.title-error-msg {
+  display: none;
+}
+
+.error-msg {
+  color: red;
+}
+
+#title-edit:invalid ~ .title-error-msg {
+  display: inline;
+  color: red;
+  margin: auto;
+}
+
+.content-container > label {
+  background-color: var(--accent);
+  box-shadow: var(--shadow);
+  padding: 0.45rem 0rem;
+  cursor: pointer;
+  border-radius: calc(var(--rad) / 2);
+  display: inline-block;
+  user-select: none;
+  width: 70px;
+  text-align: center;
+  margin-bottom: 0.5rem;
+  color: #000000;
+}
+
+.danger {
+  height: auto;
+  text-align: center;
+  background-color: var(--primary-variant);
+  border: none;
+  border-radius: calc(var(--rad) / 2);
+  padding: 0.5rem;
+  cursor: pointer;
+  box-shadow: 0 3px 1px -2px rgba(0, 0, 0, 0.2), 0 2px 2px 0 rgba(0, 0, 0, 0.14),
+    0 1px 5px 0 rgba(0, 0, 0, 0.12);
+  min-width: 70px;
+}
+
+*[data-indent="1"] {
+  margin-left: 0.5rem;
+}
+*[data-indent="1"]::before {
+  content: "";
+  margin-right: 0.5rem;
+  border-right: 1.5px solid var(--variant-muted);
+}
+*[data-indent="2"] {
+  margin-left: 1rem;
+}
+*[data-indent="2"]::before {
+  content: "";
+  margin-right: 1rem;
+  border-right: 1.5px solid var(--variant-muted);
+}
+*[data-indent="3"] {
+  margin-left: 1.5rem;
+}
+*[data-indent="3"]::before {
+  content: "";
+  margin-right: 1.5rem;
+  border-right: 1.5px solid var(--variant-muted);
+}
+
+textarea {
+  width: 100%;
+  margin: auto;
+  padding: 0.5rem;
+  color: var(--text-color);
+  background-color: var(--bg-darker);
+  border: none;
+  border-radius: var(--rad);
+  resize: none;
+  font-size: 1.2rem;
+}
+
+.content-body h2,
+h3,
+h4,
+h5,
+h6 {
+  border-bottom: 1px solid var(--accent);
+}
+
+.content-body {
+  width: 100%;
+}
+
+.content-body p {
+  font-size: 1.2rem;
+  line-height: 2rem;
+}
+
+.result {
+  /* only for safari */
+  overflow: hidden;
+  /* modern browsers provide this, but safari does not :( */
+  overflow: clip;
+  max-height: 15rem;
+  border: 1px solid var(--text-color);
+  border-radius: var(--rad);
+  padding: 1rem;
+  box-shadow: 2px 2px 6px 1px var(--bg-darker);
+  margin: 1rem auto;
+}
+.result h2:first-child {
+  margin: 0px;
+}
+
+/** File Uploader **/
+.uploader {
+  --height: 2.25rem;
+  --font-size: 16px;
+  position: relative;
+  width: 55%;
+  height: var(--height);
+  margin: auto;
+}
+
+.uploader:after {
+  content: attr(data-text);
+  font-size: 18px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: var(--bg-darker);
+  padding: 10px 15px;
+  display: block;
+  width: calc(100% - 2.25rem);
+  pointer-events: none;
+  z-index: 20;
+  height: calc(var(--height) - 20px);
+  line-height: calc(var(--height) - 20px);
+  border-radius: var(--rad);
+  font-weight: 300;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  word-wrap: normal;
+}
+
+.uploader:before {
+  content: "Select";
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: inline-block;
+  height: var(--height);
+  background: var(--primary-variant);
+  font-weight: 700;
+  z-index: 25;
+  font-size: var(--font-size);
+  line-height: var(--height);
+  padding: 0 15px;
+  text-transform: uppercase;
+  pointer-events: none;
+  border-radius: 0 var(--rad) var(--rad) 0;
+  box-shadow: var(--shadow);
+}
+
+.uploader input[type="file"] {
+  opacity: 0;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: block;
+  cursor: pointer;
+  width: 100%;
+}
+
+mark {
+  background-color: var(--accent);
+  padding: 2px;
+  border-radius: var(--rad);
+  box-shadow: var(--shadow);
+}
+
+.block {
+  text-decoration: none;
+  color: var(--text-color);
+}
+
+/** Backlinks **/
+.backlinks {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: column;
+}
+
+.backlinks-container h3 {
+  border-bottom: none;
+}
+
+.backlinks a {
+  margin: 0.25rem;
+}
+
+/** MetaData Details **/
+.metadata {
+  width: 100%;
+}
+
+details {
+  cursor: pointer;
+}
+
+.metadata[open] {
+  overflow-x: auto;
+}

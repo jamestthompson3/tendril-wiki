@@ -1,0 +1,45 @@
+.mru {
+  list-style: none;
+  font-size: 1.25rem;
+}
+
+.mru ~ ul {
+  list-style: none;
+  font-size: 1.25rem;
+}
+
+.mru ~ ul li {
+  margin: 0.5rem 0rem;
+}
+
+.editor input[type="text"] {
+  margin: 0.5rem 0rem;
+  width: 85%;
+}
+.editor label {
+  margin: 0px;
+}
+.editor button.submit {
+  margin: 2rem 0rem;
+  width: 10%;
+}
+.editor > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+}
+
+form.editor div {
+  height: auto;
+}
+@media (max-width: 900px) {
+  .editor input[type="text"] {
+    width: 100%;
+  }
+
+  .editor button.submit {
+    width: 80%;
+    margin: 2rem auto;
+  }
+}

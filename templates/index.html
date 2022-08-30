@@ -7,6 +7,8 @@
       content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover"
     />
     <%= include "styles" %>
+    <link rel="stylesheet" href="/static/editor.css" />
+    <link rel="stylesheet" href="/static/index-page.css" />
     <link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon" />
     <link rel="icon" href="/static/favicon.ico" type="image/x-icon" />
     <meta name="description" content="Index for your notebook" />
@@ -34,39 +36,6 @@
     />
 
     <title><%= user %>'s notebook</title>
-    <style>
-      .editor input[type="text"] {
-        margin: 0.5rem 0rem;
-        width: 85%;
-      }
-      .editor label {
-        margin: 0px;
-      }
-      .editor button.submit {
-        margin: 2rem 0rem;
-        width: 10%;
-      }
-      .editor > div {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        justify-content: space-between;
-      }
-
-      form.editor div {
-        height: auto;
-      }
-      @media (max-width: 900px) {
-        .editor input[type="text"] {
-          width: 100%;
-        }
-
-        .editor button.submit {
-          width: 80%;
-          margin: 2rem auto;
-        }
-      }
-    </style>
   </head>
   <body>
     <%= include "nav" %>

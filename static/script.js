@@ -53,36 +53,6 @@
   replaceOGMeta();
   populateSearch();
 
-  function edit() {
-    const editElement = document.getElementById("edit");
-    const editLabel = document.querySelector(
-      ".content-container > label:nth-child(1)"
-    );
-    if (editElement && editLabel) {
-      // sometimes the page might not be editable
-      editElement.checked = true;
-      editLabel.textContent = "Cancel";
-    }
-  }
-
-  const editCheckBox = document.getElementById("edit");
-  if (editCheckBox) {
-    editCheckBox.addEventListener("click", clickEdit);
-  }
-
-  function clickEdit(e) {
-    const editLabel = document.querySelector(
-      ".content-container > label:nth-child(1)"
-    );
-    if (editLabel) {
-      if (!e.target.checked) {
-        editLabel.textContent = "Edit";
-      } else {
-        editLabel.textContent = "Cancel";
-      }
-    }
-  }
-
   function search() {
     const searchElement = document.getElementById("term");
     if (searchElement) {
@@ -150,40 +120,4 @@
         break;
     }
   };
-
-  function detectImagePaste(event) {
-    const items = (event.clipboardData || event.originalEvent.clipboardData)
-      .items;
-    for (let index in items) {
-      const item = items[index];
-      if (item.kind === "file") {
-        // we need to get the filename, and `getAsFile` clobbers this with a generic name
-        // so we can just use FormData here.
-        const formData = new FormData();
-        const file = item.getAsFile();
-        const extension = file.type.split("image/").find(Boolean);
-        formData.append(
-          "file",
-          item.getAsFile(),
-          `image-${new Date().valueOf()}.${extension}`
-        );
-        const blob = formData.get("file");
-        fetch("/files", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/octet-stream",
-            Filename: `${blob.name}`,
-          },
-          body: blob,
-        })
-          .then(() => {
-            event.target.value += `![${blob.name} *alt text*](/files/${blob.name}) "image title"`;
-          })
-          .catch((e) => {
-            console.error(e);
-            event.target.value += "Failed to upload image";
-          });
-      }
-    }
-  }
 })();
