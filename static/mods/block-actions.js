@@ -30,7 +30,6 @@ export function saveBlock() {
       fullBody = text;
     }
   }
-  fullBody = fullBody.slice(0, fullBody.length - 1);
 
   const title = document.getElementsByClassName("title")[0].innerText;
   // TODO parse out and save metadata, tags

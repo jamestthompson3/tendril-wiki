@@ -1,10 +1,4 @@
-use std::fmt::Write as _;
 use tendril::{StrTendril, SubtendrilError, Tendril};
-
-use super::{
-    format_links, transform_audio_url, transform_cp_url, transform_cs_url, transform_spotify_url,
-    transform_vimeo_url, transform_youtube_url,
-};
 
 #[derive(Debug, PartialEq)]
 pub(crate) enum BlockElement {
@@ -14,78 +8,6 @@ pub(crate) enum BlockElement {
     EmptySpace(StrTendril),
     Text(StrTendril),
     HyperLink(StrTendril),
-}
-
-impl BlockElement {
-    pub fn collapse_to(&self, target: &mut String) {
-        match self {
-            BlockElement::Heading(content) => {
-                write!(target, "<h2>").unwrap();
-                for part in content {
-                    part.collapse_to(target);
-                }
-                write!(target, "</h2>").unwrap();
-            }
-            BlockElement::PageLink(content) => {
-                let aliases = content.split('|').collect::<Vec<&str>>();
-                if aliases.len() > 1 {
-                    write!(
-                        target,
-                        r#"<a href="{}">{}</a>"#,
-                        format_links(aliases[1]),
-                        aliases[0]
-                    )
-                    .unwrap();
-                } else {
-                    write!(
-                        target,
-                        r#"<a href="{}">{}</a>"#,
-                        format_links(aliases[0]),
-                        aliases[0]
-                    )
-                    .unwrap();
-                }
-            }
-            BlockElement::Quote(content) => {
-                write!(target, "<blockquote>").unwrap();
-                for part in content {
-                    part.collapse_to(target);
-                }
-                write!(target, "</blockquote>").unwrap();
-            }
-            BlockElement::EmptySpace(content) | BlockElement::Text(content) => {
-                write_to_string(target, content.into());
-            }
-            BlockElement::HyperLink(content) => {
-                if content.contains("youtube.com") || content.contains("youtu.be") {
-                    write_to_string(target, transform_youtube_url(content));
-                }
-                if content.contains("codesandbox.io") {
-                    write_to_string(target, transform_cs_url(content));
-                }
-                if content.contains("codepen.io") {
-                    write_to_string(target, transform_cp_url(content));
-                }
-                if content.ends_with(".mp3")
-                    || content.ends_with(".ogg")
-                    || content.ends_with(".flac")
-                {
-                    write_to_string(target, transform_audio_url(content));
-                }
-                if content.contains("vimeo.com") {
-                    write_to_string(target, transform_vimeo_url(content));
-                }
-                if content.contains("spotify.com") {
-                    write_to_string(target, transform_spotify_url(content));
-                }
-                write_to_string(target, format!(r#"<a href="{}">{}</a>"#, content, content));
-            }
-        }
-    }
-}
-
-fn write_to_string(target: &mut String, incl: String) {
-    write!(target, "{}", incl).unwrap();
 }
 
 type BlockResult = Result<(BlockElement, usize), SubtendrilError>;
@@ -141,7 +63,6 @@ fn parse_link(slice: &StrTendril) -> BlockResult {
     }
 
     let content = StrTendril::from_slice(&link);
-    // TODO add one for aliases
     Ok((BlockElement::PageLink(content), link.len() + 3))
 }
 fn parse_quote(slice: &StrTendril) -> BlockResult {
@@ -234,14 +155,27 @@ where
 fn until_empty_space(slice: &StrTendril) -> SliceWithIndex {
     let mut iter = slice.char_indices().peekable();
     let mut end = 0usize;
+    let mut unicode_offset = 0usize;
     while let Some(&(index, token)) = iter.peek() {
         match token {
             ' ' | '\t' | '\r' | '\n' => break,
-            _ => iter.next(),
+            _ => {
+                // catchall for wonky unicode stuff...
+                if !token.is_ascii() {
+                    unicode_offset += token.len_utf8();
+                }
+                iter.next()
+            }
         };
         end = index;
     }
-    Ok((slice.try_subtendril(0, end as u32 + 1)?, end))
+    end += 1;
+    let steps = if unicode_offset > 0 {
+        end - unicode_offset
+    } else {
+        end - 1
+    };
+    Ok((slice.try_subtendril(0, end as u32)?, steps))
 }
 
 #[cfg(test)]
@@ -296,6 +230,16 @@ mod tests {
     }
 
     #[test]
+    #[ignore] // TODO: maybe we want to make this illegal syntax?
+    fn parses_block_links_in_parens() {
+        let test_string = "([[testing again]])";
+        let block = parse_block(test_string.as_bytes());
+        assert_eq!(block.len(), 3);
+        let matching_block = BlockElement::PageLink(StrTendril::from_slice("testing again"));
+        assert_eq!(block[1], matching_block);
+    }
+
+    #[test]
     fn parses_block_links_in_sentences() {
         let test_string = "parsing [[another link]]";
         let block = parse_block(test_string.as_bytes());
@@ -340,6 +284,25 @@ mod tests {
 
         matching_block = BlockElement::Text(StrTendril::from_slice("again"));
         assert_eq!(block[2], matching_block);
+    }
+
+    #[test]
+    fn parses_obnoxiously_long_block_text() {
+        let test_string = "The question then becomes, what constitutes as a reality discovery, and what is the impetuous for our discovery? I think it’s the reality that surrounds us that are brought to the foreground by observation, discussion, and thought that lead us down the path of reality discovery.";
+        let block = parse_block(test_string.as_bytes());
+        assert_eq!(block.len(), 91);
+
+        let mut matching_block = BlockElement::Text(StrTendril::from_slice("The"));
+        assert_eq!(block[0], matching_block);
+
+        matching_block = BlockElement::EmptySpace(StrTendril::from_char(' '));
+        assert_eq!(block[1], matching_block);
+
+        matching_block = BlockElement::Text(StrTendril::from_slice("question"));
+        assert_eq!(block[2], matching_block);
+
+        matching_block = BlockElement::Text(StrTendril::from_slice("the"));
+        assert_eq!(block[42], matching_block);
     }
 
     #[test]

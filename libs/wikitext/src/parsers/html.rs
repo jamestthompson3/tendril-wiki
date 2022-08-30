@@ -1,5 +1,5 @@
 use super::block::{parse_block, BlockElement};
-use std::{fmt::Write as _, time::Instant};
+use std::fmt::Write as _;
 
 pub struct Html {
     pub outlinks: Vec<String>,
@@ -7,7 +7,7 @@ pub struct Html {
 }
 
 pub fn to_html(md: &str) -> Html {
-    let now = Instant::now();
+    // let now = Instant::now();
     let mut outlinks = Vec::new();
     let mut page_blocks: Vec<Vec<BlockElement>> = Vec::new();
     for line in md.lines() {
@@ -35,7 +35,7 @@ pub fn to_html(md: &str) -> Html {
         })
         .collect::<Vec<String>>()
         .join("");
-        println!("Parsed to HTML in {:?}", now.elapsed());
+    // println!("Parsed to HTML in {:?}", now.elapsed());
 
     Html {
         body: output,

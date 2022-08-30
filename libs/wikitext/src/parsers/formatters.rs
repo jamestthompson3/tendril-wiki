@@ -1,5 +1,80 @@
+use std::fmt::Write as _;
 use tendril::StrTendril;
 use urlencoding::encode;
+
+use super::block::BlockElement;
+
+impl BlockElement {
+    pub fn collapse_to(&self, target: &mut String) {
+        match self {
+            BlockElement::Heading(content) => {
+                write!(target, "<h2>").unwrap();
+                for part in content {
+                    part.collapse_to(target);
+                }
+                write!(target, "</h2>").unwrap();
+            }
+            BlockElement::PageLink(content) => {
+                let aliases = content.split('|').collect::<Vec<&str>>();
+                if aliases.len() > 1 {
+                    write!(
+                        target,
+                        r#"<a href="{}">{}</a>"#,
+                        format_links(aliases[1]),
+                        aliases[0]
+                    )
+                    .unwrap();
+                } else {
+                    write!(
+                        target,
+                        r#"<a href="{}">{}</a>"#,
+                        format_links(aliases[0]),
+                        aliases[0]
+                    )
+                    .unwrap();
+                }
+            }
+            BlockElement::Quote(content) => {
+                write!(target, "<blockquote>").unwrap();
+                for part in content {
+                    part.collapse_to(target);
+                }
+                write!(target, "</blockquote>").unwrap();
+            }
+            BlockElement::EmptySpace(content) | BlockElement::Text(content) => {
+                write_to_string(target, content.into());
+            }
+            BlockElement::HyperLink(content) => {
+                if content.contains("youtube.com") || content.contains("youtu.be") {
+                    write_to_string(target, transform_youtube_url(content));
+                }
+                if content.contains("codesandbox.io") {
+                    write_to_string(target, transform_cs_url(content));
+                }
+                if content.contains("codepen.io") {
+                    write_to_string(target, transform_cp_url(content));
+                }
+                if content.ends_with(".mp3")
+                    || content.ends_with(".ogg")
+                    || content.ends_with(".flac")
+                {
+                    write_to_string(target, transform_audio_url(content));
+                }
+                if content.contains("vimeo.com") {
+                    write_to_string(target, transform_vimeo_url(content));
+                }
+                if content.contains("spotify.com") {
+                    write_to_string(target, transform_spotify_url(content));
+                }
+                write_to_string(target, format!(r#"<a href="{}">{}</a>"#, content, content));
+            }
+        }
+    }
+}
+
+fn write_to_string(target: &mut String, incl: String) {
+    write!(target, "{}", incl).unwrap();
+}
 
 pub fn transform_audio_url(text: &StrTendril) -> String {
     format!(r#"<audio src="{}" controls></audio>"#, text)
