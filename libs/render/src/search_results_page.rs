@@ -1,6 +1,6 @@
 use async_trait::async_trait;
-use wikitext::parsers::format_links;
 use std::fmt::Write as _;
+use wikitext::parsers::format_links;
 
 use crate::{get_template_file, render_includes, Render};
 
@@ -16,11 +16,7 @@ impl SearchResultsPage {
     }
     async fn render_pages(&self) -> String {
         if self.pages.is_empty() {
-            let mut ctx = String::from("<h3>No search results.</h3>");
-            ctx.push_str(
-                &render_includes(r#"<%= include "search_form" %>"#.to_string(), None).await,
-            );
-            return ctx;
+            return String::from("<h3>No search results.</h3>");
         }
         let mut page_list = String::new();
         for (page, matched_text) in self.pages.iter() {

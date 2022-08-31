@@ -126,7 +126,6 @@ async fn process_included_file(file: String, page: Option<&TemplattedPage>) -> S
                 .replace("<%= icon %>", &icon_path)
         }
         "footer" => get_template_file("footer").await.unwrap(),
-        "search_form" => get_template_file("search_form").await.unwrap(),
         _ => String::with_capacity(0),
     }
 }
