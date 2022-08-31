@@ -47,26 +47,22 @@ impl BlockElement {
             BlockElement::HyperLink(content) => {
                 if content.contains("youtube.com") || content.contains("youtu.be") {
                     write_to_string(target, transform_youtube_url(content));
-                }
-                if content.contains("codesandbox.io") {
+                } else if content.contains("codesandbox.io") {
                     write_to_string(target, transform_cs_url(content));
-                }
-                if content.contains("codepen.io") {
+                } else if content.contains("codepen.io") {
                     write_to_string(target, transform_cp_url(content));
-                }
-                if content.ends_with(".mp3")
+                } else if content.ends_with(".mp3")
                     || content.ends_with(".ogg")
                     || content.ends_with(".flac")
                 {
                     write_to_string(target, transform_audio_url(content));
-                }
-                if content.contains("vimeo.com") {
+                } else if content.contains("vimeo.com") {
                     write_to_string(target, transform_vimeo_url(content));
-                }
-                if content.contains("spotify.com") {
+                } else if content.contains("spotify.com") {
                     write_to_string(target, transform_spotify_url(content));
+                } else {
+                    write_to_string(target, format!(r#"<a href="{}">{}</a>"#, content, content));
                 }
-                write_to_string(target, format!(r#"<a href="{}">{}</a>"#, content, content));
             }
         }
     }
@@ -91,7 +87,7 @@ pub fn format_links(link: &str) -> String {
     }
 }
 
-const MEDIA_FMT_STRING: &str = r#"<iframe title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen"#;
+const MEDIA_FMT_STRING: &str = r#"<iframe title="Video player" frameborder="0" allow="autoplay;" allowfullscreen"#;
 const CS_FMT_STRING: &str = r#"<iframe frameborder="0" title="Code Sandbox" allow="accelerometer; ambient-light-sensor;
     camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr;
     xr-spatial-tracking" sandbox="allow-forms allow-modals allow-popups allow-presentation

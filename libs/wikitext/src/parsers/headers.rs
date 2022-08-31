@@ -110,6 +110,7 @@ pub fn parse_meta<'a>(lines: impl Iterator<Item = &'a str>, debug_marker: &str) 
             if parser.current_state() == MetaParserState::Parsing {
                 parser.send(MetaParserState::End);
             }
+            continue;
         } else {
             match parser.current_state() {
                 MetaParserState::Parsing => {
@@ -123,7 +124,11 @@ pub fn parse_meta<'a>(lines: impl Iterator<Item = &'a str>, debug_marker: &str) 
                     notemeta.metadata.insert(values[0].into(), vals);
                 }
                 MetaParserState::End => {
-                    write!(notemeta.content, "\n{}", line).unwrap();
+                    if notemeta.content.is_empty() {
+                        write!(notemeta.content, "{}", line).unwrap();
+                    } else {
+                        write!(notemeta.content, "\n{}", line).unwrap();
+                    }
                 }
             }
         }

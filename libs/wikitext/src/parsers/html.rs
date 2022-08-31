@@ -16,7 +16,10 @@ pub fn to_html(md: &str) -> Html {
     }
     let output = page_blocks
         .iter()
-        .map(|block| {
+        .filter_map(|block| {
+            if block.is_empty() {
+                return None;
+            }
             let mut rendered_string = String::from(r#"<div class="text-block">"#);
             for entity in block {
                 if let BlockElement::PageLink(outlink) = entity {
@@ -31,7 +34,7 @@ pub fn to_html(md: &str) -> Html {
             }
             write!(rendered_string, "</div>").unwrap();
 
-            rendered_string
+            Some(rendered_string)
         })
         .collect::<Vec<String>>()
         .join("");
