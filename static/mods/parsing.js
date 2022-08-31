@@ -1,3 +1,11 @@
+import {
+  transformYoutubeUrl,
+  transformCSUrl,
+  transformCPUrl,
+  transformVimeoUrl,
+  transformSpotifyUrl,
+} from "./transformers.js";
+
 const WIKI_LINK_REGEXP = new RegExp(
   /\[\[([a-zA-Z0-9\s?\-?'?:?_?’?(\|)?]+)\]\]/,
   "g"
@@ -14,6 +22,7 @@ const IMAGE_REGEXP = new RegExp(
   /.*\.(jpg|jpeg|png|gif|webp|apng|avif|jfif|pjpeg|pjp)$/,
   "i"
 );
+const MULTI_MEDIA_REGEXP = new RegExp(/.*\.(mp3|ogg|flac)$/, "i");
 
 function parseWikiLinks(text) {
   let finalString = text;
@@ -54,12 +63,8 @@ function parseQuotes(text) {
 function parseURLs(text) {
   for (const match of text.matchAll(URL_REGEXP)) {
     const [url, _] = match;
-    if (isSpecialtyUrl(url)) {
-      const specialParsed = parseSpecialtyUrl(url);
-      text = text.replace(url, specialParsed);
-    } else {
-      text = text.replace(url, `<a href="${url}">${url}</a>`);
-    }
+    const processed = processUrl(url);
+    text = text.replace(url, processed);
   }
   return text;
 }
@@ -111,15 +116,35 @@ export function htmlToText(el) {
   for (const quote of shadow.querySelectorAll("blockquote")) {
     quote.replaceWith(`> ${quote.innerText}`);
   }
+  for (const embed of shadow.querySelectorAll("iframe")) {
+    // TODO: reverse the embed url
+    embed.replaceWith(embed.src);
+  }
   return shadow.textContent;
 }
 
 function isSpecialtyUrl(url) {
   return IMAGE_REGEXP.test(url);
 }
-function parseSpecialtyUrl(url) {
-  if (IMAGE_REGEXP.test(url)) {
-    return `<img src="${url}">`;
+function processUrl(url) {
+  // TODO: Try to do this with one pass...
+  switch (true) {
+    case IMAGE_REGEXP.test(url):
+      return `<img src="${url}">`;
+    case MULTI_MEDIA_REGEXP.test(url):
+      return `<audio src="${url}" controls></audio>`;
+    case url.includes("youtube.com"):
+    case url.includes("youtu.be"):
+      return transformYoutubeUrl(url);
+    case url.includes("codesandbox.io"):
+      return transformCSUrl(url);
+    case url.includes("codepen.io"):
+      return transformCPUrl(url);
+    case url.includes("vimeo.com"):
+      return transformVimeoUrl(url);
+    case url.includes("spotify.com"):
+      return transformSpotifyUrl(url);
+    default:
+      return `<a href="${url}">${url}</a>`;
   }
-  return "";
 }

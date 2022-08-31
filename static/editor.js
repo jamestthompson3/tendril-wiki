@@ -8,7 +8,7 @@ import { setupEditor } from "./mods/block-actions.js";
 })();
 
 /* TESTING */
-const shouldRunTests = true;
+const shouldRunTests = false;
 
 (async () => {
   if (shouldRunTests) {

@@ -167,7 +167,6 @@ textarea {
   border: none;
   border-radius: var(--rad);
   resize: none;
-  font-size: 1.2rem;
 }
 
 .content-body h2,
@@ -305,4 +304,9 @@ details {
 
 .metadata[open] {
   overflow-x: auto;
+}
+
+.text-block {
+  padding: 0.75rem;
+  margin: 5px;
 }
