@@ -98,6 +98,7 @@ export function handleInput(e) {
     case "Backspace": {
       if (e.target.value === "" && e.target.parentNode.children.length > 1) {
         deleteBlock(e.target);
+        saveBlock();
         break;
       }
       break;
