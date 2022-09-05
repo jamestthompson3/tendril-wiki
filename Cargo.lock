@@ -915,7 +915,6 @@ dependencies = [
  "chrono",
  "directories",
  "lazy_static",
- "render",
  "serde",
  "serde_derive",
  "tasks",
@@ -1218,6 +1217,7 @@ dependencies = [
  "directories",
  "futures",
  "lazy_static",
+ "persistance",
  "tokio",
  "wikitext",
 ]

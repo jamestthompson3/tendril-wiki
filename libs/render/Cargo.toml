@@ -12,5 +12,6 @@ chrono = "0.4.19"
 directories = "4.0.1"
 futures = "0.3.21"
 lazy_static = "1.4.0"
+persistance = { path = "../persistance" }
 wikitext = { path = "../wikitext" }
 tokio = { version = "1.17.0", features = ["fs"], default-features = false }

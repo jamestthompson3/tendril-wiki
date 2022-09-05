@@ -9,13 +9,9 @@ use std::{
 
 use chrono::{DateTime, FixedOffset, Local};
 use directories::ProjectDirs;
-use wikitext::{
-    parsers::{parse_meta, NoteHeader, ParsedPages},
-    processors::to_template,
-};
-use render::{index_page::IndexPage, wiki_page::WikiPage, GlobalBacklinks, Render};
 use tasks::messages::PatchData;
 use tokio::fs::{self, read_to_string};
+use wikitext::parsers::{parse_meta, NoteHeader};
 
 use thiserror::Error;
 
@@ -154,47 +150,9 @@ pub async fn delete(requested_file: &str) -> Result<(), io::Error> {
     Ok(())
 }
 
-pub async fn read(
-    requested_file: String,
-    backlinks: GlobalBacklinks,
-) -> Result<String, ReadPageError> {
+pub async fn read(requested_file: String) -> Result<NoteHeader, ReadPageError> {
     let file_path = get_file_path(&requested_file)?;
-    match path_to_data_structure(&file_path).await {
-        Ok(note) => {
-            let templatted = to_template(&note);
-            let link_vals = backlinks.lock().await;
-            let links = link_vals.get(&templatted.page.title);
-            let output = WikiPage::new(&templatted.page, links).render().await;
-            Ok(output)
-        }
-        Err(e) => Err(e),
-    }
-}
-
-pub async fn write_entries(pages: &ParsedPages, backlinks: &GlobalBacklinks) {
-    let page_vals = pages.lock().await;
-    let link_vals = backlinks.lock().await;
-    for page in page_vals.iter() {
-        let links = link_vals.get(&page.title);
-        let output = WikiPage::new(page, links).render().await;
-        let formatted_title = page.title.replace('/', "-");
-        let out_dir = format!("public/{}", formatted_title);
-        // TODO use path here instead of title? Since `/` in title can cause issues in fs::write
-        fs::create_dir(&out_dir)
-            .await
-            .unwrap_or_else(|e| eprintln!("{:?}\nCould not create dir: {}", e, out_dir));
-        let out_file = format!("public/{}/index.html", formatted_title);
-        fs::write(&out_file, output)
-            .await
-            .unwrap_or_else(|e| eprintln!("{:?}\nCould not write file: {}", e, out_file));
-    }
-}
-
-pub async fn write_index_page(user: String, host: String) {
-    let ctx = IndexPage { user, host };
-    fs::write("public/index.html", ctx.render().await)
-        .await
-        .unwrap();
+    path_to_data_structure(&file_path).await
 }
 
 pub async fn read_note_cache() -> String {

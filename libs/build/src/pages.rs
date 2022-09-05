@@ -1,13 +1,16 @@
 use async_recursion::async_recursion;
 use futures::{stream, StreamExt};
+
+use render::link_page::LinkPage;
+use render::wiki_page::WikiPage;
 use wikitext::parsers::ParsedPages;
 
-use wikitext::processors::{to_template, update_templatted_pages};
 use persistance::fs::config::read_config;
+use persistance::fs::path_to_data_structure;
 use persistance::fs::utils::get_config_location;
-use persistance::fs::{path_to_data_structure, write_entries, write_index_page};
-use render::{write_backlinks, GlobalBacklinks};
+use render::{GlobalBacklinks, Render};
 use tokio::sync::Mutex;
+use wikitext::processors::{to_template, update_templatted_pages};
 
 use std::env;
 use std::{
@@ -111,4 +114,41 @@ async fn parse_entries(
         }
     });
     pipeline.await
+}
+
+async fn write_index_page(user: String, host: String) {
+    // let ctx = IndexPage { user, host };
+    // TODO: Figure out static site index
+    tokio::fs::write("public/index.html", format!("{}{}", user, host))
+        .await
+        .unwrap();
+}
+
+async fn write_entries(pages: &ParsedPages, backlinks: &GlobalBacklinks) {
+    let page_vals = pages.lock().await;
+    let link_vals = backlinks.lock().await;
+    for page in page_vals.iter() {
+        let links = link_vals.get(&page.title);
+        let output = WikiPage::new(page, links).render().await;
+        let formatted_title = page.title.replace('/', "-");
+        let out_dir = format!("public/{}", formatted_title);
+        // TODO use path here instead of title? Since `/` in title can cause issues in fs::write
+        tokio::fs::create_dir(&out_dir)
+            .await
+            .unwrap_or_else(|e| eprintln!("{:?}\nCould not create dir: {}", e, out_dir));
+        let out_file = format!("public/{}/index.html", formatted_title);
+        tokio::fs::write(&out_file, output)
+            .await
+            .unwrap_or_else(|e| eprintln!("{:?}\nCould not write file: {}", e, out_file));
+    }
+}
+
+pub async fn write_backlinks(map: GlobalBacklinks) {
+    let link_map = map.lock().await;
+    let ctx = LinkPage {
+        links: link_map.clone(),
+    };
+    tokio::fs::write("public/links/index.html", ctx.render().await)
+        .await
+        .unwrap();
 }

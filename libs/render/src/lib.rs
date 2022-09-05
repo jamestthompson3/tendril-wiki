@@ -1,16 +1,19 @@
+use std::collections::HashMap;
+use std::fmt::Write as _;
 use std::{collections::BTreeMap, env, io, sync::Arc};
 
 #[macro_use]
 extern crate lazy_static;
 
+use chrono::{DateTime, FixedOffset};
 #[cfg(not(debug_assertions))]
 use directories::ProjectDirs;
 
 use async_trait::async_trait;
 use futures::{stream, StreamExt};
-use link_page::LinkPage;
-use wikitext::parsers::TemplattedPage;
+use persistance::fs::read_note_cache;
 use tokio::{fs, sync::Mutex};
+use wikitext::parsers::{format_links, TemplattedPage};
 
 pub mod bookmark_page;
 pub mod error_page;
@@ -141,16 +144,6 @@ pub async fn render_includes(ctx: String, page: Option<&TemplattedPage>) -> Stri
     });
     let collected = file_lines.collect::<Vec<String>>().await;
     collected.join("\n")
-}
-
-pub async fn write_backlinks(map: GlobalBacklinks) {
-    let link_map = map.lock().await;
-    let ctx = LinkPage {
-        links: link_map.clone(),
-    };
-    fs::write("public/links/index.html", ctx.render().await)
-        .await
-        .unwrap();
 }
 
 pub async fn get_template_file(requested_file: &str) -> Result<String, io::Error> {
