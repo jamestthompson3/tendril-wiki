@@ -85,26 +85,8 @@ async fn process_included_file(file: String, page: Option<&TemplattedPage>) -> S
         CompileState::Dynamic
     };
     match file.as_ref() {
-        "nav" => match state {
-            CompileState::Dynamic => get_template_file("nav").await.unwrap(),
-            CompileState::Static => String::with_capacity(0),
-        },
-        "edit" => match state {
-            CompileState::Dynamic => {
-                let page = page.unwrap();
-                let templatefile = get_template_file("edit").await.unwrap();
-                let metadata_string = page
-                    .metadata
-                    .iter()
-                    .map(|(k, v)| format!("{}:{}", k, v))
-                    .collect::<Vec<String>>()
-                    .join("\n");
-                templatefile
-                    .replace("<%= title %>", &page.title)
-                    .replace("<%= tags %>", &page.tags.join(","))
-                    .replace("<%= raw_md %>", &page.raw_md)
-                    .replace("<%= metadata %>", &metadata_string)
-            }
+        "search" => match state {
+            CompileState::Dynamic => get_template_file("search").await.unwrap(),
             CompileState::Static => String::with_capacity(0),
         },
         "styles" => get_template_file("styles").await.unwrap(),
@@ -115,17 +97,9 @@ async fn process_included_file(file: String, page: Option<&TemplattedPage>) -> S
                 Some(icon) => format!("/files/{}", icon),
                 None => String::from("static/favicon.ico"),
             };
-            let desc = if page.raw_md.len() >= 100 {
-                let mut shortened_desc = page.raw_md.clone();
-                shortened_desc.truncate(80);
-                shortened_desc.push_str("...");
-                shortened_desc
-            } else {
-                page.raw_md.clone()
-            };
             templatefile
                 .replace("<%= title %>", &page.title)
-                .replace("<%= desc %>", &desc)
+                .replace("<%= desc %>", &page.desc)
                 .replace("<%= icon %>", &icon_path)
         }
         "footer" => get_template_file("footer").await.unwrap(),
@@ -159,12 +133,79 @@ pub async fn get_template_file(requested_file: &str) -> Result<String, io::Error
     }
 }
 
+pub fn render_page_metadata(metadata: HashMap<String, String>) -> String {
+    let mut metadata_html = String::new();
+    for (key, value) in metadata.iter() {
+        write!(metadata_html, "<dt><strong>{}:</strong></dt>", key).unwrap();
+        // TODO: Add "created" date here as well
+        // TODO: Modify dates to be compliant with DT parsing
+        if key == "modified" || key == "created" {
+            if let Ok(val) = value.parse::<DateTime<FixedOffset>>() {
+                let val = val.format("%Y-%m-%d %H:%M").to_string();
+                write!(metadata_html, "\n<dd>{}</dd>", val).unwrap();
+            } else {
+                write!(metadata_html, "\n<dd>{}</dd>", value).unwrap();
+            }
+            continue;
+        }
+        if value.starts_with("http") {
+            match key.as_str() {
+                "cover" => {
+                    let val = format!(
+                        "<img src=\"{}\" style=\"max-height: 200px; max-width: 200px;\">",
+                        value
+                    );
+                    write!(metadata_html, "\n<dd>{}</dd>", val).unwrap();
+                }
+                _ => {
+                    let val = format!("<a href=\"{}\">{}</a>", value, value);
+                    write!(metadata_html, "\n<dd>{}</dd>", val).unwrap();
+                }
+            }
+        } else {
+            write!(metadata_html, "\n<dd>{}</dd>", &value).unwrap();
+        }
+    }
+    metadata_html
+}
+
+pub async fn render_mru() -> String {
+    let recent = read_note_cache().await;
+    let mut html = String::new();
+    for line in recent.lines() {
+        write!(html, "<li><a href=\"{}\">{}</a></li>", line, line).unwrap();
+    }
+    html
+}
+
 #[cfg(debug_assertions)]
 fn get_template_location(requested_file: &str) -> String {
     if requested_file.contains('.') {
         return format!("templates/{}", requested_file);
     }
     format!("templates/{}.html", requested_file)
+}
+
+pub fn render_page_backlinks(links: &[String]) -> String {
+    if !links.is_empty() {
+        let backlinks_string = links
+            .iter()
+            .map(|l| format!("<a href=\"{}\">{}</a>", format_links(l), l))
+            .collect::<Vec<String>>()
+            .join("\n");
+        format!(
+            r#"
+<section class="backlinks-container">
+  <hr />
+  <h3>Mentioned in:</h3>
+  <div class="backlinks">{}</div>
+</section>
+"#,
+            backlinks_string
+        )
+    } else {
+        String::with_capacity(0)
+    }
 }
 
 #[cfg(not(debug_assertions))]

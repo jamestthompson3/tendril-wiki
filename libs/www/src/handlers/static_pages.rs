@@ -4,14 +4,14 @@ use persistance::fs::utils::get_config_location;
 use render::{
     error_page::ErrorPage, file_upload_page::FileUploader, help_page::HelpPage,
     index_page::IndexPage, opensearch_page::OpenSearchPage, styles_page::StylesPage,
-    uploaded_files_page::UploadedFilesPage, Render,
+    uploaded_files_page::UploadedFilesPage, GlobalBacklinks, Render,
 };
 use tokio::fs::{self, read_dir};
 use warp::{filters::BoxedFilter, Filter, Reply};
 
 use crate::handlers::filters::with_location;
 
-use super::filters::{with_auth, with_host, with_user};
+use super::filters::{with_auth, with_host, with_links, with_user};
 
 struct Runner {}
 
@@ -54,14 +54,21 @@ pub struct StaticPageRouter {
     user: Arc<String>,
     media_location: Arc<String>,
     host: Arc<String>,
+    links: GlobalBacklinks,
 }
 
 impl StaticPageRouter {
-    pub fn new(user: Arc<String>, media_location: Arc<String>, host: Arc<String>) -> Self {
+    pub fn new(
+        user: Arc<String>,
+        media_location: Arc<String>,
+        host: Arc<String>,
+        links: GlobalBacklinks,
+    ) -> Self {
         Self {
             user,
             media_location,
             host,
+            links,
         }
     }
     pub fn routes(&self) -> BoxedFilter<(impl Reply,)> {
@@ -91,8 +98,9 @@ impl StaticPageRouter {
             .and(with_auth())
             .and(with_user(user.to_string()))
             .and(with_host(host.to_string()))
-            .then(|user: String, host: String| async {
-                let idx_ctx = IndexPage { user, host };
+            .and(with_links(self.links.to_owned()))
+            .then(|user: String, host: String, links: GlobalBacklinks| async {
+                let idx_ctx = IndexPage::new(user, host, links);
                 warp::reply::html(idx_ctx.render().await)
             })
             .boxed()

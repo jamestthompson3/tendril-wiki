@@ -3,13 +3,16 @@ use std::fmt::Write as _;
 
 use build::purge_mru_cache;
 use persistance::fs::{create_journal_entry, read, write, ReadPageError};
-use render::{link_page::LinkPage, new_page::NewPage, GlobalBacklinks, Render};
+use render::{
+    link_page::LinkPage, new_page::NewPage, wiki_page::WikiPage, GlobalBacklinks, Render,
+};
 use tasks::{
     messages::{Message, PatchData},
     Queue,
 };
 use urlencoding::{decode, encode};
 use warp::{filters::BoxedFilter, hyper::Uri, Filter, Reply};
+use wikitext::{parsers::NoteHeader, processors::to_template};
 
 use crate::RefHubParts;
 
@@ -41,20 +44,36 @@ impl Runner {
             .unwrap()
     }
 
+    async fn note_header_to_html(&self, note: NoteHeader, reflinks: GlobalBacklinks) -> String {
+        let templatted = to_template(&note);
+        let link_vals = reflinks.lock().await;
+        let links = link_vals.get(&templatted.page.title);
+        WikiPage::new(&templatted.page, links).render().await
+    }
+
     pub async fn render_nested_file(
+        &self,
         mut main_path: String,
         sub_path: String,
-        reflinks: GlobalBacklinks,
-    ) -> String {
+        links: GlobalBacklinks,
+    ) -> Result<String, ReadPageError> {
         // I don't know why warp doesn't decode the sub path here...
         let sub_path_decoded = decode(&sub_path).unwrap();
         write!(main_path, "/{}", sub_path_decoded).unwrap();
-        let page = read(main_path.clone(), reflinks).await;
-        if page.is_ok() {
-            page.unwrap()
-        } else {
-            println!("Cannot read page: {} due to {:?}", main_path, page.err());
-            String::with_capacity(0)
+        match read(main_path.clone()).await {
+            Ok(note) => Ok(self.note_header_to_html(note, links).await),
+            Err(ReadPageError::PageNotFoundError) => {
+                let ctx = NewPage {
+                    title: Some(urlencoding::decode(&sub_path).unwrap().into_owned()),
+                    linkto: None,
+                    action_params: None,
+                };
+                Ok(ctx.render().await)
+            }
+            e => {
+                eprint!("{:?}", e);
+                Err(ReadPageError::Unknown)
+            }
         }
     }
 
@@ -64,8 +83,8 @@ impl Runner {
         links: GlobalBacklinks,
         query_params: HashMap<String, String>,
     ) -> Result<String, ReadPageError> {
-        match read(path.clone(), links).await {
-            Ok(page) => Ok(page),
+        match read(path.clone()).await {
+            Ok(note) => Ok(self.note_header_to_html(note, links).await),
             Err(ReadPageError::PageNotFoundError) => {
                 let ctx = NewPage {
                     title: Some(urlencoding::decode(&path).unwrap().into_owned()),
@@ -136,7 +155,7 @@ impl Runner {
             }
             Err(e) => {
                 eprintln!("{}", e);
-                let redir_url = format!("/error?msg={}", encode(&format!("{}",e)));
+                let redir_url = format!("/error?msg={}", encode(&format!("{}", e)));
                 Ok(redir_url.parse::<Uri>().unwrap())
             }
         }
@@ -154,7 +173,7 @@ impl Runner {
             }
             Err(e) => {
                 eprintln!("{}", e);
-                let redir_url = format!("/error?msg={}", encode(&format!("{:?}",e)));
+                let redir_url = format!("/error?msg={}", encode(&format!("{:?}", e)));
                 Ok(redir_url.parse::<Uri>().unwrap())
             }
         }
@@ -235,10 +254,13 @@ impl WikiPageRouter {
             .and(with_links(links.to_owned()))
             .then(
                 |main_path: String, sub_path: String, reflinks: GlobalBacklinks| async move {
+                    let runner = Runner {};
                     let main_path = decode(&main_path).unwrap().to_string();
                     let sub_path = decode(&sub_path).unwrap().to_string();
-                    let response = Runner::render_nested_file(main_path, sub_path, reflinks).await;
-                    warp::reply::html(response)
+                    let response = runner
+                        .render_nested_file(main_path, sub_path, reflinks)
+                        .await;
+                    warp::reply::html(response.unwrap())
                 },
             )
             .boxed()

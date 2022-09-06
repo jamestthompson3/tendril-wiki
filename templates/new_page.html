@@ -15,31 +15,14 @@
     <%= include "styles" %>
   </head>
   <body>
-    <div class="content-container">
-      <h1 class="title"><%= note_title %></h1>
-      <form
-        class="editor visible"
-        method="post"
-        action="/edit<%= action_params %>"
-        target="_parent"
-      >
-        <button type="submit">Save</button>
-        <label for="title-edit">Title</label>
-        <input
-          name="title"
-          id="title-edit"
-          type="text"
-          value="<%= note_title %>"
-        />
-        <label for="tag-edit">Tags</label>
-        <input id="tag-edit" type="text" name="tags" />
-        <label for="body">Body</label>
-        <textarea id="body" name="body"><%= linkto %></textarea>
-        <label for="metadata">Metadata</label>
-        <textarea id="metadata" name="metadata" style="height: 150px"></textarea
-      </form>
+    <%= include "search" %>
+    <div class="flex-container">
+      <!-- prettier-ignore -->
+      <%= sidebar %>
+      <!-- prettier-ignore -->
+      <%= content %>
     </div>
-    <%= include "footer" %>
     <script defer="true" src="/static/newPage.js"></script>
+    <script src="static/editor.js" type="module"></script>
   </body>
 </html>

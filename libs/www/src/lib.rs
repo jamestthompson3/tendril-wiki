@@ -23,6 +23,7 @@ pub async fn server(config: General, parts: RefHubParts) {
         Arc::new(config.user),
         media_location.clone(),
         Arc::new(config.host),
+        parts.clone().0
     );
     let wiki_router = WikiPageRouter::new(parts.clone());
 

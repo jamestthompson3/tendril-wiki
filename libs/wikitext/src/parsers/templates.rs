@@ -7,7 +7,7 @@ pub struct TemplattedPage {
     pub title: String,
     pub body: String,
     pub tags: Vec<String>,
-    pub raw_md: String,
+    pub desc: String,
     pub metadata: HashMap<String, String>,
 }
 

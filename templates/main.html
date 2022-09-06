@@ -7,44 +7,19 @@
       name="viewport"
       content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover"
     />
-    <link rel="preload" as="style" href="/static/note-styles.css" />
+    <link rel="preload" as="script" href="/static/editor.js" />
     <%= include "styles" %>
-    <link rel="stylesheet" href="/static/note-styles.css"/>
 
     <title><%= title %></title>
   </head>
   <body>
-    <%= include "nav" %>
-    <noscript>
-      <div class="content-container">
-        <%= include "edit" %>
-
-        <div class="content">
-          <h1 class="title"><%= title %></h1>
-          <div>
-            <ul class="tags">
-              <%= tags %>
-            </ul>
-          </div>
-          <main class="content-body"><%= body %></main>
-          <details class="metadata">
-          <%= links %>
-        </div>
-      </div>
-    </noscript>
-    <div class="content-container">
-      <div class="content">
-        <h1 class="title"><%= title %></h1>
-        <div id="content-block" class="content-body"><%= body %></div>
-      </div>
-      <details>
-        <summary>Metadata</summary>
-        <div>
-          <dl id="metadata"><%= metadata %></dl>
-        </div>
-      </details>
+    <%= include "search" %>
+    <div class="flex-container">
+      <!-- prettier-ignore -->
+      <%= sidebar %>
+      <!-- prettier-ignore -->
+      <%= content %>
     </div>
-    <%= include "footer" %>
   </body>
   <script src="static/editor.js" type="module"></script>
 </html>
