@@ -46,8 +46,15 @@ export function saveBlock() {
       if (res.status < 400) {
         if (CURRENT_TITLE !== title) {
           history.pushState({ name: "edit page title" }, "", title);
+          const mru = document.getElementById("mru");
+          const links = mru.querySelectorAll("a");
+          for (const link of links) {
+            if (link.href.includes(CURRENT_TITLE)) {
+              link.href = link.href.replace(CURRENT_TITLE, title);
+              link.innerText = link.innerText.replace(CURRENT_TITLE, title);
+            }
+          }
           CURRENT_TITLE = title;
-          // TODO: update MRU
         }
       }
     })
