@@ -114,7 +114,7 @@ pub async fn write(data: &PatchData) -> Result<(), WriteWikiError> {
     let final_note: String = note_meta.into();
     if data.old_title != data.title && !data.old_title.is_empty() {
         let new_location = PathBuf::from(format!(
-            "{}{}.md",
+            "{}{}.txt",
             WIKI_LOCATION.to_str().unwrap(),
             data.title
         ));

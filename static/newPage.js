@@ -1,14 +1,9 @@
-function changePageTitle(title) {
-  const pageTitle = document.querySelector(".title");
-  pageTitle.innerText = title;
-  document.title = title;
+function changePageTitle() {
+  document.title = this.innerText;
 }
 
-const titleInput = document.getElementById("title-edit");
+const titleInput = document.querySelector(".title");
 
-titleInput.focus();
-titleInput.select();
-
-titleInput.onchange = function (e) {
-  changePageTitle(e.target.value);
-};
+// titleInput.focus();
+// titleInput.select();
+titleInput.addEventListener("change", changePageTitle);

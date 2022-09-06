@@ -136,6 +136,15 @@ textarea {
   font-size: 1.15rem;
   font-family: Arial;
 }
+input[type="text"].title {
+  text-align: center;
+  padding: 0rem !important;
+  margin: 0.5rem 25%;
+  color: var(--text-color);
+  background: transparent;
+  border-radius: var(--rad);
+  border: none;
+}
 
 .result {
   /* only for safari */

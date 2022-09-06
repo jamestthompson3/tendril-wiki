@@ -7,7 +7,7 @@ export function addBlock(indentationLevel) {
   if (indentationLevel) {
     textblock.dataset.indent = indentationLevel;
   }
-  setupTextblockListeners(textblock);
+  setupTextblockListeners(textblock, "text-block");
   // insert the new block directly after the current block
   const { parentNode, nextSibling } = this;
   parentNode.insertBefore(textblock, nextSibling);
@@ -37,11 +37,21 @@ export function saveBlock() {
     method: "POST",
     body: `body=${encodeURIComponent(
       fullBody
-    )}&title=${title}&old_title=${title}`,
+    )}&title=${title}&old_title=${CURRENT_TITLE}`,
     headers: {
       "content-type": "application/x-www-form-urlencoded",
     },
-  }).catch(console.error);
+  })
+    .then((res) => {
+      if (res.status < 400) {
+        if (CURRENT_TITLE !== title) {
+          history.pushState({ name: "edit page title" }, "", title);
+          CURRENT_TITLE = title;
+          // TODO: update MRU
+        }
+      }
+    })
+    .catch(console.error);
 }
 
 export function setAsFocused(el) {
@@ -65,32 +75,49 @@ export function updateInputHeight(el) {
   }
 }
 
-export function setupViewer(e) {
-  const div = document.createElement("div");
-  div.addEventListener("click", setupEditor);
-  div.innerHTML = textToHtml(e.target.value);
-  div.classList.add("text-block");
-  for (const datapoint in this.dataset) {
-    div.dataset[datapoint] = this.dataset[datapoint];
-  }
-  e.target.replaceWith(div);
-  if (this.value !== "" && this.value !== "\n") {
-    saveBlock();
-  }
+export function setupViewer(divClass) {
+  return function (e) {
+    const div = document.createElement("div");
+    div.addEventListener("click", setupEditor(divClass));
+    const html = textToHtml(e.target.value);
+    if (divClass === "title") {
+      div.innerHTML = `<h1 class="title">${html}</h1>`;
+    } else {
+      div.innerHTML = html;
+      div.classList.add(divClass);
+    }
+    for (const datapoint in this.dataset) {
+      div.dataset[datapoint] = this.dataset[datapoint];
+    }
+    e.target.replaceWith(div);
+    if (this.value !== "" && this.value !== "\n") {
+      saveBlock();
+    }
+  };
 }
 
-export function setupEditor(e) {
-  // don't try to edit the block when we're clicking a link
-  if (e.target.nodeName === "A") return;
-  const textblock = document.createElement("textarea");
+export function setupEditor(divClass) {
+  return function (e) {
+    // don't try to edit the block when we're clicking a link
+    if (e.target.nodeName === "A") return;
+    let textblock;
+    if (divClass === "title") {
+      textblock = document.createElement("input");
+      textblock.type = "text";
+      textblock.value = htmlToText(this);
+    } else {
+      textblock = document.createElement("textarea");
+      textblock.textContent = htmlToText(this);
+    }
 
-  textblock.textContent = htmlToText(this);
-  for (const datapoint in this.dataset) {
-    textblock.dataset[datapoint] = this.dataset[datapoint];
-  }
-  setupTextblockListeners(textblock);
-  this.replaceWith(textblock);
-  setAsFocused(textblock);
+    for (const datapoint in this.dataset) {
+      textblock.dataset[datapoint] = this.dataset[datapoint];
+    }
+    textblock.classList.add(divClass);
+    setupTextblockListeners(textblock, divClass);
+    this.replaceWith(textblock);
+    setAsFocused(textblock);
+  };
 }
 
 export function handleInput(e) {
@@ -136,11 +163,13 @@ export function handleKeydown(e) {
   }
 }
 
-function setupTextblockListeners(textblock) {
-  textblock.addEventListener("blur", setupViewer);
-  textblock.addEventListener("keyup", handleInput);
-  textblock.addEventListener("keydown", handleKeydown);
-  textblock.addEventListener("paste", detectImagePaste);
+function setupTextblockListeners(textblock, divClass) {
+  textblock.addEventListener("blur", setupViewer(divClass));
+  if (divClass !== "title") {
+    textblock.addEventListener("keyup", handleInput);
+    textblock.addEventListener("keydown", handleKeydown);
+    textblock.addEventListener("paste", detectImagePaste);
+  }
 }
 
 function detectImagePaste(event) {
