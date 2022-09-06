@@ -170,7 +170,7 @@ fn until_empty_space(slice: &StrTendril) -> SliceWithIndex {
         end = index;
     }
     end += 1;
-    let steps = if unicode_offset > 0 {
+    let steps = if unicode_offset > 0  && end > unicode_offset {
         end - unicode_offset
     } else {
         end - 1
