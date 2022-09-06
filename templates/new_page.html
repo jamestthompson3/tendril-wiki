@@ -13,6 +13,9 @@
     <meta property="og:type" content="website" />
     <title><%= page_title %></title>
     <%= include "styles" %>
+    <script>
+      let CURRENT_TITLE = "<%= title %>";
+    </script>
   </head>
   <body>
     <%= include "search" %>
@@ -22,7 +25,7 @@
       <!-- prettier-ignore -->
       <%= content %>
     </div>
-    <script defer="true" src="/static/newPage.js"></script>
     <script src="static/editor.js" type="module"></script>
+    <script defer="true" src="/static/newPage.js"></script>
   </body>
 </html>

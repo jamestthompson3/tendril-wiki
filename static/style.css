@@ -82,11 +82,13 @@ button {
 }
 .content-container {
   flex: 1 1 auto;
+  overflow-x: hidden;
+  overflow-y: scroll;
 }
 .content {
   height: 95%;
-  overflow-y: scroll;
-  overflow-x: hidden;
+  width: 60%;
+  margin: 0rem auto;
 }
 
 .title {

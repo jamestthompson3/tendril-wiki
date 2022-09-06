@@ -139,11 +139,12 @@ textarea {
 input[type="text"].title {
   text-align: center;
   padding: 0rem !important;
-  margin: 0.5rem 25%;
+  margin: 0.5rem auto;
   color: var(--text-color);
   background: transparent;
   border-radius: var(--rad);
   border: none;
+  width: 100%;
 }
 
 .result {

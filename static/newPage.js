@@ -1,9 +1,12 @@
 function changePageTitle() {
-  document.title = this.innerText;
+  document.title = this.value;
 }
 
-const titleInput = document.querySelector(".title");
+const title = document.querySelector(".title");
 
-// titleInput.focus();
-// titleInput.select();
+title.click();
+const titleInput = document.querySelector('input[type="text"].title');
+
+titleInput.focus();
+titleInput.select();
 titleInput.addEventListener("change", changePageTitle);

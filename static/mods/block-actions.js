@@ -84,19 +84,22 @@ export function updateInputHeight(el) {
 
 export function setupViewer(divClass) {
   return function (e) {
-    const div = document.createElement("div");
-    div.addEventListener("click", setupEditor(divClass));
+    let el;
     const html = textToHtml(e.target.value);
     if (divClass === "title") {
-      div.innerHTML = `<h1 class="title">${html}</h1>`;
+      el = document.createElement("h1");
+      el.classList.add("title");
+      el.innerHTML = html;
     } else {
-      div.innerHTML = html;
-      div.classList.add(divClass);
+      el = document.createElement("div");
+      el.innerHTML = html;
+      el.classList.add(divClass);
     }
+    el.addEventListener("click", setupEditor(divClass));
     for (const datapoint in this.dataset) {
-      div.dataset[datapoint] = this.dataset[datapoint];
+      el.dataset[datapoint] = this.dataset[datapoint];
     }
-    e.target.replaceWith(div);
+    e.target.replaceWith(el);
     if (this.value !== "" && this.value !== "\n") {
       saveBlock();
     }
