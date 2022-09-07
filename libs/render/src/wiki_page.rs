@@ -3,8 +3,8 @@ use async_trait::async_trait;
 use wikitext::parsers::TemplattedPage;
 
 use crate::{
-    get_template_file, render_includes, render_mru, render_page_backlinks, render_page_metadata,
-    Render,
+    get_template_file, render_includes, render_page_backlinks, render_page_metadata,
+    render_sidebar, Render,
 };
 
 pub struct WikiPage<'a> {
@@ -50,14 +50,12 @@ impl<'a> Render for WikiPage<'a> {
             .collect::<Vec<String>>()
             .join("\n");
         let mut ctx = get_template_file("main").await.unwrap();
-        let sidebar = get_template_file("sidebar").await.unwrap();
         let content = get_template_file("content").await.unwrap();
         ctx = ctx
-            .replace("<%= sidebar %>", &sidebar)
+            .replace("<%= sidebar %>", &render_sidebar().await)
             .replace("<%= content %>", &content)
             .replace("<%= tags %>", &tag_string)
             .replace("<%= links %>", &render_page_backlinks(&backlinks))
-            .replace("<%= mru %>", &render_mru().await)
             .replace("<%= body %>", &self.render_body())
             .replace("<%= title %>", &page.title)
             .replace(

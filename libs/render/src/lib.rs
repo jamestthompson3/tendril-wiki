@@ -178,6 +178,12 @@ pub async fn render_mru() -> String {
     html
 }
 
+pub async fn render_sidebar() -> String {
+    let mut sidebar = get_template_file("sidebar").await.unwrap();
+    sidebar = sidebar.replace("<%= mru %>", &render_mru().await);
+    sidebar
+}
+
 #[cfg(debug_assertions)]
 fn get_template_location(requested_file: &str) -> String {
     if requested_file.contains('.') {

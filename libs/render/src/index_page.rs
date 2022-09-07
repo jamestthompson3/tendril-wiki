@@ -1,6 +1,6 @@
 use crate::{
-    get_template_file, render_includes, render_mru, render_page_backlinks, render_page_metadata,
-    GlobalBacklinks, Render,
+    get_template_file, render_includes, render_page_backlinks, render_page_metadata,
+    render_sidebar, GlobalBacklinks, Render,
 };
 use async_trait::async_trait;
 use persistance::fs::ReadPageError;
@@ -68,13 +68,11 @@ impl IndexPage {
 impl Render for IndexPage {
     async fn render(&self) -> String {
         let mut ctx = get_template_file("index").await.unwrap();
-        let sidebar = get_template_file("sidebar").await.unwrap();
         ctx = ctx
             .replace("<%= user %>", &self.user)
-            .replace("<%= sidebar %>", &sidebar)
+            .replace("<%= sidebar %>", &render_sidebar().await)
             .replace("<%= host %>", &self.host)
-            .replace("<%= content %>", &self.render_today().await)
-            .replace("<%= mru %>", &render_mru().await);
+            .replace("<%= content %>", &self.render_today().await);
         render_includes(ctx, None).await
     }
 }

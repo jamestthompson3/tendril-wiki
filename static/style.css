@@ -64,6 +64,9 @@ a:hover {
   background-size: 4px 50px;
   color: var(--bg);
 }
+h2 {
+  margin: 1rem 0rem;
+}
 
 li {
   margin-bottom: 0.5rem;
@@ -87,7 +90,7 @@ button {
 }
 .content {
   height: 95%;
-  width: 60%;
+  width: 70%;
   margin: 0rem auto;
 }
 

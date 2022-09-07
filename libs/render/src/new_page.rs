@@ -1,4 +1,4 @@
-use crate::{get_template_file, render_includes, render_mru, Render};
+use crate::{get_template_file, render_includes, render_sidebar, Render};
 use async_trait::async_trait;
 
 pub struct NewPage<'a> {
@@ -48,7 +48,6 @@ impl<'a> NewPage<'a> {
 impl<'a> Render for NewPage<'a> {
     async fn render(&self) -> String {
         let mut ctx = get_template_file("new_page").await.unwrap();
-        let sidebar = get_template_file("sidebar").await.unwrap();
         let mut content = get_template_file("content").await.unwrap();
         content = content
             .replace("<%= body %>", "<div class=\"text-block\"></div>")
@@ -56,12 +55,11 @@ impl<'a> Render for NewPage<'a> {
             .replace("<%= metadata %>", "")
             .replace("<%= links %>", "");
         ctx = ctx
-            .replace("<%= sidebar %>", &sidebar)
+            .replace("<%= sidebar %>", &render_sidebar().await)
             .replace("<%= content %>", &content)
             .replace("<%= page_title %>", self.get_page_title())
             .replace("<%= action_params %>", self.action_params.unwrap_or(""))
-            .replace("<%= linkto %>", &self.get_linkto())
-            .replace("<%= mru %>", &render_mru().await);
+            .replace("<%= linkto %>", &self.get_linkto());
         render_includes(ctx, None).await
     }
 }
