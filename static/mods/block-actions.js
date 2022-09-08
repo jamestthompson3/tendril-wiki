@@ -69,6 +69,7 @@ export function saveBlock() {
         }
         if (CURRENT_TITLE !== title) {
           history.pushState({ name: "edit page title" }, "", title);
+          document.title = title;
           CURRENT_TITLE = title;
         }
       }

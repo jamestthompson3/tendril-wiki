@@ -9,4 +9,4 @@ const titleInput = document.querySelector('input[type="text"].title');
 
 titleInput.focus();
 titleInput.select();
-titleInput.addEventListener("change", changePageTitle);
+titleInput.addEventListener("blur", changePageTitle);
