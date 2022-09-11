@@ -37,33 +37,29 @@ fn parse_empty_space(_: &StrTendril) -> BlockResult {
 }
 
 fn parse_link(slice: &StrTendril) -> BlockResult {
-    let mut link = String::new();
-    let mut iter = slice.char_indices().peekable();
-    let mut end_detected = false;
-    // Start with the next char since we know that we've detected a link char already
-    iter.next();
-    while let Some(&(_, token)) = iter.peek() {
-        match token {
-            '[' => {
-                iter.next();
-            }
-            ']' => {
-                if !end_detected {
-                    end_detected = true;
-                    iter.next();
-                } else {
+    if slice.starts_with("[[") {
+        let mut iter = slice.char_indices().peekable();
+        // Skip first two indicies
+        iter.next();
+        iter.next();
+        let mut idx = 0;
+        while let Some(&(index, token)) = iter.peek() {
+            idx = index;
+            match token {
+                ']' => {
                     break;
                 }
-            }
-            _ => {
-                link.push(token);
-                iter.next();
+                _ => {
+                    iter.next();
+                }
             }
         }
+        return Ok((
+            BlockElement::PageLink(slice.try_subtendril(2, idx as u32 - 2)?),
+            idx + 1,
+        ));
     }
-
-    let content = StrTendril::from_slice(&link);
-    Ok((BlockElement::PageLink(content), link.len() + 3))
+    Ok((BlockElement::Text(slice.try_subtendril(0, 1)?), 0))
 }
 fn parse_quote(slice: &StrTendril) -> BlockResult {
     let mut elements = Vec::new();
@@ -84,10 +80,18 @@ fn parse_quote(slice: &StrTendril) -> BlockResult {
 
     Ok((BlockElement::Quote(elements), slice.len()))
 }
+
 fn parse_text(slice: &StrTendril) -> BlockResult {
     let (content, first_empty_space) = until_empty_space(slice)?;
     if content.starts_with("http://") || content.starts_with("https://") {
-        Ok((BlockElement::HyperLink(content), first_empty_space))
+        if content.ends_with(')') || content.ends_with(']') {
+            return Ok((BlockElement::HyperLink(content.try_subtendril(0, content.len32() - 1)?), first_empty_space - 1));
+        } else {
+            return Ok((BlockElement::HyperLink(content), first_empty_space));
+        }
+    }
+    if content.starts_with('(') {
+        Ok((BlockElement::Text(content.try_subtendril(0, 1)?), 0))
     } else {
         Ok((BlockElement::Text(content), first_empty_space))
     }
@@ -170,7 +174,7 @@ fn until_empty_space(slice: &StrTendril) -> SliceWithIndex {
         end = index;
     }
     end += 1;
-    let steps = if unicode_offset > 0  && end > unicode_offset {
+    let steps = if unicode_offset > 0 && end > unicode_offset {
         end - unicode_offset
     } else {
         end - 1
@@ -230,13 +234,44 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // TODO: maybe we want to make this illegal syntax?
     fn parses_block_links_in_parens() {
         let test_string = "([[testing again]])";
         let block = parse_block(test_string.as_bytes());
         assert_eq!(block.len(), 3);
-        let matching_block = BlockElement::PageLink(StrTendril::from_slice("testing again"));
+        let mut matching_block = BlockElement::PageLink(StrTendril::from_slice("testing again"));
         assert_eq!(block[1], matching_block);
+        matching_block = BlockElement::Text(StrTendril::from_slice("("));
+        assert_eq!(block[0], matching_block);
+        matching_block = BlockElement::Text(StrTendril::from_slice(")"));
+        assert_eq!(block[2], matching_block);
+    }
+
+
+    #[test]
+    fn parses_raw_links_in_brackets() {
+        let test_string = "[https://example.com]";
+        let block = parse_block(test_string.as_bytes());
+        assert_eq!(block.len(), 3);
+        let mut matching_block =
+            BlockElement::HyperLink(StrTendril::from_slice("https://example.com"));
+        assert_eq!(block[1], matching_block);
+        matching_block = BlockElement::Text(StrTendril::from_slice("["));
+        assert_eq!(block[0], matching_block);
+        matching_block = BlockElement::Text(StrTendril::from_slice("]"));
+        assert_eq!(block[2], matching_block);
+    }
+    #[test]
+    fn parses_raw_links_in_parens() {
+        let test_string = "(https://example.com)";
+        let block = parse_block(test_string.as_bytes());
+        assert_eq!(block.len(), 3);
+        let mut matching_block =
+            BlockElement::HyperLink(StrTendril::from_slice("https://example.com"));
+        assert_eq!(block[1], matching_block);
+        matching_block = BlockElement::Text(StrTendril::from_slice("("));
+        assert_eq!(block[0], matching_block);
+        matching_block = BlockElement::Text(StrTendril::from_slice(")"));
+        assert_eq!(block[2], matching_block);
     }
 
     #[test]
