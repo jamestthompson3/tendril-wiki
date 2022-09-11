@@ -1,4 +1,4 @@
-use build::{build_tags_and_links, install, pages::Builder, update, RefHub};
+use build::{build_tags_and_links, install, pages::Builder, update, RefHub, migrate};
 use persistance::fs::{
     config::read_config,
     create_journal_entry,
@@ -28,6 +28,7 @@ async fn main() {
             "-b" | "--build" => build_all = true,
             "-i" | "--init" => return install(),
             "-u" | "--update" => return update(),
+            "-m" | "--migrate" => return migrate(),
             _ => {
                 if arg.starts_with('-') {
                     eprintln!("unknown option: {}", arg);

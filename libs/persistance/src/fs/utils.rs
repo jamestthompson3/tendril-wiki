@@ -17,6 +17,10 @@ pub fn get_config_location() -> (PathBuf, PathBuf) {
     (config_dir.to_owned(), config_path)
 }
 
+pub fn get_wiki_location() -> PathBuf {
+ WIKI_LOCATION.clone()
+}
+
 /// Returns the PathBuf if an entry exists, returns an error if the file isn't found or it couldn't
 /// parse the location.
 pub fn get_file_path(requested_file: &str) -> Result<PathBuf, ReadPageError> {

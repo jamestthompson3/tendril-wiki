@@ -2,7 +2,7 @@ use std::{fs, process::exit};
 
 use persistance::fs::{
     config::Config,
-    utils::{get_config_location, get_data_dir_location},
+    utils::{get_config_location, get_data_dir_location, get_wiki_location},
 };
 use tasks::hash_password;
 
@@ -59,6 +59,42 @@ pub fn install() {
 pub fn update() {
     prep_files();
     println!("Files updated!");
+}
+
+pub fn migrate() {
+    migrate_md_to_wikitext();
+}
+
+fn migrate_md_to_wikitext() {
+    let mut backup_dir = get_wiki_location();
+    let original_dir = get_wiki_location();
+    backup_dir.pop();
+    backup_dir.push("tendril-backup");
+    println!("data_dir: {:?}, backup: {:?}", original_dir, backup_dir);
+    fs::create_dir_all(&backup_dir).unwrap();
+    for file in fs::read_dir(original_dir).unwrap() {
+        let entry = file.unwrap();
+        fs::copy(&entry.path(), &backup_dir.join(entry.file_name())).unwrap();
+        if entry.file_name().to_str().unwrap().ends_with("md") {
+            let contents = fs::read_to_string(entry.path()).unwrap();
+            let replaced_lines = contents
+                .lines()
+                .filter_map(|line| {
+                    if line == "---" {
+                        return None;
+                    }
+                    if line.starts_with('#') {
+                        let cleaned_line = line.replace('#', "");
+                        let formatted = format!("# {}", cleaned_line);
+                        return Some(formatted);
+                    }
+                    Some(line.into())
+                })
+                .collect::<Vec<String>>()
+                .join("\n");
+            fs::write(entry.path(), replaced_lines).unwrap();
+        }
+    }
 }
 
 fn bootstrap_initial_files(options: ConfigOptions) {
