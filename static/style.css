@@ -196,6 +196,7 @@ button.submit {
 }
 
 aside {
+  flex: 1 auto;
   min-width: 100px;
   max-width: 250px;
   height: 600px;
