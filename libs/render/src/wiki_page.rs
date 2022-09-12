@@ -51,6 +51,7 @@ impl<'a> Render for WikiPage<'a> {
             .join("\n");
         let mut ctx = get_template_file("main").await.unwrap();
         let content = get_template_file("content").await.unwrap();
+        let nav = get_template_file("nav").await.unwrap();
         ctx = ctx
             .replace("<%= sidebar %>", &render_sidebar().await)
             .replace("<%= content %>", &content)
@@ -62,6 +63,8 @@ impl<'a> Render for WikiPage<'a> {
                 "<%= metadata %>",
                 &render_page_metadata(self.page.metadata.clone()),
             );
-        render_includes(ctx, Some(self.page)).await
+        render_includes(ctx, Some(self.page))
+            .await
+            .replace("<%= nav %>", &nav)
     }
 }

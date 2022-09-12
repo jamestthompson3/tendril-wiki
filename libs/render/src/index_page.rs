@@ -37,9 +37,17 @@ impl IndexPage {
                 };
                 links.dedup();
                 links.sort_unstable();
+                let tag_string = templatted
+                    .page
+                    .tags
+                    .iter()
+                    .map(|t| format!("<li><a href=\"{}\">#{}</a></li>", t, t))
+                    .collect::<Vec<String>>()
+                    .join("\n");
                 content = content
                     .replace("<%= title %>", &self.today)
                     .replace("<%= body %>", &templatted.page.body)
+                    .replace("<%= tags %>", &tag_string)
                     .replace(
                         "<%= metadata %>",
                         &render_page_metadata(templatted.page.metadata),
@@ -52,8 +60,9 @@ impl IndexPage {
                 content = content
                     .replace("<%= title %>", &self.today)
                     .replace("<%= body %>", "<div class=\"text-block\"></div>")
-                    .replace("<%= metadata %>", &String::with_capacity(0))
-                    .replace("<%= links %>", &String::with_capacity(0));
+                    .replace("<%= tags %>", "")
+                    .replace("<%= metadata %>", "")
+                    .replace("<%= links %>", "");
                 content
             }
             e => {
@@ -68,11 +77,12 @@ impl IndexPage {
 impl Render for IndexPage {
     async fn render(&self) -> String {
         let mut ctx = get_template_file("index").await.unwrap();
+        let nav = get_template_file("nav").await.unwrap();
         ctx = ctx
             .replace("<%= user %>", &self.user)
             .replace("<%= sidebar %>", &render_sidebar().await)
             .replace("<%= host %>", &self.host)
             .replace("<%= content %>", &self.render_today().await);
-        render_includes(ctx, None).await
+        render_includes(ctx, None).await.replace("<%= nav %>", &nav)
     }
 }

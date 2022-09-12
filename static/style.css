@@ -126,6 +126,14 @@ button {
   flex-wrap: wrap;
 }
 
+.navigation nav {
+  display: none;
+}
+
+#home {
+  display: none;
+}
+
 #mobile-nav ~ label {
   display: none;
 }

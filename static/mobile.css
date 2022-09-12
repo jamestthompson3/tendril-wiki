@@ -22,6 +22,15 @@ aside {
   padding: 0.25rem;
 }
 
+.flex-container {
+  overflow-y: scroll;
+  overflow-x: hidden;
+}
+
+.content {
+  width: 85%;
+}
+
 .content-body p {
   padding: 1rem;
 }
@@ -37,6 +46,10 @@ aside {
 
 #mobile-nav:checked ~ nav {
   display: block;
+}
+
+#home {
+  display: inherit;
 }
 
 #mobile-nav ~ label {
