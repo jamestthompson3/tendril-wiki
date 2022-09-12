@@ -1,22 +1,22 @@
-use crate::parsers::{to_html, NoteHeader, ParsedPages, ParsedTemplate, TemplattedPage};
+use crate::parsers::{to_html, Note, ParsedPages, ParsedTemplate, TemplattedPage};
 
 pub mod tags;
 
 use self::tags::*;
 
-pub fn to_template(note: &NoteHeader) -> ParsedTemplate {
+pub fn to_template(note: &Note) -> ParsedTemplate {
     let html = to_html(&note.content);
     let default_title = "Untitled".to_string();
     let title = note
-        .metadata
+        .header
         .get("title")
         .unwrap_or(&default_title)
         .to_owned();
-    let tags = match note.metadata.get("tags") {
+    let tags = match note.header.get("tags") {
         None => Vec::with_capacity(0),
         Some(raw_tags) => TagsArray::new(raw_tags).values,
     };
-    let mut rendered_metadata = note.metadata.to_owned();
+    let mut rendered_metadata = note.header.to_owned();
     // We're already showing this, so no need to dump it in the table...
     rendered_metadata.remove("title");
     rendered_metadata.remove("tags");

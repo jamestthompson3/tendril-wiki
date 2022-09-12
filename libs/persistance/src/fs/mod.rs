@@ -11,7 +11,7 @@ use chrono::{DateTime, FixedOffset, Local};
 use directories::ProjectDirs;
 use tasks::messages::PatchData;
 use tokio::fs::{self, read_to_string};
-use wikitext::parsers::{parse_meta, NoteHeader};
+use wikitext::parsers::{parse_meta, Note};
 
 use thiserror::Error;
 
@@ -77,12 +77,12 @@ pub async fn write(data: &PatchData) -> Result<(), WriteWikiError> {
         data.title.clone()
     };
     let file_path = get_file_path(&current_title_on_disk).unwrap();
-    let mut note_meta = NoteHeader::from(data);
+    let mut note_meta = Note::from(data);
     let now = Local::now().format(DT_FORMAT).to_string();
     // In the case that we're creating a new file
     if !file_path.exists() && data.old_title.is_empty() {
-        note_meta.metadata.insert("created".into(), now.clone());
-        note_meta.metadata.insert("id".into(), now);
+        note_meta.header.insert("created".into(), now.clone());
+        note_meta.header.insert("id".into(), now);
         let note: String = note_meta.into();
         return match fs::write(file_path, note).await {
             Ok(()) => Ok(()),
@@ -92,22 +92,22 @@ pub async fn write(data: &PatchData) -> Result<(), WriteWikiError> {
             }
         };
     }
-    note_meta.metadata.insert("modified".into(), now.clone());
+    note_meta.header.insert("modified".into(), now.clone());
 
-    let created = note_meta.metadata.get("created");
+    let created = note_meta.header.get("created");
 
     // HACK: Only for legacy notes
     if created.is_none() {
-        note_meta.metadata.insert("created".into(), now.clone());
-        note_meta.metadata.insert("id".into(), now);
+        note_meta.header.insert("created".into(), now.clone());
+        note_meta.header.insert("id".into(), now);
     }
-    if note_meta.metadata.get("id").is_none() {
-        let created_time = note_meta.metadata.get("created").unwrap().to_owned();
+    if note_meta.header.get("id").is_none() {
+        let created_time = note_meta.header.get("created").unwrap().to_owned();
         let parsed_created = match created_time.parse::<DateTime<FixedOffset>>() {
             Ok(dt) => dt.format(DT_FORMAT).to_string(),
             Err(_) => created_time,
         };
-        note_meta.metadata.insert("id".into(), parsed_created);
+        note_meta.header.insert("id".into(), parsed_created);
     }
     // END HACK
 
@@ -150,7 +150,7 @@ pub async fn delete(requested_file: &str) -> Result<(), io::Error> {
     Ok(())
 }
 
-pub async fn read(requested_file: String) -> Result<NoteHeader, ReadPageError> {
+pub async fn read(requested_file: String) -> Result<Note, ReadPageError> {
     let file_path = get_file_path(&requested_file)?;
     path_to_data_structure(&file_path).await
 }
@@ -178,7 +178,7 @@ pub async fn create_journal_entry(entry: String) -> Result<PatchData, std::io::E
         write!(entry_file, "\n\n[{}] {}", now.format("%H:%M"), entry).unwrap();
         println!("\x1b[38;5;47mdaily journal updated\x1b[0m");
         fs::write(path, &entry_file).await?;
-        Ok(NoteHeader::from(entry_file).into())
+        Ok(Note::from(entry_file).into())
     } else {
         let docstring = format!(
             r#"
@@ -196,7 +196,7 @@ created: {:?}
         );
         println!("\x1b[38;5;47mdaily journal updated\x1b[0m");
         fs::write(get_file_path(&daily_file).unwrap(), docstring.clone()).await?;
-        Ok(NoteHeader::from(docstring).into())
+        Ok(Note::from(docstring).into())
     }
 }
 
@@ -218,7 +218,7 @@ pub async fn path_to_string<P: AsRef<Path> + ?Sized>(path: &P) -> Result<String,
     read_to_string(&path).await
 }
 
-pub async fn path_to_data_structure(path: &Path) -> Result<NoteHeader, ReadPageError> {
+pub async fn path_to_data_structure(path: &Path) -> Result<Note, ReadPageError> {
     match path_to_string(path).await {
         Ok(reader) => {
             let lines = reader.lines();

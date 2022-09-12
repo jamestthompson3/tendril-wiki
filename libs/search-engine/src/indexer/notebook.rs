@@ -2,7 +2,7 @@ use std::{fs::read_dir, path::Path};
 
 use async_trait::async_trait;
 use futures::{stream, StreamExt};
-use wikitext::parsers::{to_html, NoteHeader};
+use wikitext::parsers::{to_html, Note};
 use persistance::fs::path_to_data_structure;
 
 use crate::{tokenizer::tokenize, Doc};
@@ -26,10 +26,10 @@ impl Proccessor for Notebook {
                     if let Some(fname) = entry.file_name().to_str() {
                         if fname.ends_with(".md") {
                             let mut content = path_to_data_structure(&entry.path()).await.unwrap();
-                            if content.metadata.get("title").is_none() {
+                            if content.header.get("title").is_none() {
                                 let fixed_name = fname.strip_suffix(".md").unwrap();
                                 content
-                                    .metadata
+                                    .header
                                     .insert("title".into(), fixed_name.to_owned());
                             }
 
@@ -50,10 +50,10 @@ impl Proccessor for Notebook {
     }
 }
 
-pub(crate) fn tokenize_note_meta(content: &NoteHeader) -> Doc {
+pub(crate) fn tokenize_note_meta(content: &Note) -> Doc {
     let mut tokeniziable_content = content.content.clone();
-    let tags = content.metadata.get("tags");
-    let title = content.metadata.get("title");
+    let tags = content.header.get("tags");
+    let title = content.header.get("title");
     // create space between content and tags
     tokeniziable_content.push(' ');
     tokeniziable_content.push_str(tags.unwrap_or(&String::from("")));

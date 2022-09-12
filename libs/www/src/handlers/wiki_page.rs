@@ -12,7 +12,7 @@ use tasks::{
 };
 use urlencoding::{decode, encode};
 use warp::{filters::BoxedFilter, hyper::Uri, Filter, Reply};
-use wikitext::{parsers::NoteHeader, processors::to_template};
+use wikitext::{parsers::Note, processors::to_template};
 
 use crate::RefHubParts;
 
@@ -44,7 +44,7 @@ impl Runner {
             .unwrap()
     }
 
-    async fn note_header_to_html(&self, note: NoteHeader, reflinks: GlobalBacklinks) -> String {
+    async fn note_header_to_html(&self, note: Note, reflinks: GlobalBacklinks) -> String {
         let templatted = to_template(&note);
         let link_vals = reflinks.lock().await;
         let links = link_vals.get(&templatted.page.title);
