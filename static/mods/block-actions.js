@@ -1,6 +1,42 @@
 import { textToHtml, htmlToText } from "./parsing.js";
+import { updateMRU, getFullBody, getTags } from "./dom.js";
 
 let currentFocusedElement;
+
+export function setupTagEditor() {
+  // Don't like this, but bad architecture causes a race condition between savePage and setupTagViewer.
+  let changed = false;
+  const tags = Array.from(this.querySelectorAll("a"));
+  const textblock = document.createElement("input");
+  textblock.type = "text";
+  textblock.value = tags.map((el) => el.innerText.replace("#", "")).join(",");
+  // Setup event handlers
+  textblock.addEventListener("blur", setupTagViewer);
+  textblock.addEventListener("change", () => {
+    changed = true;
+  });
+  this.replaceWith(textblock);
+  setAsFocused(textblock);
+
+  function setupTagViewer() {
+    if (!this) return;
+    const container = document.createElement("div");
+    const list = document.createElement("ul");
+    this.value.split(",").forEach((tag) => {
+      const trimmed = tag.trim();
+      const child = document.createElement("li");
+      child.innerHTML = `<a href="${trimmed}">#${trimmed}</a>`;
+      list.appendChild(child);
+    });
+    container.appendChild(list);
+    container.classList.add("tags");
+    container.addEventListener("click", setupTagEditor);
+    this.replaceWith(container);
+    if (changed) {
+      savePage();
+    }
+  }
+}
 
 export function addBlock(indentationLevel) {
   const textblock = document.createElement("textarea");
@@ -18,60 +54,23 @@ export function deleteBlock(el) {
   el.remove();
 }
 
-export function saveBlock() {
-  let fullBody;
-  const pageContent = document.getElementById("content-block");
-  for (let i = 0; i < pageContent.children.length; i++) {
-    const child = pageContent.children[i];
-    const text = htmlToText(child);
-    if (fullBody) {
-      fullBody = `${fullBody}\n${text}`;
-    } else {
-      fullBody = text;
-    }
-  }
-
+export function savePage() {
+  const body = getFullBody();
   const title = document.getElementsByClassName("title")[0].innerText;
+  const tags = getTags();
   // TODO parse out and save metadata, tags
   fetch("/edit", {
     method: "POST",
     body: `body=${encodeURIComponent(
-      fullBody
-    )}&title=${title}&old_title=${CURRENT_TITLE}`,
+      body
+    )}&title=${title}&old_title=${CURRENT_TITLE}&tags=${tags}`,
     headers: {
       "content-type": "application/x-www-form-urlencoded",
     },
   })
     .then((res) => {
       if (res.status < 400) {
-        const mru = document.getElementById("mru");
-        const links = mru.querySelectorAll("a");
-        let found = false;
-        for (let i = 0; i < links.length; i++) {
-          const link = links[i];
-          if (link.href.includes(CURRENT_TITLE)) {
-            found = true;
-            if (CURRENT_TITLE !== title) {
-              link.href = link.href.replace(CURRENT_TITLE, title);
-              link.innerText = link.innerText.replace(CURRENT_TITLE, title);
-            }
-            // use parent node here since we're targeting the list items that contain the link, not the link itself.
-            mru.insertBefore(link.parentNode, links[0].parentNode);
-            break;
-          }
-        }
-        if (!found) {
-          const newEntry = document.createElement("li");
-          newEntry.innerHTML = `<a href="${title}">${title}</a>`;
-          mru.insertBefore(newEntry, mru.firstChild);
-          // Trim off the last link. List should only be 8 entries long.
-          mru.removeChild(links[7].parentNode);
-        }
-        if (CURRENT_TITLE !== title) {
-          history.pushState({ name: "edit page title" }, "", title);
-          document.title = title;
-          CURRENT_TITLE = title;
-        }
+        updateMRU(title);
       }
     })
     .catch(console.error);
@@ -116,9 +115,6 @@ export function setupViewer(divClass) {
       el.dataset[datapoint] = this.dataset[datapoint];
     }
     e.target.replaceWith(el);
-    if (this.value !== "" && this.value !== "\n") {
-      saveBlock();
-    }
   };
 }
 
@@ -151,7 +147,7 @@ export function handleInput(e) {
     case "Backspace": {
       if (e.target.value === "" && e.target.parentNode.children.length > 1) {
         deleteBlock(e.target);
-        saveBlock();
+        savePage();
         break;
       }
       break;
@@ -195,6 +191,7 @@ function setupTextblockListeners(textblock, divClass) {
     textblock.addEventListener("keyup", handleInput);
     textblock.addEventListener("keydown", handleKeydown);
     textblock.addEventListener("paste", detectImagePaste);
+    textblock.addEventListener("change", savePage);
   }
 }
 

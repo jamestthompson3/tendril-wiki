@@ -48,12 +48,14 @@ pre code {
   line-height: 20px;
 }
 
-.tags {
+.tags ul {
   list-style: none;
   display: flex;
   flex-wrap: wrap;
   margin: 0px;
   padding: 0px;
+  cursor: text;
+  min-height: 35px;
 }
 
 .tags li {
@@ -68,6 +70,9 @@ pre code {
 .tags li a {
   color: var(--bg);
   text-decoration: none;
+}
+.tags li a:hover {
+  background-size: 0px 0px;
 }
 
 .title-error-msg {
@@ -140,7 +145,7 @@ input[type="text"].title {
   text-align: center;
   padding: 0rem !important;
   margin: 0.5rem auto;
-  color: var(--text-color);
+  color: var(--accent);
   background: transparent;
   border-radius: var(--rad);
   border: none;
