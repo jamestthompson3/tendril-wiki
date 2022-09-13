@@ -7,34 +7,19 @@ use crate::{
     render_sidebar, Render,
 };
 
-pub struct WikiPage<'a> {
+pub struct InjectedHTML<'a> {
     page: &'a TemplattedPage,
     links: Option<&'a Vec<String>>,
 }
 
-impl<'a> WikiPage<'a> {
+impl<'a> InjectedHTML<'a> {
     pub fn new(page: &'a TemplattedPage, links: Option<&'a Vec<String>>) -> Self {
         Self { page, links }
-    }
-
-    fn render_body(&self) -> String {
-        self.page
-            .body
-            .split('\n')
-            .filter_map(|line| {
-                if line.is_empty() {
-                    None
-                } else {
-                    Some(line.to_owned())
-                }
-            })
-            .collect::<Vec<String>>()
-            .join("\n")
     }
 }
 
 #[async_trait]
-impl<'a> Render for WikiPage<'a> {
+impl<'a> Render for InjectedHTML<'a> {
     async fn render(&self) -> String {
         let page = self.page;
         let mut backlinks = match self.links {
@@ -49,15 +34,15 @@ impl<'a> Render for WikiPage<'a> {
             .map(|t| format!("<li><a href=\"{}\">#{}</a></li>", t, t))
             .collect::<Vec<String>>()
             .join("\n");
-        let mut ctx = get_template_file("main").await.unwrap();
+        let mut ctx = get_template_file("raw_html").await.unwrap();
         let content = get_template_file("content").await.unwrap();
         let nav = get_template_file("nav").await.unwrap();
         ctx = ctx
             .replace("<%= sidebar %>", &render_sidebar().await)
             .replace("<%= content %>", &content)
+            .replace("<%= body %>", &page.body)
             .replace("<%= tags %>", &tag_string)
             .replace("<%= links %>", &render_page_backlinks(&backlinks))
-            .replace("<%= body %>", &self.render_body())
             .replace("<%= title %>", &page.title)
             .replace(
                 "<%= metadata %>",

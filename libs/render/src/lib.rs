@@ -20,6 +20,7 @@ pub mod error_page;
 pub mod file_upload_page;
 pub mod help_page;
 pub mod index_page;
+pub mod injected_html;
 pub mod link_page;
 pub mod login_page;
 pub mod new_page;

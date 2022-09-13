@@ -1,11 +1,23 @@
-use crate::parsers::{to_html, Note, ParsedPages, ParsedTemplate, TemplattedPage};
+use crate::parsers::{to_html, Html, Note, ParsedPages, ParsedTemplate, TemplattedPage};
 
 pub mod tags;
 
 use self::tags::*;
 
 pub fn to_template(note: &Note) -> ParsedTemplate {
-    let html = to_html(&note.content);
+    let content_type = if let Some(content_type) = note.header.get("type") {
+        content_type.as_str()
+    } else {
+        "text"
+    };
+    let html = if content_type == "html" {
+        Html {
+            body: note.content.clone(),
+            outlinks: Vec::with_capacity(0),
+        }
+    } else {
+        to_html(&note.content)
+    };
     let default_title = "Untitled".to_string();
     let title = note
         .header
@@ -21,10 +33,14 @@ pub fn to_template(note: &Note) -> ParsedTemplate {
     rendered_metadata.remove("title");
     rendered_metadata.remove("tags");
     let desc = if note.content.len() >= 100 {
-        let mut shortened_desc = note.content.clone();
-        shortened_desc.truncate(80);
-        shortened_desc.push_str("...");
-        shortened_desc
+        if content_type != "html" {
+            let mut shortened_desc = note.content.clone();
+            shortened_desc.truncate(80);
+            shortened_desc.push_str("...");
+            shortened_desc
+        } else {
+            title.clone()
+        }
     } else {
         note.content.clone()
     };

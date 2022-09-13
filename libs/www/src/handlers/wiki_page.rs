@@ -4,7 +4,8 @@ use std::fmt::Write as _;
 use build::purge_mru_cache;
 use persistance::fs::{create_journal_entry, read, write, ReadPageError, WriteWikiError};
 use render::{
-    link_page::LinkPage, new_page::NewPage, wiki_page::WikiPage, GlobalBacklinks, Render,
+    injected_html::InjectedHTML, link_page::LinkPage, new_page::NewPage, wiki_page::WikiPage,
+    GlobalBacklinks, Render,
 };
 use tasks::{
     messages::{Message, PatchData},
@@ -44,11 +45,19 @@ impl Runner {
             .unwrap()
     }
 
-    async fn note_header_to_html(&self, note: Note, reflinks: GlobalBacklinks) -> String {
+    async fn note_to_html(&self, note: Note, reflinks: GlobalBacklinks) -> String {
         let templatted = to_template(&note);
         let link_vals = reflinks.lock().await;
         let links = link_vals.get(&templatted.page.title);
-        WikiPage::new(&templatted.page, links).render().await
+        match note.header.get("type") {
+            Some(content_type) => {
+                if content_type == "html" {
+                    return InjectedHTML::new(&templatted.page, links).render().await;
+                }
+                WikiPage::new(&templatted.page, links).render().await
+            }
+            None => WikiPage::new(&templatted.page, links).render().await,
+        }
     }
 
     pub async fn render_nested_file(
@@ -61,7 +70,7 @@ impl Runner {
         let sub_path_decoded = decode(&sub_path).unwrap();
         write!(main_path, "/{}", sub_path_decoded).unwrap();
         match read(main_path.clone()).await {
-            Ok(note) => Ok(self.note_header_to_html(note, links).await),
+            Ok(note) => Ok(self.note_to_html(note, links).await),
             Err(ReadPageError::PageNotFoundError) => {
                 let ctx = NewPage {
                     title: Some(urlencoding::decode(&sub_path).unwrap().into_owned()),
@@ -84,7 +93,7 @@ impl Runner {
         query_params: HashMap<String, String>,
     ) -> Result<String, ReadPageError> {
         match read(path.clone()).await {
-            Ok(note) => Ok(self.note_header_to_html(note, links).await),
+            Ok(note) => Ok(self.note_to_html(note, links).await),
             Err(ReadPageError::PageNotFoundError) => {
                 let ctx = NewPage {
                     title: Some(urlencoding::decode(&path).unwrap().into_owned()),
