@@ -3,7 +3,8 @@ import { updateMRU, getFullBody, getTags } from "./dom.js";
 
 let currentFocusedElement;
 
-export function setupTagEditor() {
+export function setupTagEditor(e) {
+  if (e.target.nodeName === "A") return;
   // Don't like this, but bad architecture causes a race condition between savePage and setupTagViewer.
   let changed = false;
   const tags = Array.from(this.querySelectorAll("a"));
