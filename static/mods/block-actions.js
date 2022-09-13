@@ -61,11 +61,14 @@ export function savePage() {
   // TODO parse out and save metadata, tags
   fetch("/edit", {
     method: "POST",
-    body: `body=${encodeURIComponent(
-      body
-    )}&title=${title}&old_title=${CURRENT_TITLE}&tags=${tags}`,
+    body: JSON.stringify({
+      body,
+      title,
+      old_title: CURRENT_TITLE,
+      tags,
+    }),
     headers: {
-      "content-type": "application/x-www-form-urlencoded",
+      "content-type": "application/json",
     },
   })
     .then((res) => {
@@ -95,27 +98,6 @@ export function updateInputHeight(el) {
   if (heightDiff > 0 || scrollHeight > clientHeight) {
     el.style.height = `${scrollHeight}px`;
   }
-}
-
-export function setupViewer(divClass) {
-  return function (e) {
-    let el;
-    const html = textToHtml(e.target.value);
-    if (divClass === "title") {
-      el = document.createElement("h1");
-      el.classList.add("title");
-      el.innerHTML = html;
-    } else {
-      el = document.createElement("div");
-      el.innerHTML = html;
-      el.classList.add(divClass);
-    }
-    el.addEventListener("click", setupEditor(divClass));
-    for (const datapoint in this.dataset) {
-      el.dataset[datapoint] = this.dataset[datapoint];
-    }
-    e.target.replaceWith(el);
-  };
 }
 
 export function setupEditor(divClass) {
@@ -186,12 +168,38 @@ export function handleKeydown(e) {
 }
 
 function setupTextblockListeners(textblock, divClass) {
+  let changed = false;
   textblock.addEventListener("blur", setupViewer(divClass));
   if (divClass !== "title") {
     textblock.addEventListener("keyup", handleInput);
     textblock.addEventListener("keydown", handleKeydown);
     textblock.addEventListener("paste", detectImagePaste);
-    textblock.addEventListener("change", savePage);
+    textblock.addEventListener("change", () => {
+      changed = true;
+    });
+  }
+  function setupViewer(divClass) {
+    return function (e) {
+      let el;
+      const html = textToHtml(e.target.value);
+      if (divClass === "title") {
+        el = document.createElement("h1");
+        el.classList.add("title");
+        el.innerHTML = html;
+      } else {
+        el = document.createElement("div");
+        el.innerHTML = html;
+        el.classList.add(divClass);
+      }
+      el.addEventListener("click", setupEditor(divClass));
+      for (const datapoint in this.dataset) {
+        el.dataset[datapoint] = this.dataset[datapoint];
+      }
+      e.target.replaceWith(el);
+      if (changed) {
+        savePage();
+      }
+    };
   }
 }
 

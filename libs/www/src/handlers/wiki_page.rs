@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::fmt::Write as _;
 
 use build::purge_mru_cache;
-use persistance::fs::{create_journal_entry, read, write, ReadPageError};
+use persistance::fs::{create_journal_entry, read, write, ReadPageError, WriteWikiError};
 use render::{
     link_page::LinkPage, new_page::NewPage, wiki_page::WikiPage, GlobalBacklinks, Render,
 };
@@ -10,14 +10,14 @@ use tasks::{
     messages::{Message, PatchData},
     Queue,
 };
-use urlencoding::{decode, encode};
+use urlencoding::decode;
 use warp::{filters::BoxedFilter, hyper::Uri, Filter, Reply};
 use wikitext::{parsers::Note, processors::to_template};
 
 use crate::RefHubParts;
 
 use super::{
-    filters::{with_auth, with_links, with_queue},
+    filters::{reply_on_result, with_auth, with_links, with_queue},
     QueueHandle, MAX_BODY_SIZE,
 };
 
@@ -111,14 +111,8 @@ impl Runner {
     pub async fn edit(
         form_body: HashMap<String, String>,
         queue: QueueHandle,
-        query_params: HashMap<String, String>,
-    ) -> Result<Uri, std::io::Error> {
+    ) -> Result<(), WriteWikiError> {
         let parsed_data = PatchData::from(form_body);
-        let redir_url = if let Some(redirect_addition) = query_params.get("redir_to") {
-            format!("/{}/{}", redirect_addition, encode(&parsed_data.title))
-        } else {
-            format!("/{}", encode(&parsed_data.title))
-        };
         if parsed_data
             .tags
             .iter()
@@ -151,12 +145,11 @@ impl Runner {
                     .push(Message::Patch { patch: parsed_data })
                     .await
                     .unwrap();
-                Ok(redir_url.parse::<Uri>().unwrap())
+                Ok(())
             }
             Err(e) => {
                 eprintln!("{}", e);
-                let redir_url = format!("/error?msg={}", encode(&format!("{}", e)));
-                Ok(redir_url.parse::<Uri>().unwrap())
+                Err(e)
             }
         }
     }
@@ -164,17 +157,16 @@ impl Runner {
     pub async fn append(
         form_body: HashMap<String, String>,
         queue: QueueHandle,
-    ) -> Result<Uri, std::io::Error> {
+    ) -> Result<(), WriteWikiError> {
         let parsed_data = form_body.get("body").unwrap();
         match create_journal_entry(parsed_data.to_string()).await {
             Ok(patch) => {
                 queue.push(Message::Patch { patch }).await.unwrap();
-                Ok("/".parse::<Uri>().unwrap())
+                Ok(())
             }
             Err(e) => {
                 eprintln!("{}", e);
-                let redir_url = format!("/error?msg={}", encode(&format!("{:?}", e)));
-                Ok(redir_url.parse::<Uri>().unwrap())
+                Err(persistance::fs::WriteWikiError::WriteError(e))
             }
         }
     }
@@ -304,16 +296,11 @@ impl WikiPageRouter {
             .and(
                 warp::path("edit").and(
                     warp::body::content_length_limit(MAX_BODY_SIZE)
-                        .and(warp::body::form())
+                        .and(warp::body::json())
                         .and(with_queue(queue.to_owned()))
-                        .and(warp::query::<HashMap<String, String>>())
                         .then(
-                            |form_body: HashMap<String, String>,
-                             queue: QueueHandle,
-                             query_params: HashMap<String, String>| async {
-                                let redir_url =
-                                    Runner::edit(form_body, queue, query_params).await.unwrap();
-                                warp::redirect(redir_url)
+                            |form_body: HashMap<String, String>, queue: QueueHandle| async {
+                                reply_on_result(Runner::edit(form_body, queue).await)
                             },
                         ),
                 ),
@@ -328,12 +315,11 @@ impl WikiPageRouter {
             .and(
                 warp::path("quick-add").and(
                     warp::body::content_length_limit(MAX_BODY_SIZE)
-                        .and(warp::body::form())
+                        .and(warp::body::json())
                         .and(with_queue(queue.to_owned()))
                         .then(
                             |form_body: HashMap<String, String>, queue: QueueHandle| async {
-                                let response = Runner::append(form_body, queue).await.unwrap();
-                                warp::redirect(response)
+                                reply_on_result(Runner::append(form_body, queue).await)
                             },
                         ),
                 ),

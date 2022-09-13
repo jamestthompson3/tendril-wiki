@@ -99,24 +99,7 @@ impl APIRouter {
             .or(self.img())
             .or(self.files())
             .or(self.search_from_qs())
-            .or(self.search())
             .or(self.search_indicies())
-            .boxed()
-    }
-    fn search(&self) -> BoxedFilter<(impl Reply,)> {
-        warp::post()
-            .and(with_auth())
-            .and(
-                warp::path("search").and(
-                    warp::body::content_length_limit(MAX_BODY_SIZE)
-                        .and(warp::body::form())
-                        .then(|form_body: HashMap<String, String>| async move {
-                            let term = form_body.get("term").unwrap();
-                            let results_page = Runner::note_search(term.clone()).await;
-                            warp::reply::html(results_page)
-                        }),
-                ),
-            )
             .boxed()
     }
     fn search_indicies(&self) -> BoxedFilter<(impl Reply,)> {

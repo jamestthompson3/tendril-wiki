@@ -180,7 +180,8 @@ button {
   align-items: center;
   flex-direction: row;
 }
-input[type="text"] {
+input[type="text"],
+input[type="url"] {
   color: var(--text-color);
   background-color: var(--bg-darker);
   border-radius: var(--rad);

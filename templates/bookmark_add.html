@@ -6,8 +6,8 @@
       name="viewport"
       content="width=device-width, initial-scale=1, shrink-to-fit=no"
     />
-    <%= include "styles" %>
     <link rel="stylesheet" href="/static/style.css" />
+    <link rel="stylesheet" href="/static/bookmark-page.css" />
     <link
       rel="stylesheet"
       href="/static/mobile.css"
@@ -20,22 +20,35 @@
     <title>New Bookmark</title>
   </head>
   <body>
-    <%= include "nav" %>
-    <div class="content-container">
-      <h4>New Bookmark</h4>
-      <form
-        class="editor visible"
-        method="post"
-        action="/new_bookmark"
-        target="_parent"
-      >
-        <button class="submit">Save</button>
-        <label for="url">Url</label>
-        <input type="url" id="url" autofocus name="url" />
-        <label for="tag-edit">Tags</label>
-        <input id="tag-edit" type="text" name="tags" />
-      </form>
+    <%= include "search" %>
+    <div class="flex-container">
+      <%= sidebar %>
+      <div class="content-container">
+        <h2 style="text-align: center">New Bookmark</h2>
+        <form
+          class="editor visible"
+          method="post"
+          action="/new_bookmark"
+          target="_parent"
+        >
+          <label for="url">Url</label>
+          <input
+            type="url"
+            id="url"
+            autofocus
+            name="url"
+            placeholder="enter url"
+          />
+          <label for="tag-edit">Tags</label>
+          <input
+            id="tag-edit"
+            type="text"
+            name="tags"
+            placeholder="tag this bookmark"
+          />
+          <button class="submit">Save</button>
+        </form>
+      </div>
     </div>
-    <%= include "footer" %>
   </body>
 </html>

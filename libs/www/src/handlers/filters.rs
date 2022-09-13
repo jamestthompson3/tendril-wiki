@@ -6,7 +6,7 @@ use render::GlobalBacklinks;
 use serde::{Deserialize, Serialize};
 use tasks::JobQueue;
 use thiserror::Error;
-use warp::{Filter, Rejection};
+use warp::{reply::WithStatus, Filter, Rejection, hyper::StatusCode};
 
 #[derive(Error, Debug)]
 pub enum AuthError {
@@ -66,6 +66,14 @@ pub fn with_auth() -> impl Filter<Extract = (), Error = Rejection> + Clone {
         .and_then(check_auth)
         .untuple_one()
         .boxed()
+}
+
+pub fn reply_on_result<'a, E>(result: Result<(), E>) -> WithStatus<&'a str> {
+    if result.is_ok() {
+        warp::reply::with_status("OK", StatusCode::OK)
+    } else {
+        warp::reply::with_status("BAD REQUEST", StatusCode::BAD_REQUEST)
+    }
 }
 
 pub async fn check_auth(token: Option<String>) -> AuthResult<()> {
