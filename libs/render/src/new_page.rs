@@ -49,6 +49,7 @@ impl<'a> Render for NewPage<'a> {
     async fn render(&self) -> String {
         let mut ctx = get_template_file("new_page").await.unwrap();
         let mut content = get_template_file("content").await.unwrap();
+        let nav = get_template_file("nav").await.unwrap();
         content = content
             .replace("<%= body %>", "<div class=\"text-block\"></div>")
             .replace("<%= title %>", &self.get_note_title())
@@ -59,7 +60,8 @@ impl<'a> Render for NewPage<'a> {
             .replace("<%= content %>", &content)
             .replace("<%= page_title %>", self.get_page_title())
             .replace("<%= action_params %>", self.action_params.unwrap_or(""))
-            .replace("<%= linkto %>", &self.get_linkto());
-        render_includes(ctx, None).await
+            .replace("<%= linkto %>", &self.get_linkto())
+            .replace("<%= tags %>", "");
+        render_includes(ctx, None).await.replace("<%= nav %>", &nav)
     }
 }
