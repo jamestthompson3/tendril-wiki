@@ -280,7 +280,9 @@ details {
   line-height: 2rem;
 }
 .text-block:empty {
-  border: 0.5px dotted var(--text-color);
   cursor: pointer;
-  border-radius: var(--rad);
+}
+
+.text-block:empty::before {
+  content: "➤  ";
 }
