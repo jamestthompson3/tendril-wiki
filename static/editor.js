@@ -1,5 +1,6 @@
 import { setupEditor } from "./mods/block-actions.js";
 import { TagEditor } from "./mods/tag-editor.js";
+import { TitleEditor } from "./mods/title-editor.js";
 
 (function () {
   const content = document.getElementById("content-block");
@@ -7,7 +8,8 @@ import { TagEditor } from "./mods/tag-editor.js";
     el.addEventListener("click", setupEditor("text-block"));
   });
   const title = document.querySelector(".title");
-  title.addEventListener("click", setupEditor("title"));
+  new TitleEditor(title);
+  // title.addEventListener("click", setupEditor("title"));
   const tags = document.querySelector(".tags");
   new TagEditor(tags);
 })();

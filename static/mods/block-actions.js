@@ -132,7 +132,7 @@ export function handleKeydown(e) {
   }
 }
 
-function setupTextblockListeners(textblock, divClass) {
+export function setupTextblockListeners(textblock, divClass) {
   let changed = false;
   textblock.addEventListener("blur", setupViewer(divClass));
   if (divClass !== "title") {
