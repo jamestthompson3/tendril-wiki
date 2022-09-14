@@ -3,42 +3,6 @@ import { updateMRU, getFullBody, getTags } from "./dom.js";
 
 let currentFocusedElement;
 
-export function setupTagEditor(e) {
-  if (e.target.nodeName === "A") return;
-  // Don't like this, but bad architecture causes a race condition between savePage and setupTagViewer.
-  let changed = false;
-  const tags = Array.from(this.querySelectorAll("a"));
-  const textblock = document.createElement("input");
-  textblock.type = "text";
-  textblock.value = tags.map((el) => el.innerText.replace("#", "")).join(",");
-  // Setup event handlers
-  textblock.addEventListener("blur", setupTagViewer);
-  textblock.addEventListener("change", () => {
-    changed = true;
-  });
-  this.replaceWith(textblock);
-  setAsFocused(textblock);
-
-  function setupTagViewer() {
-    if (!this) return;
-    const container = document.createElement("div");
-    const list = document.createElement("ul");
-    this.value.split(",").forEach((tag) => {
-      const trimmed = tag.trim();
-      const child = document.createElement("li");
-      child.innerHTML = `<a href="${trimmed}">#${trimmed}</a>`;
-      list.appendChild(child);
-    });
-    container.appendChild(list);
-    container.classList.add("tags");
-    container.addEventListener("click", setupTagEditor);
-    this.replaceWith(container);
-    if (changed) {
-      savePage();
-    }
-  }
-}
-
 export function addBlock(indentationLevel) {
   const textblock = document.createElement("textarea");
   if (indentationLevel) {

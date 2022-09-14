@@ -1,4 +1,5 @@
-import { setupEditor, setupTagEditor } from "./mods/block-actions.js";
+import { setupEditor } from "./mods/block-actions.js";
+import { TagEditor } from "./mods/tag-editor.js";
 
 (function () {
   const content = document.getElementById("content-block");
@@ -8,7 +9,7 @@ import { setupEditor, setupTagEditor } from "./mods/block-actions.js";
   const title = document.querySelector(".title");
   title.addEventListener("click", setupEditor("title"));
   const tags = document.querySelector(".tags");
-  tags.addEventListener("click", setupTagEditor);
+  new TagEditor(tags);
 })();
 
 /* TESTING */
