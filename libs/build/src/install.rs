@@ -5,6 +5,7 @@ use persistance::fs::{
     utils::{get_config_location, get_data_dir_location, get_wiki_location},
 };
 use tasks::hash_password;
+use wikitext::parsers::Note;
 
 use crate::{gen_config_interactive, ConfigOptions};
 
@@ -70,7 +71,6 @@ fn migrate_md_to_wikitext() {
     let original_dir = get_wiki_location();
     backup_dir.pop();
     backup_dir.push("tendril-backup");
-    println!("data_dir: {:?}, backup: {:?}", original_dir, backup_dir);
     fs::create_dir_all(&backup_dir).unwrap();
     for file in fs::read_dir(original_dir).unwrap() {
         let entry = file.unwrap();
@@ -92,7 +92,22 @@ fn migrate_md_to_wikitext() {
                 })
                 .collect::<Vec<String>>()
                 .join("\n");
-            fs::write(entry.path(), replaced_lines).unwrap();
+            let mut note: Note = replaced_lines.into();
+            if let Some(tags) = note.header.get("tags") {
+                if tags.contains("bookmark") {
+                    if let Some(content_type) = note.header.get("type") {
+                        if content_type != "html" {
+                            note.header.insert("type".into(), "html".into());
+                        }
+                    } else {
+                        note.header.insert("type".into(), "html".into());
+                    }
+                }
+            }
+            let mut path = entry.path();
+            path.set_extension("txt");
+            fs::write(path, std::convert::Into::<String>::into(note)).unwrap();
+            fs::remove_file(entry.path()).unwrap();
         }
     }
 }
