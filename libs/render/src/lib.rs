@@ -137,15 +137,15 @@ pub async fn get_template_file(requested_file: &str) -> Result<String, io::Error
 pub fn render_page_metadata(metadata: HashMap<String, String>) -> String {
     let mut metadata_html = String::new();
     for (key, value) in metadata.iter() {
-        write!(metadata_html, "<dt><strong>{}:</strong></dt>", key).unwrap();
+        write!(metadata_html, "<dt>{}</dt>", key).unwrap();
         // TODO: Add "created" date here as well
         // TODO: Modify dates to be compliant with DT parsing
         if key == "modified" || key == "created" {
             if let Ok(val) = value.parse::<DateTime<FixedOffset>>() {
                 let val = val.format("%Y-%m-%d %H:%M").to_string();
-                write!(metadata_html, "\n<dd>{}</dd>", val).unwrap();
+                write!(metadata_html, "<dd>{}</dd>", val).unwrap();
             } else {
-                write!(metadata_html, "\n<dd>{}</dd>", value).unwrap();
+                write!(metadata_html, "<dd>{}</dd>", value).unwrap();
             }
             continue;
         }
@@ -156,15 +156,15 @@ pub fn render_page_metadata(metadata: HashMap<String, String>) -> String {
                         "<img src=\"{}\" style=\"max-height: 200px; max-width: 200px;\">",
                         value
                     );
-                    write!(metadata_html, "\n<dd>{}</dd>", val).unwrap();
+                    write!(metadata_html, "<dd>{}</dd>", val).unwrap();
                 }
                 _ => {
                     let val = format!("<a href=\"{}\">{}</a>", value, value);
-                    write!(metadata_html, "\n<dd>{}</dd>", val).unwrap();
+                    write!(metadata_html, "<dd>{}</dd>", val).unwrap();
                 }
             }
         } else {
-            write!(metadata_html, "\n<dd>{}</dd>", &value).unwrap();
+            write!(metadata_html, "<dd>{}</dd>", &value).unwrap();
         }
     }
     metadata_html
