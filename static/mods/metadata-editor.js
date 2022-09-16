@@ -3,6 +3,7 @@ import { setAsFocused, updateInputHeight } from "./block-actions.js";
 export class MetaDataEditor {
   constructor(element) {
     this.element = element;
+    this.id = "metadata";
     const v = Array.from(element.querySelectorAll("dd"));
     const k = Array.from(element.querySelectorAll("dt"));
     this.content = {};
@@ -11,6 +12,12 @@ export class MetaDataEditor {
       this.content[key.textContent] = v[idx].textContent;
     });
     element.addEventListener("click", this.handleClick);
+
+    this.bc = new BroadcastChannel(`tendril-wiki${location.pathname}`);
+    this.bc.postMessage({
+      type: "REGISTER",
+      data: { id: this.id, content: this.content },
+    });
   }
 
   parse = (str) =>
@@ -53,5 +60,9 @@ export class MetaDataEditor {
   };
   handleChange = (e) => {
     this.content = this.parse(e.target.value);
+    this.bc.postMessage({
+      type: "SAVE",
+      data: { id: this.id, content: this.content },
+    });
   };
 }

@@ -3,11 +3,17 @@ import { setAsFocused } from "./block-actions.js";
 export class TagEditor {
   constructor(element) {
     this.element = element;
+    this.id = "tag";
     // plain-text tag array
     this.content = Array.from(element.querySelectorAll("a")).map((el) =>
       el.innerText.replace("#", "")
     );
     element.addEventListener("click", this.handleClick);
+    this.bc = new BroadcastChannel(`tendril-wiki${location.pathname}`);
+    this.bc.postMessage({
+      type: "REGISTER",
+      data: { id: this.id, content: this.content },
+    });
   }
   handleClick = (e) => {
     if (e.target.nodeName === "A") return;
@@ -37,6 +43,9 @@ export class TagEditor {
   };
   handleChange = (e) => {
     this.content = e.target.value.split(",");
-    // TODO: Save Page
+    this.bc.postMessage({
+      type: "SAVE",
+      data: { id: this.id, content: this.content },
+    });
   };
 }

@@ -118,22 +118,21 @@ impl Runner {
     }
 
     pub async fn edit(
-        form_body: HashMap<String, String>,
+        body: PatchData,
         queue: QueueHandle,
     ) -> Result<(), WriteWikiError> {
-        let parsed_data = PatchData::from(form_body);
-        if parsed_data
+        if body
             .tags
             .iter()
             .map(|t| t.to_lowercase())
             .any(|t| t == "bookmark")
         {
-            if let Some(url) = parsed_data.metadata.get("url") {
-                if parsed_data.old_title != parsed_data.title && !parsed_data.old_title.is_empty() {
+            if let Some(url) = body.metadata.get("url") {
+                if body.old_title != body.title && !body.old_title.is_empty() {
                     queue
                         .push(Message::ArchiveMove {
-                            old_title: parsed_data.old_title.clone(),
-                            new_title: parsed_data.title.clone(),
+                            old_title: body.old_title.clone(),
+                            new_title: body.title.clone(),
                         })
                         .await
                         .unwrap();
@@ -141,17 +140,17 @@ impl Runner {
                     queue
                         .push(Message::Archive {
                             url: url.into(),
-                            title: parsed_data.title.clone(),
+                            title: body.title.clone(),
                         })
                         .await
                         .unwrap();
                 }
             }
         }
-        match write(&parsed_data).await {
+        match write(&body).await {
             Ok(()) => {
                 queue
-                    .push(Message::Patch { patch: parsed_data })
+                    .push(Message::Patch { patch: body })
                     .await
                     .unwrap();
                 Ok(())
@@ -164,11 +163,10 @@ impl Runner {
     }
 
     pub async fn append(
-        form_body: HashMap<String, String>,
+        body: PatchData,
         queue: QueueHandle,
     ) -> Result<(), WriteWikiError> {
-        let parsed_data = form_body.get("body").unwrap();
-        match create_journal_entry(parsed_data.to_string()).await {
+        match create_journal_entry(body.body).await {
             Ok(patch) => {
                 queue.push(Message::Patch { patch }).await.unwrap();
                 Ok(())
@@ -308,8 +306,8 @@ impl WikiPageRouter {
                         .and(warp::body::json())
                         .and(with_queue(queue.to_owned()))
                         .then(
-                            |form_body: HashMap<String, String>, queue: QueueHandle| async {
-                                reply_on_result(Runner::edit(form_body, queue).await)
+                            |body: PatchData, queue: QueueHandle| async {
+                                reply_on_result(Runner::edit(body, queue).await)
                             },
                         ),
                 ),
@@ -327,8 +325,8 @@ impl WikiPageRouter {
                         .and(warp::body::json())
                         .and(with_queue(queue.to_owned()))
                         .then(
-                            |form_body: HashMap<String, String>, queue: QueueHandle| async {
-                                reply_on_result(Runner::append(form_body, queue).await)
+                            |body: PatchData, queue: QueueHandle| async {
+                                reply_on_result(Runner::append(body, queue).await)
                             },
                         ),
                 ),

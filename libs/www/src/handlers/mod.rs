@@ -36,6 +36,7 @@ pub async fn handle_rejection(err: Rejection) -> std::result::Result<impl Reply,
             _ => (StatusCode::BAD_REQUEST, e.to_string()),
         }
     } else if err.find::<BodyDeserializeError>().is_some() {
+        eprintln!("Serialization error: {:?}", err);
         (StatusCode::BAD_REQUEST, "Invalid body".to_string())
     } else {
         eprintln!("unhandled error: {:?}", err);

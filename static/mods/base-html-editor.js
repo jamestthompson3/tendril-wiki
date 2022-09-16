@@ -5,6 +5,7 @@ export class HTMLEditor {
     this.element = element;
     // plain-text tag array
     this.content = htmlToText(this.element);
+    this.bc = new BroadcastChannel(`tendril-wiki${location.pathname}`);
   }
   setupTextblockListeners = (element) => {
     element.addEventListener("blur", this.setupViewer);
@@ -16,4 +17,11 @@ export class HTMLEditor {
   detectImagePaste = () => {};
   handleKeydown = () => {};
   handleInput = () => {};
+  change = (e) => {
+    this.content = e.target.value;
+    this.bc.postMessage({
+      type: "SAVE",
+      data: { id: this.id, content: this.content },
+    });
+  };
 }

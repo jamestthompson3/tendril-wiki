@@ -1,5 +1,6 @@
 import { textToHtml } from "./parsing.js";
 import { HTMLEditor } from "./base-html-editor.js";
+import { nanoid } from "./utils.js";
 import {
   setAsFocused,
   updateInputHeight,
@@ -9,11 +10,17 @@ import {
 export class BlockEditor extends HTMLEditor {
   constructor(element) {
     super(element);
+    this.id = `block@${nanoid()}`;
     if (element.nodeName === "TEXTAREA") {
       this.setupTextblockListeners(element);
     } else {
       element.addEventListener("click", this.setupEditor);
     }
+
+    this.bc.postMessage({
+      type: "REGISTER",
+      data: { id: this.id, content: this.content },
+    });
   }
   setupViewer = (e) => {
     const html = textToHtml(e.target.value);
@@ -41,15 +48,13 @@ export class BlockEditor extends HTMLEditor {
     setAsFocused(textblock);
     this.element = textblock;
   };
-  change = (e) => {
-    this.content = e.target.value;
-  };
   handleInput = (e) => {
     switch (e.key) {
       case "Backspace": {
         if (e.target.value === "" && e.target.parentNode.children.length > 1) {
           deleteBlock(e.target);
-          //savePage();
+          this.bc.postMessage({ type: "UNREGISTER", data: this.id });
+          this.bc.postMessage({ type: "SAVE" });
           break;
         }
         break;
@@ -133,7 +138,6 @@ export class BlockEditor extends HTMLEditor {
     // insert the new block directly after the current block
     const { parentNode, nextSibling } = this.element;
     parentNode.insertBefore(textblock, nextSibling);
-    // TODO: push to global registry
     setAsFocused(textblock);
   };
 }

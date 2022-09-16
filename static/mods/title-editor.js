@@ -6,6 +6,11 @@ export class TitleEditor extends HTMLEditor {
   constructor(element) {
     super(element);
     element.addEventListener("click", this.setupEditor);
+    this.id = "title";
+    this.bc.postMessage({
+      type: "REGISTER",
+      data: { id: this.id, content: this.content },
+    });
   }
   setupViewer = (e) => {
     const html = textToHtml(e.target.value);
@@ -31,8 +36,5 @@ export class TitleEditor extends HTMLEditor {
     this.element.replaceWith(textblock);
     setAsFocused(textblock);
     this.element = textblock;
-  };
-  change = (e) => {
-    this.content = e.target.value;
   };
 }
