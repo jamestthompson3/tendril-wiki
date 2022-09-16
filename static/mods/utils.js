@@ -20,3 +20,21 @@ export const nanoid = (size = 21) =>
     }
     return id;
   }, "");
+
+/**
+ *
+ * Basic state machine, takes a statechart as input.
+ */
+export class StateMachine {
+  #chart;
+  constructor(statechart) {
+    this.state = statechart.initial;
+    this.#chart = statechart;
+  }
+  send = (message, _payload) => {
+    const { on } = this.#chart.states[this.state];
+    if (on[message]) {
+      this.state = on[message];
+    }
+  };
+}

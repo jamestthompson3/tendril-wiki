@@ -1,17 +1,30 @@
 import { textToHtml } from "./parsing.js";
 import { HTMLEditor } from "./base-html-editor.js";
-import { nanoid } from "./utils.js";
+import { nanoid, StateMachine } from "./utils.js";
 import {
   setAsFocused,
   updateInputHeight,
   deleteBlock,
 } from "./block-actions.js";
 
+const stateChart = {
+  initial: "not-cleared",
+  states: {
+    "not-cleared": {
+      on: { CLEAR: "cleared" },
+    },
+    cleared: {
+      on: { RESET: "not-cleared" },
+    },
+  },
+};
+
 export class BlockEditor extends HTMLEditor {
+  #machine;
   constructor(element) {
     super(element);
     this.id = `block@${nanoid()}`;
-    this.cleared = false;
+    this.#machine = new StateMachine(stateChart);
     if (element.nodeName === "TEXTAREA") {
       this.setupTextblockListeners(element);
     } else {
@@ -53,8 +66,8 @@ export class BlockEditor extends HTMLEditor {
     switch (e.key) {
       case "Backspace": {
         if (e.target.value === "" && e.target.parentNode.children.length > 1) {
-          if (!this.cleared) {
-            this.cleared = true;
+          if (this.#machine.state === "not-cleared") {
+            this.#machine.send("CLEAR");
             return;
           }
           deleteBlock(e.target);
@@ -97,8 +110,8 @@ export class BlockEditor extends HTMLEditor {
       // }
     }
     if (e.key !== "Backspace") {
-      if (this.cleared) {
-        this.cleared = false;
+      if (this.#machine.state === "cleared") {
+        this.#machine.send("RESET");
       }
     }
     updateInputHeight(this);

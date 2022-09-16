@@ -1,6 +1,30 @@
 import { updateMRU } from "./dom.js";
+import { StateMachine } from "./utils.js";
+
+const stateChart = {
+  initial: "idle",
+  states: {
+    idle: {
+      on: {
+        SUBMITTING: "submitting",
+      },
+    },
+    submitting: {
+      on: {
+        COMPLETE: "idle",
+        ERROR: "error",
+      },
+    },
+    error: {
+      on: {
+        RESET: "idle",
+      },
+    },
+  },
+};
 
 export class ComponentRegister {
+  #machine;
   constructor() {
     this.components = {};
     try {
@@ -12,13 +36,14 @@ export class ComponentRegister {
       document.body.firstElementChild.appendChild(failsafe);
     }
     this.bc.onmessage = this.handleMessage;
+    this.#machine = new StateMachine(stateChart);
   }
   handleMessage = (m) => {
     const { data } = m;
     const { data: messageData } = data;
     switch (data.type) {
       case "SAVE":
-        this.savePage(messageData);
+        if (this.#machine.state === "idle") this.savePage(messageData);
         break;
       case "UNREGISTER":
         this.unregister(messageData);
@@ -44,6 +69,7 @@ export class ComponentRegister {
     }, []);
   dump = () => this.components;
   savePage = (messageData) => {
+    this.#machine.send("SUBMITTING");
     if (messageData) {
       this.components[messageData.id].content = messageData.content;
     }
@@ -71,8 +97,12 @@ export class ComponentRegister {
       .then((res) => {
         if (res.status < 400) {
           updateMRU(title);
+          this.#machine.send("COMPLETE");
         }
       })
-      .catch(console.error);
+      .catch((e) => {
+        console.error(e);
+        this.#machine.send("ERROR");
+      });
   };
 }
