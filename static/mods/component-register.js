@@ -72,7 +72,6 @@ export class ComponentRegister {
         if (res.status < 400) {
           updateMRU(title);
         }
-        console.log(this.dump());
       })
       .catch(console.error);
   };

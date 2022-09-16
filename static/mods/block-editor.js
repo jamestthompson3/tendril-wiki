@@ -11,6 +11,7 @@ export class BlockEditor extends HTMLEditor {
   constructor(element) {
     super(element);
     this.id = `block@${nanoid()}`;
+    this.cleared = false;
     if (element.nodeName === "TEXTAREA") {
       this.setupTextblockListeners(element);
     } else {
@@ -52,6 +53,10 @@ export class BlockEditor extends HTMLEditor {
     switch (e.key) {
       case "Backspace": {
         if (e.target.value === "" && e.target.parentNode.children.length > 1) {
+          if (!this.cleared) {
+            this.cleared = true;
+            return;
+          }
           deleteBlock(e.target);
           this.bc.postMessage({ type: "UNREGISTER", data: this.id });
           this.bc.postMessage({ type: "SAVE" });
@@ -90,9 +95,13 @@ export class BlockEditor extends HTMLEditor {
       // } else if (!e.shiftKey) {
       //   this.dataset.indent = 1;
       // }
-    } else {
-      updateInputHeight(this);
     }
+    if (e.key !== "Backspace") {
+      if (this.cleared) {
+        this.cleared = false;
+      }
+    }
+    updateInputHeight(this);
   };
   detectImagePaste = (e) => {
     const items = (e.clipboardData || e.originale.clipboardData).items;
