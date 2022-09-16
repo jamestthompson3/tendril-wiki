@@ -77,11 +77,16 @@ fn migrate_md_to_wikitext() {
         fs::copy(&entry.path(), &backup_dir.join(entry.file_name())).unwrap();
         if entry.file_name().to_str().unwrap().ends_with("md") {
             let contents = fs::read_to_string(entry.path()).unwrap();
+
             let replaced_lines = contents
                 .lines()
-                .filter_map(|line| {
-                    if line == "---" {
+                .enumerate()
+                .filter_map(|(idx, line)| {
+                    if line == "---" && idx == 0 {
                         return None;
+                    }
+                    if line == "---" {
+                        return Some("\n".into());
                     }
                     if line.starts_with('#') {
                         let cleaned_line = line.replace('#', "");
@@ -95,12 +100,12 @@ fn migrate_md_to_wikitext() {
             let mut note: Note = replaced_lines.into();
             if let Some(tags) = note.header.get("tags") {
                 if tags.contains("bookmark") {
-                    if let Some(content_type) = note.header.get("type") {
+                    if let Some(content_type) = note.header.get("content-type") {
                         if content_type != "html" {
-                            note.header.insert("type".into(), "html".into());
+                            note.header.insert("content-type".into(), "html".into());
                         }
                     } else {
-                        note.header.insert("type".into(), "html".into());
+                        note.header.insert("content-type".into(), "html".into());
                     }
                 }
             }
