@@ -87,7 +87,8 @@ pub fn format_links(link: &str) -> String {
     }
 }
 
-const MEDIA_FMT_STRING: &str = r#"<iframe title="Video player" frameborder="0" allow="autoplay;" allowfullscreen"#;
+const MEDIA_FMT_STRING: &str =
+    r#"<iframe title="Video player" frameborder="0" allow="autoplay;" allowfullscreen"#;
 const CS_FMT_STRING: &str = r#"<iframe frameborder="0" title="Code Sandbox" allow="accelerometer; ambient-light-sensor;
     camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr;
     xr-spatial-tracking" sandbox="allow-forms allow-modals allow-popups allow-presentation
@@ -158,29 +159,33 @@ mod tests {
     #[test]
     fn transforms_youtube_urls_to_embedable() {
         let link = StrTendril::from_slice("https://youtube.com/watch?v=giEnkiRHJ9Y");
-        let final_string = r#"<iframe title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen src="https://youtube.com/embed/giEnkiRHJ9Y"></iframe>"#;
-        assert!(StrTendril::from_slice(final_string).to_string() == transform_youtube_url(&link));
+        let final_string = r#"<iframe title="Video player" frameborder="0" allow="autoplay;" allowfullscreen src="https://youtube.com/embed/giEnkiRHJ9Y"></iframe>"#;
+        let transformed_string = transform_youtube_url(&link);
+        assert_eq!(*final_string, transformed_string);
     }
 
     #[test]
     fn transforms_vimeo_urls_to_embedable() {
         let link = StrTendril::from_slice("https://vimeo.com/665036978#t=20s");
-        let final_string = r#"<iframe title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen src="https://player.vimeo.com/video/665036978#t=20s"></iframe>"#;
-        assert!(StrTendril::from_slice(final_string).to_string() == transform_vimeo_url(&link));
+        let final_string = r#"<iframe title="Video player" frameborder="0" allow="autoplay;" allowfullscreen src="https://player.vimeo.com/video/665036978#t=20s"></iframe>"#;
+        let transformed_string = transform_vimeo_url(&link);
+        assert_eq!(*final_string, transformed_string);
     }
     #[test]
     fn transforms_spotify_urls_to_embedable() {
         let link = StrTendril::from_slice(
             "https://open.spotify.com/track/3YD9EehnGOf88rGSZFrnHg?si=8c669e6880f54c88",
         );
-        let final_string = r#"<iframe title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen src="https://open.spotify.com/embed/track/3YD9EehnGOf88rGSZFrnHg?si=8c669e6880f54c88"></iframe>"#;
-        assert!(StrTendril::from_slice(final_string).to_string() == transform_spotify_url(&link));
+        let final_string = r#"<iframe title="Video player" frameborder="0" allow="autoplay;" allowfullscreen src="https://open.spotify.com/embed/track/3YD9EehnGOf88rGSZFrnHg?si=8c669e6880f54c88"></iframe>"#;
+        let transformed_string = transform_spotify_url(&link);
+        assert_eq!(*final_string, transformed_string);
     }
 
     #[test]
     fn transforms_codepen_urls_to_embedable() {
         let link = StrTendril::from_slice("https://codepen.io/P1N2O/pen/pyBNzX");
         let final_string = r#"<iframe frameborder="0" title="CodePen" scrolling="no" allowtransparency="true" allowfullscreen="true" loading="lazy" src="https://codepen.io/P1N2O/embed/pyBNzX"></iframe>"#;
-        assert!(StrTendril::from_slice(final_string).to_string() == transform_cp_url(&link));
+        let transformed_string = transform_cp_url(&link);
+        assert_eq!(*final_string, transformed_string);
     }
 }

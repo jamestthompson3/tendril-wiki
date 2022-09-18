@@ -256,9 +256,9 @@ mod tests {
     }
     fn cp_file(src: &str, dest: &str) {
         let mut src_path = PathBuf::from(TEST_DIR);
-        src_path.push(src.to_owned() + ".md");
+        src_path.push(src.to_owned() + ".txt");
         let mut dest_path = PathBuf::from(TEST_DIR);
-        dest_path.push(dest.to_owned() + ".md");
+        dest_path.push(dest.to_owned() + ".txt");
         assert!(src_path.exists());
         fs::copy(src_path, dest_path).unwrap();
     }
