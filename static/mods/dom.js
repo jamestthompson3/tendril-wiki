@@ -4,7 +4,8 @@ export function updateMRU(title) {
   let found = false;
   for (let i = 0; i < links.length; i++) {
     const link = links[i];
-    if (link.href.includes(CURRENT_TITLE)) {
+    const href = link.href;
+    if (href.includes(encodeURIComponent(CURRENT_TITLE))) {
       found = true;
       if (CURRENT_TITLE !== title) {
         link.href = link.href.replace(CURRENT_TITLE, title);
