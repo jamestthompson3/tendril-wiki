@@ -20,10 +20,12 @@ export function updateMRU(title) {
     const newEntry = document.createElement("li");
     newEntry.innerHTML = `<a href="${title}">${title}</a>`;
     mru.insertBefore(newEntry, mru.firstChild);
-    // Trim off the last link. List should only be 8 entries long.
-    mru.removeChild(links[7].parentNode);
+    if (links.length >= 8) {
+      // Trim off the last link. List should only be 8 entries long.
+      mru.removeChild(links[7].parentNode);
+    }
   }
-  if (CURRENT_TITLE !== title) {
+  if (CURRENT_TITLE !== title || window.location.pathname === "/new") {
     history.pushState({ name: "edit page title" }, "", title);
     document.title = title;
     CURRENT_TITLE = title;
