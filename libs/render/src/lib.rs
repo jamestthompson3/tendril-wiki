@@ -116,6 +116,9 @@ pub async fn get_template_file(requested_file: &str) -> Result<String, io::Error
 
 pub fn render_page_metadata(metadata: HashMap<String, String>) -> String {
     let mut metadata_html = String::new();
+    if metadata.is_empty() {
+        return metadata_html;
+    }
     for (key, value) in metadata.iter() {
         write!(metadata_html, "<dt>{}</dt>", key).unwrap();
         // TODO: Add "created" date here as well
