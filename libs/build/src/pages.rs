@@ -13,7 +13,7 @@ use wikitext::processors::{to_template, update_templatted_pages};
 use std::{
     collections::{BTreeMap, HashMap},
     fs::{self, read_dir},
-    path::{PathBuf, Path},
+    path::{Path, PathBuf},
     sync::Arc,
 };
 
@@ -49,7 +49,11 @@ impl Builder {
         fs::create_dir("public/config").unwrap();
         fs::copy("./static/style.css", "./public/static/style.css").unwrap();
         fs::copy("./static/mobile.css", "./public/static/mobile.css").unwrap();
-        fs::copy("./static/note-styles.css", "./public/static/note-styles.css").unwrap();
+        fs::copy(
+            "./static/note-styles.css",
+            "./public/static/note-styles.css",
+        )
+        .unwrap();
         if config_dir.exists() {
             fs::copy(config_dir, "./public/config/userstyles.css").unwrap();
         }
@@ -97,10 +101,7 @@ async fn parse_entries(
         let entry = entry.unwrap();
         let file_name = entry.file_name();
         let file_name = file_name.to_str().unwrap();
-        if entry.file_type().unwrap().is_file()
-            && file_name.ends_with(".txt")
-            && file_name != "todo.txt"
-        {
+        if entry.file_type().unwrap().is_file() && file_name.ends_with(".txt") {
             tokio::spawn(async move {
                 process_file(entry.path(), links, pages).await;
             })
@@ -121,7 +122,10 @@ async fn write_index_page(pages: &ParsedPages) {
         .iter()
         .map(|page| format!(r#"<li><a href="{}">{}</a></li>"#, page.title, page.title))
         .collect();
-    let body = format!(r#"<h1>Pages</h1><ul style="margin: 1rem 0rem;">{}</ul>"#, pages);
+    let body = format!(
+        r#"<h1>Pages</h1><ul style="margin: 1rem 0rem;">{}</ul>"#,
+        pages
+    );
     let page = TemplattedPage {
         title: String::from("Notebook Index"),
         body,

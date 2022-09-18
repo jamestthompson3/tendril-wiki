@@ -18,7 +18,7 @@ pub fn get_config_location() -> (PathBuf, PathBuf) {
 }
 
 pub fn get_wiki_location() -> PathBuf {
- WIKI_LOCATION.clone()
+    WIKI_LOCATION.clone()
 }
 
 /// Returns the PathBuf if an entry exists, returns an error if the file isn't found or it couldn't
@@ -75,7 +75,7 @@ pub fn get_archive_file_path(title: &str) -> PathBuf {
 }
 
 pub fn get_todo_location() -> PathBuf {
-    let mut base_path = WIKI_LOCATION.clone();
+    let mut base_path = get_data_dir_location();
     base_path.push("todo.txt");
     base_path
 }

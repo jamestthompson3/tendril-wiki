@@ -69,13 +69,22 @@ pub fn migrate() {
 fn migrate_md_to_wikitext() {
     let mut backup_dir = get_wiki_location();
     let original_dir = get_wiki_location();
+    let data_dir = get_data_dir_location();
     backup_dir.pop();
     backup_dir.push("tendril-backup");
     fs::create_dir_all(&backup_dir).unwrap();
     for file in fs::read_dir(original_dir).unwrap() {
         let entry = file.unwrap();
         fs::copy(&entry.path(), &backup_dir.join(entry.file_name())).unwrap();
-        if entry.file_name().to_str().unwrap().ends_with("md") {
+        let file_name = entry.file_name();
+        let file_name = file_name.to_str().unwrap();
+        if file_name == "todo.txt" {
+            let new_loc = data_dir.as_path().join(file_name);
+            fs::rename(file_name, &new_loc).unwrap();
+            fs::remove_file(file_name).unwrap();
+            continue;
+        }
+        if file_name.ends_with("md") {
             let contents = fs::read_to_string(entry.path()).unwrap();
 
             let replaced_lines = contents
