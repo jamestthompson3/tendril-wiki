@@ -48,22 +48,9 @@ body {
 a {
   color: var(--primary-variant);
   font-weight: bold;
-  background: linear-gradient(
-    to bottom,
-    var(--primary-variant) 0%,
-    var(--primary-variant) 100%
-  );
-  background-position: 0 100%;
-  background-repeat: repeat-x;
-  background-size: 0px 0px;
   text-decoration: none;
-  transition: background-size 0.4s;
 }
 
-a:hover {
-  background-size: 4px 50px;
-  color: var(--bg);
-}
 h2 {
   margin: 1rem 0rem;
 }

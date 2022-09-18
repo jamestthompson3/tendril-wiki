@@ -75,9 +75,6 @@ dt::after {
   color: var(--bg);
   text-decoration: none;
 }
-.tags li a:hover {
-  background-size: 0px 0px;
-}
 
 .title-error-msg {
   display: none;
