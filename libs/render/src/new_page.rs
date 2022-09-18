@@ -50,7 +50,7 @@ impl<'a> Render for NewPage<'a> {
         let mut ctx = get_template_file("new_page").await.unwrap();
         let mut content = get_template_file("content").await.unwrap();
         let nav = get_template_file("nav").await.unwrap();
-        let body = format!(r#"<div class="text-block">{}</div>"#, self.get_linkto());
+        let body = format!(r#"<div class="text-block" tabindex="0">{}</div>"#, self.get_linkto());
         content = content
             .replace("<%= body %>", &body)
             .replace("<%= metadata %>", "")

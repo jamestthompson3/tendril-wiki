@@ -42,9 +42,15 @@ export class BlockEditor extends HTMLEditor {
     el.innerHTML = html;
     el.classList.add("text-block");
     el.addEventListener("click", this.setupEditor);
+    el.addEventListener("keyup", (e) => {
+      if (e.key === "Enter") {
+        this.setupEditor(e);
+      }
+    });
     for (const datapoint in this.element.dataset) {
       el.dataset[datapoint] = this.element.dataset[datapoint];
     }
+    el.tabIndex = 0;
     this.element.replaceWith(el);
     this.element = el;
   };
@@ -87,6 +93,10 @@ export class BlockEditor extends HTMLEditor {
           this.addBlock(indentation && Number(indentation));
           break;
         }
+        break;
+      }
+      case "Escape": {
+        this.element.blur();
         break;
       }
       default:
