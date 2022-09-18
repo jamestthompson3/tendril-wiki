@@ -4,8 +4,7 @@ use std::fmt::Write as _;
 use build::purge_mru_cache;
 use persistance::fs::{create_journal_entry, read, write, ReadPageError, WriteWikiError};
 use render::{
-    injected_html::InjectedHTML, link_page::LinkPage, new_page::NewPage, wiki_page::WikiPage,
-    GlobalBacklinks, Render,
+    injected_html::InjectedHTML, new_page::NewPage, wiki_page::WikiPage, GlobalBacklinks, Render,
 };
 use tasks::{
     messages::{Message, PatchData},
@@ -25,14 +24,6 @@ use super::{
 struct Runner {}
 
 impl Runner {
-    pub async fn render_backlink_index(links: GlobalBacklinks) -> String {
-        let links = links.lock().await;
-        let ctx = LinkPage {
-            links: links.to_owned(),
-        };
-        ctx.render().await
-    }
-
     pub async fn render_file(
         &self,
         path: String,
@@ -117,10 +108,7 @@ impl Runner {
         ctx.render().await
     }
 
-    pub async fn edit(
-        body: PatchData,
-        queue: QueueHandle,
-    ) -> Result<(), WriteWikiError> {
+    pub async fn edit(body: PatchData, queue: QueueHandle) -> Result<(), WriteWikiError> {
         if body
             .tags
             .iter()
@@ -149,10 +137,7 @@ impl Runner {
         }
         match write(&body).await {
             Ok(()) => {
-                queue
-                    .push(Message::Patch { patch: body })
-                    .await
-                    .unwrap();
+                queue.push(Message::Patch { patch: body }).await.unwrap();
                 Ok(())
             }
             Err(e) => {
@@ -162,10 +147,7 @@ impl Runner {
         }
     }
 
-    pub async fn append(
-        body: PatchData,
-        queue: QueueHandle,
-    ) -> Result<(), WriteWikiError> {
+    pub async fn append(body: PatchData, queue: QueueHandle) -> Result<(), WriteWikiError> {
         match create_journal_entry(body.body).await {
             Ok(patch) => {
                 queue.push(Message::Patch { patch }).await.unwrap();
@@ -206,21 +188,7 @@ impl WikiPageRouter {
             .or(self.edit())
             .or(self.quick_add())
             .or(self.new_page())
-            .or(self.backlink_index())
             .or(self.get())
-            .boxed()
-    }
-
-    fn backlink_index(&self) -> BoxedFilter<(impl Reply,)> {
-        let (links, _) = &self.parts;
-        warp::get()
-            .and(with_auth())
-            .and(warp::path("links"))
-            .and(with_links(links.to_owned()))
-            .then(|links: GlobalBacklinks| async move {
-                let response = Runner::render_backlink_index(links).await;
-                warp::reply::html(response)
-            })
             .boxed()
     }
 
@@ -305,11 +273,9 @@ impl WikiPageRouter {
                     warp::body::content_length_limit(MAX_BODY_SIZE)
                         .and(warp::body::json())
                         .and(with_queue(queue.to_owned()))
-                        .then(
-                            |body: PatchData, queue: QueueHandle| async {
-                                reply_on_result(Runner::edit(body, queue).await)
-                            },
-                        ),
+                        .then(|body: PatchData, queue: QueueHandle| async {
+                            reply_on_result(Runner::edit(body, queue).await)
+                        }),
                 ),
             )
             .boxed()
@@ -324,11 +290,9 @@ impl WikiPageRouter {
                     warp::body::content_length_limit(MAX_BODY_SIZE)
                         .and(warp::body::json())
                         .and(with_queue(queue.to_owned()))
-                        .then(
-                            |body: PatchData, queue: QueueHandle| async {
-                                reply_on_result(Runner::append(body, queue).await)
-                            },
-                        ),
+                        .then(|body: PatchData, queue: QueueHandle| async {
+                            reply_on_result(Runner::append(body, queue).await)
+                        }),
                 ),
             )
             .boxed()

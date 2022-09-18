@@ -1,9 +1,6 @@
 use std::collections::HashMap;
 use std::fmt::Write as _;
-use std::{collections::BTreeMap, env, io, sync::Arc};
-
-#[macro_use]
-extern crate lazy_static;
+use std::{collections::BTreeMap, io, sync::Arc};
 
 use chrono::{DateTime, FixedOffset};
 #[cfg(not(debug_assertions))]
@@ -21,11 +18,11 @@ pub mod file_upload_page;
 pub mod help_page;
 pub mod index_page;
 pub mod injected_html;
-pub mod link_page;
 pub mod login_page;
 pub mod new_page;
 pub mod opensearch_page;
 pub mod search_results_page;
+pub mod static_site_page;
 pub mod styles_page;
 pub mod tasks_page;
 pub mod uploaded_files_page;
@@ -43,15 +40,6 @@ const FORBIDDEN_TAGS: [&str; 5] = ["noscript", "script", "object", "embed", "lin
 #[async_trait]
 pub trait Render {
     async fn render(&self) -> String;
-}
-
-lazy_static! {
-    pub static ref STATIC_BUILD: String = {
-        match env::var("TENDRIL_COMPILE_STATIC") {
-            Ok(val) => val,
-            _ => String::with_capacity(0),
-        }
-    };
 }
 
 pub fn parse_includes(include_str: &str) -> String {
@@ -80,16 +68,8 @@ pub fn sanitize_html(html: &str) -> String {
 }
 
 async fn process_included_file(file: String, page: Option<&TemplattedPage>) -> String {
-    let state = if STATIC_BUILD.as_str() == "true" {
-        CompileState::Static
-    } else {
-        CompileState::Dynamic
-    };
     match file.as_ref() {
-        "search" => match state {
-            CompileState::Dynamic => get_template_file("search").await.unwrap(),
-            CompileState::Static => String::with_capacity(0),
-        },
+        "search" => get_template_file("search").await.unwrap(),
         "styles" => get_template_file("styles").await.unwrap(),
         "meta" => {
             let templatefile = get_template_file("meta").await.unwrap();

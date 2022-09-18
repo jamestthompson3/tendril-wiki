@@ -1,22 +1,19 @@
 use async_recursion::async_recursion;
 use futures::{stream, StreamExt};
 
-use render::link_page::LinkPage;
-use render::wiki_page::WikiPage;
-use wikitext::parsers::ParsedPages;
+use render::static_site_page::StaticSitePage;
+use wikitext::parsers::{ParsedPages, TemplattedPage};
 
-use persistance::fs::config::read_config;
 use persistance::fs::path_to_data_structure;
 use persistance::fs::utils::get_config_location;
 use render::{GlobalBacklinks, Render};
 use tokio::sync::Mutex;
 use wikitext::processors::{to_template, update_templatted_pages};
 
-use std::env;
 use std::{
-    collections::BTreeMap,
+    collections::{BTreeMap, HashMap},
     fs::{self, read_dir},
-    path::{Path, PathBuf},
+    path::{PathBuf, Path},
     sync::Arc,
 };
 
@@ -43,25 +40,24 @@ impl Builder {
         }
     }
     pub async fn compile_all(&self) {
-        env::set_var("TENDRIL_COMPILE_STATIC", "true");
-        let links = Arc::clone(&self.backlinks);
         let pages = Arc::clone(&self.pages);
         write_entries(&pages, &self.backlinks).await;
-        write_backlinks(links).await;
-        let config_general = read_config().general;
-        write_index_page(config_general.user, config_general.host).await;
+        write_index_page(&pages).await;
         let mut config_dir = get_config_location().0;
         config_dir.push("userstyles.css");
         fs::create_dir("public/static").unwrap();
         fs::create_dir("public/config").unwrap();
         fs::copy("./static/style.css", "./public/static/style.css").unwrap();
-        fs::copy(config_dir, "./public/config/userstyles.css").unwrap();
+        fs::copy("./static/mobile.css", "./public/static/mobile.css").unwrap();
+        fs::copy("./static/note-styles.css", "./public/static/note-styles.css").unwrap();
+        if config_dir.exists() {
+            fs::copy(config_dir, "./public/config/userstyles.css").unwrap();
+        }
     }
 
     pub async fn sweep(&self, wiki_location: &str) {
         if !Path::new("./public").exists() {
-            fs::create_dir_all("./public/tags").unwrap();
-            fs::create_dir_all("./public/links").unwrap();
+            fs::create_dir_all("./public").unwrap();
         }
         let links = Arc::clone(&self.backlinks);
         let pages = Arc::clone(&self.pages);
@@ -99,8 +95,11 @@ async fn parse_entries(
         let links = Arc::clone(&backlinks);
         let pages = Arc::clone(&rendered_pages);
         let entry = entry.unwrap();
+        let file_name = entry.file_name();
+        let file_name = file_name.to_str().unwrap();
         if entry.file_type().unwrap().is_file()
-            && entry.file_name().to_str().unwrap().ends_with(".md")
+            && file_name.ends_with(".txt")
+            && file_name != "todo.txt"
         {
             tokio::spawn(async move {
                 process_file(entry.path(), links, pages).await;
@@ -116,12 +115,23 @@ async fn parse_entries(
     pipeline.await
 }
 
-async fn write_index_page(user: String, host: String) {
-    // let ctx = IndexPage { user, host };
+async fn write_index_page(pages: &ParsedPages) {
+    let page_vals = pages.lock().await;
+    let pages: String = page_vals
+        .iter()
+        .map(|page| format!(r#"<li><a href="{}">{}</a></li>"#, page.title, page.title))
+        .collect();
+    let body = format!(r#"<h1>Pages</h1><ul style="margin: 1rem 0rem;">{}</ul>"#, pages);
+    let page = TemplattedPage {
+        title: String::from("Notebook Index"),
+        body,
+        tags: Vec::with_capacity(0),
+        desc: String::from("list of all pages"),
+        metadata: HashMap::with_capacity(0),
+    };
+    let output = StaticSitePage::new(&page, None).render().await;
     // TODO: Figure out static site index
-    tokio::fs::write("public/index.html", format!("{}{}", user, host))
-        .await
-        .unwrap();
+    tokio::fs::write("public/index.html", output).await.unwrap();
 }
 
 async fn write_entries(pages: &ParsedPages, backlinks: &GlobalBacklinks) {
@@ -129,7 +139,7 @@ async fn write_entries(pages: &ParsedPages, backlinks: &GlobalBacklinks) {
     let link_vals = backlinks.lock().await;
     for page in page_vals.iter() {
         let links = link_vals.get(&page.title);
-        let output = WikiPage::new(page, links).render().await;
+        let output = StaticSitePage::new(page, links).render().await;
         let formatted_title = page.title.replace('/', "-");
         let out_dir = format!("public/{}", formatted_title);
         // TODO use path here instead of title? Since `/` in title can cause issues in fs::write
@@ -141,14 +151,4 @@ async fn write_entries(pages: &ParsedPages, backlinks: &GlobalBacklinks) {
             .await
             .unwrap_or_else(|e| eprintln!("{:?}\nCould not write file: {}", e, out_file));
     }
-}
-
-pub async fn write_backlinks(map: GlobalBacklinks) {
-    let link_map = map.lock().await;
-    let ctx = LinkPage {
-        links: link_map.clone(),
-    };
-    tokio::fs::write("public/links/index.html", ctx.render().await)
-        .await
-        .unwrap();
 }
