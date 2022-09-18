@@ -80,10 +80,12 @@ impl Render for IndexPage {
         let nav = get_template_file("nav").await.unwrap();
         ctx = ctx
             .replace("<%= user %>", &self.user)
-            .replace("<%= title %>", &self.today)
             .replace("<%= sidebar %>", &render_sidebar().await)
             .replace("<%= host %>", &self.host)
             .replace("<%= content %>", &self.render_today().await);
-        render_includes(ctx, None).await.replace("<%= nav %>", &nav)
+        render_includes(ctx, None)
+            .await
+            .replace("<%= nav %>", &nav)
+            .replace("<%= title %>", &self.today)
     }
 }

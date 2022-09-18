@@ -58,7 +58,6 @@ impl<'a> Render for WikiPage<'a> {
             .replace("<%= tags %>", &tag_string)
             .replace("<%= links %>", &render_page_backlinks(&backlinks))
             .replace("<%= body %>", &self.render_body())
-            .replace("<%= title %>", &page.title)
             .replace(
                 "<%= metadata %>",
                 &render_page_metadata(page.metadata.clone()),
@@ -66,5 +65,6 @@ impl<'a> Render for WikiPage<'a> {
         render_includes(ctx, Some(page))
             .await
             .replace("<%= nav %>", &nav)
+            .replace("<%= title %>", &page.title)
     }
 }

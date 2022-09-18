@@ -1,14 +1,4 @@
 (function () {
-  function replaceLinkTo() {
-    const linkTo = document.getElementById("linkto");
-    if (!linkTo) return;
-    // Remove leading '/' of the current note
-    const currentWiki = window.location.pathname.slice(1);
-    linkTo.href = `/new?linkto=${currentWiki}`;
-  }
-
-  replaceLinkTo();
-
   function replaceOGMeta() {
     const metas = document.querySelectorAll("meta");
     for (const meta of metas) {

@@ -216,6 +216,19 @@ aside ul a {
   max-width: 100%;
 }
 
+aside form button {
+  border: none;
+  color: var(--primary-variant);
+  font-weight: bold;
+  cursor: pointer;
+  background-color: transparent;
+  font-size: 1rem;
+}
+
+aside form {
+  margin-left: -0.3rem;
+}
+
 aside h2 {
   text-align: center;
 }

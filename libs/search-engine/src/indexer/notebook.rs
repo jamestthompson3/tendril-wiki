@@ -2,8 +2,8 @@ use std::{fs::read_dir, path::Path};
 
 use async_trait::async_trait;
 use futures::{stream, StreamExt};
-use wikitext::parsers::{to_html, Note};
 use persistance::fs::path_to_data_structure;
+use wikitext::parsers::{to_html, Note};
 
 use crate::{tokenizer::tokenize, Doc};
 
@@ -24,13 +24,11 @@ impl Proccessor for Notebook {
                 if let Ok(..) = entry {
                     let entry = entry.unwrap();
                     if let Some(fname) = entry.file_name().to_str() {
-                        if fname.ends_with(".md") {
+                        if fname.ends_with(".txt") && fname != "todo.txt" {
                             let mut content = path_to_data_structure(&entry.path()).await.unwrap();
                             if content.header.get("title").is_none() {
-                                let fixed_name = fname.strip_suffix(".md").unwrap();
-                                content
-                                    .header
-                                    .insert("title".into(), fixed_name.to_owned());
+                                let fixed_name = fname.strip_suffix(".txt").unwrap();
+                                content.header.insert("title".into(), fixed_name.to_owned());
                             }
 
                             let doc = tokenize_note_meta(&content);
@@ -70,10 +68,20 @@ pub(crate) fn tokenize_note_meta(content: &Note) -> Doc {
             println!("Failed to tokenize {} in {:?}", token, tokenized_entry);
         }
     }
+    let doc_content = match content.header.get("content-type") {
+        Some(content_type) => {
+            if content_type == "html" {
+                content.content.clone()
+            } else {
+                to_html(&content.content).body
+            }
+        }
+        None => to_html(&content.content).body,
+    };
 
     Doc {
         id: title.unwrap().to_owned(),
         tokens: tokenized_entry,
-        content: to_html(&content.content).body,
+        content: doc_content,
     }
 }

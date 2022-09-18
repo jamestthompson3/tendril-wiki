@@ -69,10 +69,10 @@ pub async fn process_tasks(
                             panic!("Failed to find file for deletion: {}", title)
                         });
                         let note = path_to_data_structure(&path).await.unwrap();
-                        persistance::fs::delete(&title).await.unwrap();
                         delete_from_global_store(&title, &note, links.clone()).await;
                         delete_entry_from_update(&title).await;
                         delete_archived_file(&title).await;
+                        persistance::fs::delete(&title).await.unwrap();
                     }
                     Message::Archive { url, title } => {
                         let product = tokio::task::spawn_blocking(|| extract(url)).await.unwrap();
