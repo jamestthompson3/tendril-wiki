@@ -1,7 +1,7 @@
 <nav>
   <ul>
     <li><a href="/new" accesskey="n">✏️ new</a></li>
-    <li>
+    <li id="linkto">
       <a accesskey="l" href="/new?linkto=<%= title %>"
         >🔗 link to <%= title %></a
       >
@@ -11,7 +11,7 @@
     <li><a accesskey="t" href="/tasks">📋 task list</a></li>
     <li><a accesskey="b" href="/new_bookmark">🔖 add a bookmark</a></li>
     <li><a id="home" href="/">🏠 home</a></li>
-    <li>
+    <li id="delete-note">
       <form
         action="delete"
         method="post"
