@@ -1,4 +1,5 @@
 import { textToHtml } from "./parsing.js";
+import { moveCaretToEnd, moveCaretToStart } from "./dom.js";
 import { HTMLEditor } from "./base-html-editor.js";
 import { nanoid, StateMachine } from "./utils.js";
 import {
@@ -66,6 +67,7 @@ export class BlockEditor extends HTMLEditor {
     this.setupTextblockListeners(textblock);
     this.element.replaceWith(textblock);
     setAsFocused(textblock);
+    moveCaretToEnd(textblock);
     this.element = textblock;
   };
   handleInput = (e) => {
@@ -97,6 +99,10 @@ export class BlockEditor extends HTMLEditor {
       }
       case "Escape": {
         this.element.blur();
+        break;
+      }
+      case "Home": {
+        moveCaretToStart(this.element);
         break;
       }
       default:

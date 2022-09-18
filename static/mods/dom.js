@@ -1,5 +1,3 @@
-import { htmlToText } from "./parsing.js";
-
 export function updateMRU(title) {
   const mru = document.getElementById("mru");
   const links = mru.querySelectorAll("a");
@@ -31,24 +29,24 @@ export function updateMRU(title) {
   }
 }
 
-export function getFullBody() {
-  let fullBody;
-  const pageContent = document.getElementById("content-block");
-  for (let i = 0; i < pageContent.children.length; i++) {
-    const child = pageContent.children[i];
-    const text = htmlToText(child);
-    if (fullBody) {
-      fullBody = `${fullBody}\n${text}`;
-    } else {
-      fullBody = text;
-    }
+export function moveCaretToEnd(el) {
+  if (typeof el.selectionStart == "number") {
+    el.selectionStart = el.selectionEnd = el.value.length;
+  } else if (typeof el.createTextRange != "undefined") {
+    el.focus();
+    var range = el.createTextRange();
+    range.collapse(false);
+    range.select();
   }
-  return fullBody;
 }
 
-export function getTags() {
-  const tags = document.querySelector(".tags");
-  return Array.from(tags.querySelectorAll("a"))
-    .map((el) => el.innerText.replace("#", ""))
-    .join(",");
+export function moveCaretToStart(el) {
+  if (typeof el.selectionStart == "number") {
+    el.selectionStart = el.selectionEnd = 0;
+  } else if (typeof el.createTextRange != "undefined") {
+    el.focus();
+    var range = el.createTextRange();
+    range.collapse(false);
+    range.select();
+  }
 }

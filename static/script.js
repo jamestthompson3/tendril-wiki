@@ -1,26 +1,4 @@
 (function () {
-  function moveCaretToEnd(el) {
-    if (typeof el.selectionStart == "number") {
-      el.selectionStart = el.selectionEnd = el.value.length;
-    } else if (typeof el.createTextRange != "undefined") {
-      el.focus();
-      var range = el.createTextRange();
-      range.collapse(false);
-      range.select();
-    }
-  }
-
-  function moveCaretToStart(el) {
-    if (typeof el.selectionStart == "number") {
-      el.selectionStart = el.selectionEnd = 0;
-    } else if (typeof el.createTextRange != "undefined") {
-      el.focus();
-      var range = el.createTextRange();
-      range.collapse(false);
-      range.select();
-    }
-  }
-
   function replaceLinkTo() {
     const linkTo = document.getElementById("linkto");
     if (!linkTo) return;
@@ -66,33 +44,12 @@
     window.location.href = url;
   }
 
-  const textarea = document.getElementById("body");
-  if (textarea) {
-    textarea.onkeydown = function (e) {
-      switch (e.key) {
-        case "Home":
-          moveCaretToStart(textarea);
-          break;
-        case "End":
-          moveCaretToEnd(textarea);
-          break;
-        default:
-          break;
-      }
-    };
-
-    textarea.addEventListener("paste", detectImagePaste);
-  }
-
   document.onkeydown = function (e) {
     if (e.target !== document.body) return;
     if (e.ctrlKey) return;
     switch (e.key) {
       case "t":
         jump("tasks");
-        break;
-      case "e":
-        edit();
         break;
       case "/":
         search();
