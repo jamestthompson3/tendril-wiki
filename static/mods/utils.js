@@ -33,8 +33,16 @@ export class StateMachine {
   }
   send = (message, _payload) => {
     const { on } = this.#chart.states[this.state];
-    if (on[message]) {
-      this.state = on[message];
+    const requestedNextState = on[message];
+    if (requestedNextState) {
+      if (typeof requestedNextState === "string") {
+        this.state = on[message];
+      } else {
+        requestedNextState.actions.forEach((action) => {
+          this.#chart.actions[action]();
+        });
+        this.state = requestedNextState.target;
+      }
     }
   };
 }
