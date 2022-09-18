@@ -37,7 +37,7 @@ impl<'a> NewPage<'a> {
     }
     fn get_linkto(&self) -> String {
         if let Some(linkto) = &self.linkto {
-            format!("[[{}]]", linkto)
+            format!(r#"<a href="{}">{}</a>"#, linkto, linkto)
         } else {
             String::new()
         }
@@ -50,9 +50,9 @@ impl<'a> Render for NewPage<'a> {
         let mut ctx = get_template_file("new_page").await.unwrap();
         let mut content = get_template_file("content").await.unwrap();
         let nav = get_template_file("nav").await.unwrap();
+        let body = format!(r#"<div class="text-block">{}</div>"#, self.get_linkto());
         content = content
-            .replace("<%= body %>", "<div class=\"text-block\"></div>")
-            .replace("<%= title %>", &self.get_note_title())
+            .replace("<%= body %>", &body)
             .replace("<%= metadata %>", "")
             .replace("<%= links %>", "");
         ctx = ctx
@@ -60,7 +60,7 @@ impl<'a> Render for NewPage<'a> {
             .replace("<%= content %>", &content)
             .replace("<%= page_title %>", self.get_page_title())
             .replace("<%= action_params %>", self.action_params.unwrap_or(""))
-            .replace("<%= linkto %>", &self.get_linkto())
+            .replace("<%= title %>", &self.get_note_title())
             .replace("<%= tags %>", "");
         render_includes(ctx, None).await.replace("<%= nav %>", &nav)
     }

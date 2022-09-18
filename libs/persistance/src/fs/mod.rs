@@ -83,7 +83,9 @@ pub async fn write(data: &PatchData) -> Result<(), WriteWikiError> {
     if !file_path.exists() && data.old_title.is_empty() {
         note_meta.header.insert("created".into(), now.clone());
         note_meta.header.insert("id".into(), now);
-        note_meta.header.insert("content-type".into(), "wikitext".into());
+        note_meta
+            .header
+            .insert("content-type".into(), "wikitext".into());
         let note: String = note_meta.into();
         return match fs::write(file_path, note).await {
             Ok(()) => Ok(()),
@@ -101,7 +103,9 @@ pub async fn write(data: &PatchData) -> Result<(), WriteWikiError> {
     if created.is_none() {
         note_meta.header.insert("created".into(), now.clone());
         note_meta.header.insert("id".into(), now);
-        note_meta.header.insert("content-type".into(), "wikitext".into());
+        note_meta
+            .header
+            .insert("content-type".into(), "wikitext".into());
     }
     if note_meta.header.get("id").is_none() {
         let created_time = note_meta.header.get("created").unwrap().to_owned();
@@ -130,12 +134,18 @@ pub async fn write(data: &PatchData) -> Result<(), WriteWikiError> {
                 }
             },
 
-            Err(e) => Err(WriteWikiError::WriteError(e)),
+            Err(e) => {
+                eprintln!("could not perform rename action on file: {}", e);
+                Err(WriteWikiError::WriteError(e))
+            }
         }
     } else {
         match fs::write(file_path, final_note).await {
             Ok(()) => Ok(()),
-            Err(e) => Err(WriteWikiError::WriteError(e)),
+            Err(e) => {
+                eprintln!("Could not write file: {}", e);
+                Err(WriteWikiError::WriteError(e))
+            }
         }
     }
 }
