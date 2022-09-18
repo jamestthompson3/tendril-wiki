@@ -1,5 +1,6 @@
-button.submit {
+button[type="submit"] {
   height: auto;
+  width: 5rem;
   text-align: center;
   align-self: flex-end;
   background-color: var(--accent);

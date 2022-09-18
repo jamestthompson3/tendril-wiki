@@ -186,7 +186,9 @@ input[type="url"] {
   background-color: var(--bg-darker);
   border-radius: var(--rad);
   padding: 0.25rem;
-  border: 0.5px solid var(--primary-variant);
+  /* border: 0.5px solid var(--primary-variant); */
+  border: none;
+  box-shadow: var(--shadow);
   font-weight: bold;
   width: 80%;
   height: 25px;

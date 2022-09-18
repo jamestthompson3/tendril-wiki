@@ -8,6 +8,7 @@
     />
     <%= include "styles" %>
     <link rel="stylesheet" href="/static/tasks.css" />
+    <link rel="stylesheet" href="/static/static-form.css" />
     <link
       rel="stylesheet"
       href="/static/tasks.mobile.css"
@@ -20,28 +21,30 @@
     <title>Tasks</title>
   </head>
   <body>
-    <%= include "nav" %>
-    <div class="content-container">
-      <h4>Current Tasks</h4>
-      <div class="task-header">
-        <div>
-          <span
-            >Use the todo.txt format for adding new todos. More information on
-            this format can be found in the
-            <a href="/help#todo-format">help page</a>.</span
-          >
-          <form class="editor">
-            <label for="task" class="hidden">create task</label>
-            <input type="text" autocomplete="off" name="task" />
-            <button type="submit">New Task</button>
-          </form>
+    <%= include "search" %>
+    <div class="flex-container">
+      <%= sidebar %>
+      <div class="content-container">
+        <h2>Current Tasks</h2>
+        <div class="task-header">
+          <div>
+            <span
+              >Use the todo.txt format for adding new todos. More information on
+              this format can be found in the
+              <a href="/help#todo-format">help page</a>.</span
+            >
+            <form class="editor">
+              <label for="task" class="hidden">create task</label>
+              <input type="text" autocomplete="off" name="task" />
+              <button type="submit">New Task</button>
+            </form>
+          </div>
         </div>
+        <ul class="task-list">
+          <%= tasks %>
+        </ul>
       </div>
-      <ul class="task-list">
-        <%= tasks %>
-      </ul>
     </div>
-    <%= include "footer" %>
     <script src="/static/tasks.js"></script>
   </body>
 </html>

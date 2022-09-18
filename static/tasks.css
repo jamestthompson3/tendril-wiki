@@ -141,10 +141,7 @@ input {
   display: flex;
   justify-content: space-between;
   padding: 1rem 0rem;
-}
-
-.task-header form button {
-  align-self: center;
+  height: 120px;
 }
 
 .task-header form input {
@@ -158,4 +155,8 @@ input {
 
 .task-header button {
   width: 80px;
+}
+
+h2 {
+  text-align: center;
 }
