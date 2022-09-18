@@ -19,7 +19,8 @@ impl Default for HelpPage {
 impl Render for HelpPage {
     async fn render(&self) -> String {
         let mut ctx = get_template_file("help").await.unwrap();
+        let nav = get_template_file("nav").await.unwrap();
         ctx = ctx.replace("<%= sidebar %>", &render_sidebar().await);
-        render_includes(ctx, None).await
+        render_includes(ctx, None).await.replace("<%= nav %>", &nav)
     }
 }

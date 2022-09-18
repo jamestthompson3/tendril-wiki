@@ -29,6 +29,17 @@
       .shortcuts {
         list-style: none;
       }
+      h3 {
+        font-size: 1.5rem;
+      }
+      p {
+        font-size: 1.15rem;
+        line-height: 2rem;
+        margin: 0.5rem 0rem;
+      }
+      code {
+        display: inline-block;
+      }
     </style>
   </head>
   <body>
@@ -40,36 +51,68 @@
           <main class="content-body">
             <h2 id="wiki-syntax">Wiki Syntax</h2>
             <p>
-            In addition supporting GitHub flavored markdown, Tendril Wiki
-            supports some wiki syntax extensions.
-            </p>
-            <p><code>[[My Note]]</code> will link to a page called, "My Note"</p>
-            <p>
-            <code>[[A cool note!|My Note]]</code> will link to a page called,
-            "My Note", with the link text displaying, "A cool note!"
+              Tendril Wiki uses a custom wikitext syntax that is a simplified
+              version of markdown. The scope is currently very limited, but may
+              change to include more of the markdown syntax in the future.
             </p>
             <p>
-            <code>[[files:article.pdf]]</code> will link to an uploaded pdf
-            called, "article"
+              The following sections will be examples of the currently supported
+              syntax features.
+            </p>
+            <h3>Links</h3>
+            <p>
+              In addition to automatic link detection, Tendril Wiki has a
+              special syntax for quickly linking to other notes in your
+              notebook. This is done by using brackets, <code>[[]]</code> to
+              surround the title of the note you want to link.
             </p>
             <p>
-            <code>[[this article|files:article.pdf]]</code> will link to an
-            uploaded pdf called, "article" with the link text displaying, "this
-            article"
+              <code>[[My Note]]</code> will link to a page called, "My Note"
+            </p>
+            <p>
+              You can also alias note names to other text. This is to preserve
+              the same behavior of HTML anchor tags where the href property and
+              text content can differ.
+            </p>
+            <p>
+              For example,
+              <code>[[A cool note!|My Note]]</code> will link to a page called,
+              "My Note", with the link text displaying, "A cool note!"
+            </p>
+            <p>
+              <code>[[files:article.pdf]]</code> will link to an uploaded pdf
+              called, "article"
+            </p>
+            <p>
+              <code>[[this article|files:article.pdf]]</code> will link to an
+              uploaded pdf called, "article" with the link text displaying,
+              "this article"
+            </p>
+            <h3>Quotes</h3>
+            <p>
+              To render a quote, you should start the line with
+              <code>&gt;</code> which may optionally be followed by a space.
+              This means <code>&gt; this is a quote</code> and
+              <code>&gt;this is a quote</code> will result in the same output.
+            </p>
+            <h3>Everything Else</h3>
+            <p>
+              All other text that you write in your notes will be interpreted as
+              plaintext, with the sole exception of link detection.
             </p>
             <h2 id="todo-format">Todo.txt Format</h2>
             <p>
-            The task tracking functionality in Tendril Wiki follows the
-            <a href="https://github.com/todotxt/todo.txt">todo.txt format</a>.
-            Your tasks are stored in a <strong>todo.txt</strong> file inside
-            your wiki directory.
+              The task tracking functionality in Tendril Wiki follows the
+              <a href="https://github.com/todotxt/todo.txt">todo.txt format</a>.
+              Your tasks are stored in a <strong>todo.txt</strong> file inside
+              your wiki directory.
             </p>
 
             <svg
               xmlns="http://www.w3.org/2000/svg"
               id="svg2"
               viewBox="0 0 632.2 281"
-              >
+            >
               <style>
                 .st0 {
                   font-family: Courier;
@@ -87,61 +130,62 @@
               </style>
               <rect width="100%" height="100%" fill="#FFF" />
               <text class="st0" transform="translate(4.024 172.96)">
-              x (A) 2016-05-20 2016-04-30 measure space for +chapelShelving
-              @chapel due:2016-05-30
+                x (A) 2016-05-20 2016-04-30 measure space for +chapelShelving
+                @chapel due:2016-05-30
               </text>
               <path
-              d="M15.2 159v-6H.5v6m36 0v-6H21.8v6m96.5 0v-6H47.5v6m149.3 0v-6H126v6m483.7.2V153H206v6.1m238.7 22.8v7.2H335V182m274.7-.1v7.2H509V182m-7.5-.1v7.2h-49.1V182"
-              class="st1"
+                d="M15.2 159v-6H.5v6m36 0v-6H21.8v6m96.5 0v-6H47.5v6m149.3 0v-6H126v6m483.7.2V153H206v6.1m238.7 22.8v7.2H335V182m274.7-.1v7.2H509V182m-7.5-.1v7.2h-49.1V182"
+                class="st1"
               />
               <text class="st2" transform="rotate(-45 161.175 55.627)">
-              Optional — Marks completion
+                Optional — Marks completion
               </text>
               <text class="st2" transform="rotate(-45 171.8 29.976)">
-              Optional -- Marks priority
+                Optional -- Marks priority
               </text>
               <text class="st2" transform="rotate(-45 198.684 -34.92)">
-              Optional -- Completion Date
+                Optional -- Completion Date
               </text>
               <text transform="rotate(-45 237.935 -129.68)">
-              <tspan x="0" y="0" class="st2">Optional -- Creation Date</tspan>
-              <tspan x="0" y="12" class="st2">
-              (must be specified if completion date is)
-              </tspan>
+                <tspan x="0" y="0" class="st2">Optional -- Creation Date</tspan>
+                <tspan x="0" y="12" class="st2">
+                  (must be specified if completion date is)
+                </tspan>
               </text>
               <text transform="rotate(-45 352.18 -405.478)">
-              <tspan x="0" y="0" class="st2">
-              Description; tags (optional)
-              </tspan>
-              <tspan x="0" y="12" class="st2">
-              can be placed anywhere in here
-              </tspan>
+                <tspan x="0" y="0" class="st2">
+                  Description; tags (optional)
+                </tspan>
+                <tspan x="0" y="12" class="st2">
+                  can be placed anywhere in here
+                </tspan>
               </text>
               <text class="st2" transform="rotate(45 -60.77 576.533)">
-              Project Tag
+                Project Tag
               </text>
               <text class="st2" transform="rotate(45 -17.238 681.627)">
-              Context tag
+                Context tag
               </text>
               <text class="st2" transform="rotate(45 23.978 781.127)">
-              Special key/value tag
+                Special key/value tag
               </text>
             </svg>
             <h2 id="wiki-syntax">Archiving Bookmarks</h2>
             <p>
-            If you add the `bookmark` tag to a note in addition to adding
-            `url:<url-of-bookmark>` to the metadata, tendril will archive the text content of the url.
-              This text content will be availble inside the search engine, allowing you to do a full
-              text search across the bookmarks you've saved!
+              If you add the <code>bookmark</code> tag to a note in addition to
+              adding <code>url:&lt;url-of-bookmark&gt;</code> to the metadata,
+              tendril will archive the text content of the url. This text
+              content will be availble inside the search engine, allowing you to
+              do a full text search across the bookmarks you've saved!
             </p>
             <h2 id="embeds">Automatic Embeds</h2>
             <p>
-            Certain websites and links to filetypes will automatically be
-            embedded in your wiki by just pasting the link into the note!
+              Certain websites and links to filetypes will automatically be
+              embedded in your wiki by just pasting the link into the note!
             </p>
             <p>
-            Here some examples of sites and files that you can automatically
-            embed:
+              Here some examples of sites and files that you can automatically
+              embed:
             </p>
             <ul>
               <li>Youtube videos</li>
@@ -154,32 +198,29 @@
             </ul>
             <h2 id="keyboard-shortcuts">Keyboard Shortcuts</h2>
             <p>
-            Keyboard shortcuts are enabled regardless of whether or not you are
-            using JavaScript. If you aren't using JavaScript, the keyboard
-            shortcuts are the same as the key listed below, in combination with
-            your browser's
-            <a
-              href="https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/accesskey"
-              >access key combination</a
-            >
+              Keyboard shortcuts are enabled regardless of whether or not you
+              are using JavaScript. If you aren't using JavaScript, the keyboard
+              shortcuts are the same as the key listed below, in combination
+              with your browser's
+              <a
+                href="https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/accesskey"
+                >access key combination</a
+              >
             </p>
-              <ul class="shortcuts">
-                <li><kbd class="shortcut">/</kbd> Jump to the search page</li>
-                <li>
-                  <kbd class="shortcut">e</kbd> Edit the currently viewed page
-                </li>
-                <li><kbd class="shortcut">n</kbd> Create a new page</li>
-                <li>
-                  <kbd class="shortcut">l</kbd> Create a new page that backlinks to
-                  the currently viewed page
-                </li>
-                <li><kbd class="shortcut">p</kbd> Edit your user stylesheet</li>
-                <li><kbd class="shortcut">t</kbd> View your task list</li>
-              </ul>
+            <ul class="shortcuts">
+              <li><kbd class="shortcut">/</kbd> Jump to the search page</li>
+              <li><kbd class="shortcut">n</kbd> Create a new page</li>
+              <li>
+                <kbd class="shortcut">l</kbd> Create a new page that backlinks
+                to the currently viewed page
+              </li>
+              <li><kbd class="shortcut">p</kbd> Edit your user stylesheet</li>
+              <li><kbd class="shortcut">t</kbd> View your task list</li>
+              <li><kbd class="shortcut">b</kbd> Add a new bookmark</li>
+            </ul>
           </main>
         </div>
       </div>
     </div>
-    <script defer="true" src="/static/searchPage.js"></script>
   </body>
 </html>
