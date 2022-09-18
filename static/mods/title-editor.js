@@ -29,6 +29,7 @@ export class TitleEditor extends HTMLEditor {
     const textblock = document.createElement("input");
     textblock.type = "text";
     textblock.value = this.content;
+    textblock.minLength = 1;
     textblock.setAttribute("pattern", "([a-zA-Z0-9-_+—]\\s?)+");
     for (const datapoint in this.element.dataset) {
       textblock.dataset[datapoint] = this.element.dataset[datapoint];
