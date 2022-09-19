@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en-US" prefix="og:http://ogp.me/ns#">
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    <%= include "styles" %>
+    <meta property="og:title" content="All Pages" />
+    <meta property="og:type" content="website" />
+    <link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon" />
+    <link rel="icon" href="/static/favicon.ico"" type="image/x-icon" />
+    <title>All Pages</title>
+    <style>
+      .table-container {
+        max-height: 700px;
+        overflow-y: scroll;
+        flex: 1 1 auto;
+      }
+      table {
+        width: 85%;
+        margin: 0rem auto;
+      }
+    </style>
+  </head>
+  <body>
+    <%= include "search" %>
+    <div class="flex-container">
+      <!-- prettier-ignore -->
+      <%= sidebar %>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Backlinks</th>
+            </tr>
+          </thead>
+          <tbody>
+            <%= content %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <script src="/static/clear-nav-links.js"></script>
+  </body>
+</html>

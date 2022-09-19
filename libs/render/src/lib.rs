@@ -12,6 +12,7 @@ use persistance::fs::read_note_cache;
 use tokio::{fs, sync::Mutex};
 use wikitext::parsers::{format_links, TemplattedPage};
 
+pub mod all_pages;
 pub mod bookmark_page;
 pub mod error_page;
 pub mod file_upload_page;

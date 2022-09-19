@@ -2,9 +2,9 @@ use std::{collections::HashMap, sync::Arc};
 
 use persistance::fs::utils::get_config_location;
 use render::{
-    error_page::ErrorPage, file_upload_page::FileUploader, help_page::HelpPage,
-    index_page::IndexPage, opensearch_page::OpenSearchPage, styles_page::StylesPage,
-    uploaded_files_page::UploadedFilesPage, GlobalBacklinks, Render,
+    all_pages::PageList, error_page::ErrorPage, file_upload_page::FileUploader,
+    help_page::HelpPage, index_page::IndexPage, opensearch_page::OpenSearchPage,
+    styles_page::StylesPage, uploaded_files_page::UploadedFilesPage, GlobalBacklinks, Render,
 };
 use tokio::fs::{self, read_dir};
 use warp::{filters::BoxedFilter, Filter, Reply};
@@ -74,6 +74,7 @@ impl StaticPageRouter {
     pub fn routes(&self) -> BoxedFilter<(impl Reply,)> {
         self.file_list()
             .or(self.upload())
+            .or(self.all_pages())
             .or(self.help())
             .or(self.open_search())
             .or(self.styles())
@@ -101,6 +102,19 @@ impl StaticPageRouter {
             .and(with_links(self.links.to_owned()))
             .then(|user: String, host: String, links: GlobalBacklinks| async {
                 let idx_ctx = IndexPage::new(user, host, links);
+                warp::reply::html(idx_ctx.render().await)
+            })
+            .boxed()
+    }
+    fn all_pages(&self) -> BoxedFilter<(impl Reply,)> {
+        warp::get()
+            .and(with_auth())
+            .and(warp::path("all_pages"))
+            .and(with_links(self.links.to_owned()))
+            .then(|links: GlobalBacklinks| async move {
+                let links = links.lock().await;
+                let note_names = links.iter().collect();
+                let idx_ctx = PageList::new(note_names);
                 warp::reply::html(idx_ctx.render().await)
             })
             .boxed()
