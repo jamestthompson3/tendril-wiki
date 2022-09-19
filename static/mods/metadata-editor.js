@@ -39,8 +39,9 @@ export class MetaDataEditor {
     textblock.addEventListener("change", this.handleChange);
     textblock.addEventListener("keyup", () => updateInputHeight(textblock));
     this.element.replaceWith(textblock);
-    this.element = textblock;
     setAsFocused(textblock);
+    moveCaretToEnd(textblock);
+    this.element = textblock;
   };
   setupViewer = () => {
     const container = document.createElement("dl");
