@@ -39,7 +39,7 @@ pub async fn parse_entries(entrypoint: PathBuf, backlinks: GlobalBacklinks) {
         let links = Arc::clone(&backlinks);
         let entry = entry.unwrap();
         if entry.file_type().unwrap().is_file()
-            && entry.file_name().to_str().unwrap().ends_with(".md")
+            && entry.file_name().to_str().unwrap().ends_with(".txt")
         {
             tokio::spawn(async move { process_file(entry.path(), links).await })
                 .await

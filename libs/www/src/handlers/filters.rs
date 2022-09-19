@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, fmt::Display};
 
 use jsonwebtoken::{Algorithm, DecodingKey, Validation};
 use persistance::fs::config::read_config;
@@ -6,7 +6,7 @@ use render::GlobalBacklinks;
 use serde::{Deserialize, Serialize};
 use tasks::JobQueue;
 use thiserror::Error;
-use warp::{reply::WithStatus, Filter, Rejection, hyper::StatusCode};
+use warp::{hyper::StatusCode, reply::WithStatus, Filter, Rejection};
 
 #[derive(Error, Debug)]
 pub enum AuthError {
@@ -68,10 +68,14 @@ pub fn with_auth() -> impl Filter<Extract = (), Error = Rejection> + Clone {
         .boxed()
 }
 
-pub fn reply_on_result<'a, E>(result: Result<(), E>) -> WithStatus<&'a str> {
+pub fn reply_on_result<'a, E>(result: Result<(), E>) -> WithStatus<&'a str>
+where
+    E: Display + std::fmt::Debug,
+{
     if result.is_ok() {
         warp::reply::with_status("OK", StatusCode::OK)
     } else {
+        eprintln!("{:?}", result);
         warp::reply::with_status("BAD REQUEST", StatusCode::BAD_REQUEST)
     }
 }

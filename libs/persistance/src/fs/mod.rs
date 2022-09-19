@@ -124,19 +124,37 @@ pub async fn write(data: &PatchData) -> Result<(), WriteWikiError> {
             WIKI_LOCATION.to_str().unwrap(),
             data.title
         ));
-        // Rename the file to the new title
-        match fs::rename(&file_path, &new_location).await {
-            Ok(()) => match fs::write(new_location, final_note).await {
+        if !PathBuf::from(format!(
+            "{}{}.txt",
+            WIKI_LOCATION.to_str().unwrap(),
+            data.old_title
+        ))
+        .exists()
+        {
+            // This is the case where we've autofilled a default name on the web and are now
+            // renaming the note
+            match fs::write(new_location, final_note).await {
                 Ok(()) => Ok(()),
                 Err(e) => {
                     eprintln!("write renamed file: {}", e);
                     Err(WriteWikiError::WriteError(e))
                 }
-            },
+            }
+        } else {
+            // Rename the file to the new title
+            match fs::rename(&file_path, &new_location).await {
+                Ok(()) => match fs::write(new_location, final_note).await {
+                    Ok(()) => Ok(()),
+                    Err(e) => {
+                        eprintln!("write renamed file: {}", e);
+                        Err(WriteWikiError::WriteError(e))
+                    }
+                },
 
-            Err(e) => {
-                eprintln!("could not perform rename action on file: {}", e);
-                Err(WriteWikiError::WriteError(e))
+                Err(e) => {
+                    eprintln!("could not perform rename action on file: {}", e);
+                    Err(WriteWikiError::WriteError(e))
+                }
             }
         }
     } else {
