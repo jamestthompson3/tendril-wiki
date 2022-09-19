@@ -75,6 +75,9 @@ fn migrate_md_to_wikitext() {
     fs::create_dir_all(&backup_dir).unwrap();
     for file in fs::read_dir(original_dir).unwrap() {
         let entry = file.unwrap();
+        if entry.path().starts_with(".git") {
+            continue;
+        }
         fs::copy(&entry.path(), &backup_dir.join(entry.file_name())).unwrap();
         let file_name = entry.file_name();
         let file_name = file_name.to_str().unwrap();
