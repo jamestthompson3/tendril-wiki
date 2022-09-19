@@ -91,10 +91,15 @@ fn migrate_md_to_wikitext() {
                 .lines()
                 .enumerate()
                 .filter_map(|(idx, line)| {
-                    if line == "---" && idx == 0 {
+                    if idx == 0 && (line == "---" || line.is_empty()) {
                         return None;
                     }
                     if line == "---" {
+                        // case where the original file started with an empty line or malformed
+                        // metadata
+                        if idx == 1 {
+                            return None;
+                        }
                         return Some("\n".into());
                     }
                     if line.starts_with('#') {
