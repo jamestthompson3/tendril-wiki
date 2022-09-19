@@ -40,7 +40,7 @@ impl Runner {
         let templatted = to_template(&note);
         let link_vals = reflinks.lock().await;
         let links = link_vals.get(&templatted.page.title);
-        match note.header.get("type") {
+        match note.header.get("content-type") {
             Some(content_type) => {
                 if content_type == "html" {
                     return InjectedHTML::new(&templatted.page, links).render().await;

@@ -5,7 +5,7 @@ pub mod tags;
 use self::tags::*;
 
 pub fn to_template(note: &Note) -> ParsedTemplate {
-    let content_type = if let Some(content_type) = note.header.get("type") {
+    let content_type = if let Some(content_type) = note.header.get("content-type") {
         content_type.as_str()
     } else {
         "text"

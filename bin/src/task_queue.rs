@@ -99,7 +99,7 @@ pub async fn process_tasks(
                         let compressed = compress(&product.text);
                         write_archive(compressed, &note_title).await;
                         patch_search_from_archive((note_title.clone(), product.text)).await;
-                        metadata.insert("type".into(), "html".into());
+                        metadata.insert("content-type".into(), "html".into());
                         let patch = PatchData {
                             body: sanitized_content,
                             tags,

@@ -37,7 +37,7 @@ impl Runner {
         let mut metadata = HashMap::new();
         metadata.insert(String::from("url"), url.clone());
         if let Ok(product) = tokio::task::spawn_blocking(move || extract(url)).await {
-            metadata.insert("type".into(), "html".into());
+            metadata.insert("content-type".into(), "html".into());
             let title = normalize_title(&product.title);
             let patch = PatchData {
                 body: sanitize_html(&product.content),
