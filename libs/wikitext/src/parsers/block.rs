@@ -8,6 +8,7 @@ pub(crate) enum BlockElement {
     EmptySpace(StrTendril),
     Text(StrTendril),
     HyperLink(StrTendril),
+    IndentationLevel(u32),
 }
 
 type BlockResult = Result<(BlockElement, usize), SubtendrilError>;
@@ -34,6 +35,23 @@ fn parse_heading(slice: &StrTendril) -> BlockResult {
 
 fn parse_empty_space(_: &StrTendril) -> BlockResult {
     Ok((BlockElement::EmptySpace(StrTendril::from_char(' ')), 0))
+}
+
+fn parse_indentation(slice: &StrTendril) -> BlockResult {
+    let mut iter = slice.char_indices().peekable();
+    let mut indentation_level = 0;
+    while let Some(&(index, token)) = iter.peek() {
+        indentation_level = index;
+        if token == '\t' {
+            iter.next();
+        } else {
+            break;
+        }
+    }
+    Ok((
+        BlockElement::IndentationLevel(indentation_level as u32),
+        indentation_level - 1,
+    ))
 }
 
 fn parse_link(slice: &StrTendril) -> BlockResult {
@@ -85,7 +103,10 @@ fn parse_text(slice: &StrTendril) -> BlockResult {
     let (content, first_empty_space) = until_empty_space(slice)?;
     if content.starts_with("http://") || content.starts_with("https://") {
         if content.ends_with(')') || content.ends_with(']') {
-            return Ok((BlockElement::HyperLink(content.try_subtendril(0, content.len32() - 1)?), first_empty_space - 1));
+            return Ok((
+                BlockElement::HyperLink(content.try_subtendril(0, content.len32() - 1)?),
+                first_empty_space - 1,
+            ));
         } else {
             return Ok((BlockElement::HyperLink(content), first_empty_space));
         }
@@ -116,7 +137,14 @@ fn iterate_slice(input: &StrTendril) -> Vec<BlockElement> {
                 }
             }
             '[' => parse_link,
-            ' ' | '\t' => parse_empty_space,
+            ' ' => parse_empty_space,
+            '\t' => {
+                if index == 0 {
+                    parse_indentation
+                } else {
+                    parse_empty_space
+                }
+            }
             '>' => {
                 if index == 0 {
                     parse_quote
@@ -246,7 +274,6 @@ mod tests {
         assert_eq!(block[2], matching_block);
     }
 
-
     #[test]
     fn parses_raw_links_in_brackets() {
         let test_string = "[https://example.com]";
@@ -374,5 +401,23 @@ mod tests {
         ]);
 
         assert_eq!(block[0], matching_block);
+    }
+
+    #[test]
+    fn parses_indentation_levels() {
+        let mut test_string = "\ttesting examples";
+        let mut block = parse_block(test_string.as_bytes());
+        assert_eq!(block.len(), 4);
+        let mut matching_block = BlockElement::IndentationLevel(1);
+        assert_eq!(block[0], matching_block);
+
+        test_string = "\t\ttesting examples";
+        block = parse_block(test_string.as_bytes());
+        assert_eq!(block.len(), 4);
+        matching_block = BlockElement::IndentationLevel(2);
+        assert_eq!(block[0], matching_block);
+
+        matching_block = BlockElement::Text(StrTendril::from_slice("testing"));
+        assert_eq!(block[1], matching_block);
     }
 }

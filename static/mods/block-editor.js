@@ -25,6 +25,7 @@ export class BlockEditor extends HTMLEditor {
   constructor(element) {
     super(element);
     this.id = `block@${nanoid()}`;
+    this.indent = parseInt(element.dataset.indent || 0, 10);
     this.#machine = new StateMachine(stateChart);
     if (element.nodeName === "TEXTAREA") {
       this.setupTextblockListeners(element);
@@ -34,7 +35,7 @@ export class BlockEditor extends HTMLEditor {
 
     this.bc.postMessage({
       type: "REGISTER",
-      data: { id: this.id, content: this.content },
+      data: { id: this.id, content: this.prepareContent(this.content) },
     });
   }
   setupViewer = (e) => {
@@ -91,8 +92,8 @@ export class BlockEditor extends HTMLEditor {
             0,
             this.element.value.length - 1
           );
-          const indentation = this.element.dataset.indent;
-          this.addBlock(indentation && Number(indentation));
+          const indentation = this.indent;
+          this.addBlock(indentation);
           break;
         }
         break;
@@ -112,18 +113,17 @@ export class BlockEditor extends HTMLEditor {
 
   handleKeydown = (e) => {
     if (e.key === "Tab") {
-      // TODO: Figure out if I want to deal with indentation like an outliner.
-      // e.preventDefault();
-      // const indentation = this.dataset.indent;
-      // if (indentation) {
-      //   // Max indent is 3 levels, min is 0
-      //   const indentationLevel = e.shiftKey
-      //     ? Math.max(Number(indentation) - 1, 0)
-      //     : Math.min(Number(indentation) + 1, 3);
-      //   this.dataset.indent = indentationLevel;
-      // } else if (!e.shiftKey) {
-      //   this.dataset.indent = 1;
-      // }
+      e.preventDefault();
+      if (this.indent) {
+        // Max indent is 3 levels, min is 0
+        const indentationLevel = e.shiftKey
+          ? Math.max(this.indent - 1, 0)
+          : Math.min(this.indent + 1, 3);
+        e.target.dataset.indent = this.indent = indentationLevel;
+      } else if (!e.shiftKey) {
+        e.target.dataset.indent = this.indent = 1;
+      }
+      this.change(e);
     }
     if (e.key !== "Backspace") {
       if (this.#machine.state === "cleared") {
@@ -177,5 +177,19 @@ export class BlockEditor extends HTMLEditor {
     const { parentNode, nextSibling } = this.element;
     parentNode.insertBefore(textblock, nextSibling);
     setAsFocused(textblock);
+  };
+  change = (e) => {
+    this.content = e.target.value;
+    this.bc.postMessage({
+      type: "SAVE",
+      data: {
+        id: this.id,
+        content: this.prepareContent(),
+      },
+    });
+  };
+  prepareContent = () => {
+    const targetLength = this.indent + this.content.length;
+    return this.content.padStart(targetLength, String.fromCharCode(9));
   };
 }

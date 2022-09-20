@@ -1,4 +1,8 @@
-use std::{fs, process::exit};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+    process::exit,
+};
 
 use persistance::fs::{
     config::Config,
@@ -69,68 +73,87 @@ pub fn migrate() {
 fn migrate_md_to_wikitext() {
     let mut backup_dir = get_wiki_location();
     let original_dir = get_wiki_location();
-    let data_dir = get_data_dir_location();
     backup_dir.pop();
     backup_dir.push("tendril-backup");
     fs::create_dir_all(&backup_dir).unwrap();
+    process_migration_dir(original_dir, backup_dir);
+}
+
+fn process_migration_dir(original_dir: PathBuf, backup_dir: PathBuf) {
+    let wiki_dir = get_wiki_location();
+    let data_dir = get_data_dir_location();
     for file in fs::read_dir(original_dir).unwrap() {
         let entry = file.unwrap();
-        if entry.path().starts_with(".git") {
+        if entry.path().to_str().unwrap().contains(".git") {
             continue;
         }
-        fs::copy(&entry.path(), &backup_dir.join(entry.file_name())).unwrap();
-        let file_name = entry.file_name();
-        let file_name = file_name.to_str().unwrap();
-        if file_name == "todo.txt" {
-            let new_loc = data_dir.as_path().join(file_name);
-            fs::rename(file_name, &new_loc).unwrap();
-            fs::remove_file(file_name).unwrap();
-            continue;
+        if entry.metadata().unwrap().is_dir() {
+            process_migration_dir(entry.path(), backup_dir.clone());
+            for file in fs::read_dir(entry.path()).unwrap() {
+                let entry = file.unwrap();
+                fs::rename(entry.path(), wiki_dir.join(entry.file_name())).unwrap();
+            }
+            fs::remove_dir(entry.path()).unwrap();
+        } else {
+            let target = backup_dir.join(entry.file_name());
+            let entry_path = entry.path();
+            process_migration_file(entry_path, target, &data_dir);
         }
-        if file_name.ends_with("md") {
-            let contents = fs::read_to_string(entry.path()).unwrap();
+    }
+}
 
-            let replaced_lines = contents
-                .lines()
-                .enumerate()
-                .filter_map(|(idx, line)| {
-                    if idx == 0 && (line == "---" || line.is_empty()) {
+fn process_migration_file(entry_path: PathBuf, target: PathBuf, data_dir: &Path) {
+    fs::copy(&entry_path, target).unwrap();
+    let file_name = entry_path.file_name().unwrap();
+    let file_name = file_name.to_str().unwrap();
+    if file_name == "todo.txt" {
+        let new_loc = data_dir.join(file_name);
+        fs::rename(&entry_path, &new_loc).unwrap();
+        return;
+    }
+    if file_name.ends_with("md") {
+        let contents = fs::read_to_string(&entry_path).unwrap();
+
+        let replaced_lines = contents
+            .lines()
+            .enumerate()
+            .filter_map(|(idx, line)| {
+                if idx == 0 && (line == "---" || line.is_empty()) {
+                    return None;
+                }
+                if line == "---" {
+                    // case where the original file started with an empty line or malformed
+                    // metadata
+                    if idx == 1 {
                         return None;
                     }
-                    if line == "---" {
-                        // case where the original file started with an empty line or malformed
-                        // metadata
-                        if idx == 1 {
-                            return None;
-                        }
-                        return Some("\n".into());
-                    }
-                    if line.starts_with('#') {
-                        let cleaned_line = line.replace('#', "");
-                        let formatted = format!("# {}", cleaned_line);
-                        return Some(formatted);
-                    }
-                    Some(line.into())
-                })
-                .collect::<Vec<String>>()
-                .join("\n");
-            let mut note: Note = replaced_lines.into();
-            if let Some(tags) = note.header.get("tags") {
-                if tags.contains("bookmark") {
-                    if let Some(content_type) = note.header.get("content-type") {
-                        if content_type != "html" {
-                            note.header.insert("content-type".into(), "html".into());
-                        }
-                    } else {
+                    return Some("\n".into());
+                }
+                if line.starts_with('#') {
+                    let cleaned_line = line.replace('#', "");
+                    let formatted = format!("# {}", cleaned_line);
+                    return Some(formatted);
+                }
+                Some(line.into())
+            })
+            .collect::<Vec<String>>()
+            .join("\n");
+        let mut note: Note = replaced_lines.into();
+        if let Some(tags) = note.header.get("tags") {
+            if tags.contains("bookmark") {
+                if let Some(content_type) = note.header.get("content-type") {
+                    if content_type != "html" {
                         note.header.insert("content-type".into(), "html".into());
                     }
+                } else {
+                    note.header.insert("content-type".into(), "html".into());
                 }
             }
-            let mut path = entry.path();
-            path.set_extension("txt");
-            fs::write(path, std::convert::Into::<String>::into(note)).unwrap();
-            fs::remove_file(entry.path()).unwrap();
         }
+        let mut path = entry_path.clone();
+        path.set_extension("txt");
+        fs::write(path, std::convert::Into::<String>::into(note)).unwrap();
+        fs::remove_file(&entry_path).unwrap();
     }
 }
 

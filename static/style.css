@@ -76,9 +76,11 @@ button {
 }
 .content {
   height: 95%;
-  width: 70%;
+  width: 80%;
   margin: 0rem auto;
   overflow-y: scroll;
+  display: flex;
+  flex-direction: column;
 }
 
 .title {

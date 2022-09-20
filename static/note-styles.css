@@ -105,27 +105,30 @@ dt::after {
 
 *[data-indent="1"] {
   margin-left: 0.5rem;
+  width: calc(100% - 0.5rem);
 }
 *[data-indent="1"]::before {
-  content: "";
+  content: "•";
   margin-right: 0.5rem;
-  border-right: 1.5px solid var(--variant-muted);
+  color: var(--variant-muted);
 }
 *[data-indent="2"] {
   margin-left: 1rem;
+  width: calc(100% - 1rem);
 }
 *[data-indent="2"]::before {
-  content: "";
-  margin-right: 1rem;
-  border-right: 1.5px solid var(--variant-muted);
+  content: "•";
+  margin-right: 0.5rem;
+  color: var(--variant-muted);
 }
 *[data-indent="3"] {
   margin-left: 1.5rem;
+  width: calc(100% - 1.5rem);
 }
 *[data-indent="3"]::before {
-  content: "";
-  margin-right: 1.5rem;
-  border-right: 1.5px solid var(--variant-muted);
+  content: "•";
+  margin-right: 0.5rem;
+  color: var(--variant-muted);
 }
 
 textarea {
@@ -143,6 +146,7 @@ textarea {
   font-family: Arial;
 }
 input[type="text"].title {
+  height: 4rem;
   text-align: center;
   padding: 0rem !important;
   margin: 0.5rem auto;
@@ -150,7 +154,7 @@ input[type="text"].title {
   background: transparent;
   border-radius: var(--rad);
   border: none;
-  width: 100%;
+  width: 85%;
 }
 
 .result {
@@ -275,8 +279,6 @@ details {
 }
 
 .text-block {
-  margin: 5px;
-  padding: 8px;
   min-height: 40px;
   font-size: 1.15rem;
   line-height: 2rem;

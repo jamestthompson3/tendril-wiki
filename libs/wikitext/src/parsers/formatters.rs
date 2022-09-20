@@ -64,6 +64,9 @@ impl BlockElement {
                     write_to_string(target, format!(r#"<a href="{}">{}</a>"#, content, content));
                 }
             }
+            BlockElement::IndentationLevel(_) => {
+                // noop
+            }
         }
     }
 }

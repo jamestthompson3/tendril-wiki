@@ -1,16 +1,38 @@
 use super::block::{parse_block, BlockElement};
-use std::fmt::Write as _;
 
 pub struct Html {
     pub outlinks: Vec<String>,
     pub body: String,
 }
 
-pub fn to_html(md: &str) -> Html {
+pub(crate) struct Block {
+    pub indentation_level: u32,
+    pub text: String,
+}
+
+impl Block {
+    pub(crate) fn new() -> Self {
+        Self {
+            text: String::new(),
+            indentation_level: 0,
+        }
+    }
+    pub fn close(&self) -> String {
+        format!(
+            r#"<div data-indent="{}" class="text-block">{}</div>"#,
+            self.indentation_level, self.text
+        )
+    }
+    pub fn update_indentation(&mut self, indentation_level: u32) {
+        self.indentation_level = indentation_level
+    }
+}
+
+pub fn to_html(text: &str) -> Html {
     // let now = Instant::now();
     let mut outlinks = Vec::new();
     let mut page_blocks: Vec<Vec<BlockElement>> = Vec::new();
-    for line in md.lines() {
+    for line in text.lines() {
         let blocks = parse_block(line.as_bytes());
         page_blocks.push(blocks);
     }
@@ -20,21 +42,26 @@ pub fn to_html(md: &str) -> Html {
             if block.is_empty() {
                 return None;
             }
-            let mut rendered_string = String::from(r#"<div class="text-block">"#);
+            let mut final_block = Block::new();
             for entity in block {
-                if let BlockElement::PageLink(outlink) = entity {
-                    let aliases = outlink.split('|').collect::<Vec<&str>>();
-                    if aliases.len() > 1 {
-                        outlinks.push(aliases[1].to_string());
-                    } else {
-                        outlinks.push(aliases[0].to_string());
+                match entity {
+                    BlockElement::PageLink(outlink) => {
+                        let aliases = outlink.split('|').collect::<Vec<&str>>();
+                        if aliases.len() > 1 {
+                            outlinks.push(aliases[1].to_string());
+                        } else {
+                            outlinks.push(aliases[0].to_string());
+                        }
                     }
+                    BlockElement::IndentationLevel(level) => {
+                        final_block.update_indentation(*level);
+                    }
+                    _ => {}
                 }
-                entity.collapse_to(&mut rendered_string);
+                entity.collapse_to(&mut final_block.text);
             }
-            write!(rendered_string, "</div>").unwrap();
 
-            Some(rendered_string)
+            Some(final_block.close())
         })
         .collect::<Vec<String>>()
         .join("");
@@ -50,11 +77,11 @@ pub fn to_html(md: &str) -> Html {
 mod tests {
     use super::*;
     #[test]
-    fn parses_md_to_html_with_wikilinks() {
+    fn parses_wikitext_to_html_with_wikilinks() {
         let test_string = "[[Some Page]]";
         let test_html = Html {
             outlinks: vec!["Some Page".into()],
-            body: "<div class=\"text-block\"><a href=\"/Some%20Page\">Some Page</a></div>".into(),
+            body: r#"<div data-indent="0" class="text-block"><a href="/Some%20Page">Some Page</a></div>"#.into(),
         };
         let parsed = to_html(test_string);
         assert_eq!(parsed.outlinks, test_html.outlinks);
@@ -63,7 +90,7 @@ mod tests {
         let test_string = "# Title\n[[Some Page]]. Another thing\n * Hi\n * List\n * Output";
         let test_html = Html {
             outlinks: vec!["Some Page".into()],
-            body: "<div class=\"text-block\"><h2>Title</h2></div><div class=\"text-block\"><a href=\"/Some%20Page\">Some Page</a>. Another thing</div><div class=\"text-block\"> * Hi</div><div class=\"text-block\"> * List</div><div class=\"text-block\"> * Output</div>".into()
+            body: r#"<div data-indent="0" class="text-block"><h2>Title</h2></div><div data-indent="0" class="text-block"><a href="/Some%20Page">Some Page</a>. Another thing</div><div data-indent="0" class="text-block"> * Hi</div><div data-indent="0" class="text-block"> * List</div><div data-indent="0" class="text-block"> * Output</div>"#.into()
         };
         let parsed = to_html(test_string);
         assert_eq!(parsed.outlinks, test_html.outlinks);

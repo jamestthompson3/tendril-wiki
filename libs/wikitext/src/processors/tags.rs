@@ -4,7 +4,7 @@ pub struct TagsArray {
 
 impl TagsArray {
     pub fn new(tag_str: &str) -> Self {
-        if tag_str.find('[') != None {
+        if tag_str.find('[').is_some() {
             let split_tags = tag_str
                 .strip_prefix('[')
                 .unwrap()
@@ -62,7 +62,7 @@ mod tests {
     fn parse_tags_with_wikilink() {
         let tag_string = "[reality building, Article]";
         assert_eq!(
-            TagsArray::new(tag_string.into()).values,
+            TagsArray::new(tag_string).values,
             vec!["reality building", "Article"]
         );
     }
@@ -71,15 +71,14 @@ mod tests {
     fn parse_tags_without_wikilinks() {
         let tag_string = "Tools Article project-management";
         assert_eq!(
-            TagsArray::new(tag_string.into()).values,
+            TagsArray::new(tag_string).values,
             vec!["Tools", "Article", "project-management"]
         );
     }
 
     #[test]
     fn writes_tags_without_quotes() {
-        let tag_string = "[Tools Article, project-management]";
-        let tags_arr = TagsArray::new(tag_string.into());
+        let tags_arr = TagsArray::new("[Tools Article, project-management]");
 
         assert_eq!(
             tags_arr.write(),
