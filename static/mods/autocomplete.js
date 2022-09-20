@@ -1,39 +1,45 @@
+import { StateMachine } from "./utils.js";
 import caretPos from "/static/vendors/caretposition.js";
 
-const states = {
-  IDLE: {
-    "[": "READY",
-  },
-  READY: {
-    "[": "COMPLETING",
+const stateChart = {
+  initial: "idle",
+  states: {
+    idle: {
+      on: { "[": "ready" },
+    },
+    ready: {
+      on: { "[": "completing" },
+    },
+    completing: {
+      on: { "]": "finishing" },
+    },
+    finishing: {
+      on: { "]": "idle" },
+    },
   },
 };
 
-let currentState = "IDLE";
-
-let completing = false;
-document.querySelector("textarea").addEventListener("keyup", function (e) {
-  const derivedState = states[currentState];
-  if (e.key === "[") {
-    if (derivedState && derivedState["["]) {
-      currentState = states[currentState]["["];
+const machine = new StateMachine(stateChart);
+export function autocomplete() {
+  document.querySelector("textarea").addEventListener("keyup", function (e) {
+    if (e.key === "[") {
+      machine.send("[");
     }
-    if (currentState === "COMPLETING") {
+    if (e.key === "]") {
+      machine.send("]");
+    }
+    if (machine.state === "completing") {
       caretPos();
       const caret = getCaretCoordinates(this, this.selectionEnd);
-      if (completing) {
-        return;
-      }
       const suggestions = document.createElement("div");
       suggestions.style.position = "absolute";
       const HEIGHT = 100;
-      // console.log({scrollHeight: this.scrollHeight, offsetTop: this.offsetTop, caretTop: caret.top});
       console.log({
         scrollWidth: this.scrollWidth,
         caretLeft: caret.left,
         obj: this,
       });
-      suggestions.style.top = `${this.scrollHeight}px`;
+      suggestions.style.top = `${this.scrollHeight + HEIGHT * 2}px`;
 
       suggestions.style.left = `${this.offsetLeft + caret.left}px`;
 
@@ -56,8 +62,6 @@ document.querySelector("textarea").addEventListener("keyup", function (e) {
 
         list.appendChild(item);
       });
-
-      completing = true;
     }
-  }
-});
+  });
+}
