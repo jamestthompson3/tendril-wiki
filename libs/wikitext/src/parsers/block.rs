@@ -262,6 +262,25 @@ mod tests {
     }
 
     #[test]
+    fn parses_contrived_ts_types_somehow_triggering_links() {
+        let test_string = "type EucDiv<A extends number, B extends number> = Mul<A, Div<A, B>> extends A ? Div<A,B> : Dec<Div<A,B>>;";
+        let block = parse_block(test_string.as_bytes());
+        assert_eq!(block.len(), 33);
+        let matching_block = BlockElement::Text(StrTendril::from_slice("type"));
+        assert_eq!(block[0], matching_block);
+        for part in block {
+            println!("{:?}", part);
+            match part {
+                BlockElement::PageLink(link) | BlockElement::HyperLink(link) => {
+                    panic!("{}", link);
+                }
+                _ => {}
+            }
+        }
+        panic!("oops");
+    }
+
+    #[test]
     fn parses_block_links_in_parens() {
         let test_string = "([[testing again]])";
         let block = parse_block(test_string.as_bytes());

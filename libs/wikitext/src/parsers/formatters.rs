@@ -42,7 +42,10 @@ impl BlockElement {
                 write!(target, "</blockquote>").unwrap();
             }
             BlockElement::EmptySpace(content) | BlockElement::Text(content) => {
-                write_to_string(target, content.into());
+                write_to_string(
+                    target,
+                    content.replace('<', "&lt;").replace('>', "&gt;"),
+                );
             }
             BlockElement::HyperLink(content) => {
                 if content.contains("youtube.com") || content.contains("youtu.be") {
