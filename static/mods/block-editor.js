@@ -130,7 +130,7 @@ export class BlockEditor extends HTMLEditor {
         this.#machine.send("RESET");
       }
     }
-    updateInputHeight(this);
+    updateInputHeight(e.target);
   };
   detectImagePaste = (e) => {
     const items = (e.clipboardData || e.originale.clipboardData).items;

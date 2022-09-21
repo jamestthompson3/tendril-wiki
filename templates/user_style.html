@@ -7,6 +7,7 @@
       content="width=device-width, initial-scale=1, shrink-to-fit=no"
     />
     <%= include "styles" %>
+    <link rel="stylesheet" href="/static/static-form.css" />
     <meta property="og:title" content="User Styles" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="" />
@@ -19,77 +20,95 @@
         margin: auto;
         width: 80%;
       }
+      .content-container {
+        overflow-y: scroll;
+      }
+      textarea {
+        font-family: monospace;
+        background-color: var(--bg-darker);
+        min-height: 300px;
+      }
+      .editor {
+        height: auto;
+      }
+      h2 {
+        text-align: center;
+      }
     </style>
   </head>
   <body>
-    <%= include "nav" %>
-    <div class="content-container">
-      <h4>Available global variables</h4>
-      <table>
-        <thead>
-          <tr>
-            <td>Variable</td>
-            <td>Description</td>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>--primary</td>
-            <td>primary color</td>
-          </tr>
-          <tr>
-            <td>--primary-variant</td>
-            <td>slight variant on primary color</td>
-          </tr>
-          <tr>
-            <td>--variant-muted</td>
-            <td>primary-variant at 50% opacity</td>
-          </tr>
-          <tr>
-            <td>--accent</td>
-            <td>accent color</td>
-          </tr>
-          <tr>
-            <td>--bg</td>
-            <td>background color for main wiki text</td>
-          </tr>
-          <tr>
-            <td>--bg-darker</td>
-            <td>darker background for page</td>
-          </tr>
-          <tr>
-            <td>--shadow</td>
-            <td>box shadow for main wiki text</td>
-          </tr>
-          <tr>
-            <td>--rad</td>
-            <td>border radius</td>
-          </tr>
-          <tr>
-            <td>--text-color</td>
-            <td>color for text</td>
-          </tr>
-          <tr>
-            <td>--table-border-color</td>
-            <td>color for the borders on tables</td>
-          </tr>
-          <tr>
-            <td>--button-text</td>
-            <td>color for the text of buttons</td>
-          </tr>
-        </tbody>
-      </table>
-      <form
-        class="editor visible"
-        method="post"
-        action="styles"
-        target="_parent"
-      >
-        <button type="submit">Save</button>
-        <label for="body">Styles</label>
-        <textarea id="body" name="body"><%= body %></textarea>
-      </form>
+    <%= include "search" %>
+    <div class="flex-container">
+      <%= sidebar %>
+      <script src="/static/clear-nav-links.js"></script>
+      <div class="content-container">
+        <h2>Available global variables</h2>
+        <table>
+          <thead>
+            <tr>
+              <td>Variable</td>
+              <td>Description</td>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>--primary</td>
+              <td>primary color</td>
+            </tr>
+            <tr>
+              <td>--primary-variant</td>
+              <td>slight variant on primary color</td>
+            </tr>
+            <tr>
+              <td>--variant-muted</td>
+              <td>primary-variant at 50% opacity</td>
+            </tr>
+            <tr>
+              <td>--accent</td>
+              <td>accent color</td>
+            </tr>
+            <tr>
+              <td>--bg</td>
+              <td>background color for main wiki text</td>
+            </tr>
+            <tr>
+              <td>--bg-darker</td>
+              <td>darker background for page</td>
+            </tr>
+            <tr>
+              <td>--shadow</td>
+              <td>box shadow for main wiki text</td>
+            </tr>
+            <tr>
+              <td>--rad</td>
+              <td>border radius</td>
+            </tr>
+            <tr>
+              <td>--text-color</td>
+              <td>color for text</td>
+            </tr>
+            <tr>
+              <td>--table-border-color</td>
+              <td>color for the borders on tables</td>
+            </tr>
+            <tr>
+              <td>--button-text</td>
+              <td>color for the text of buttons</td>
+            </tr>
+          </tbody>
+        </table>
+        <form
+          class="editor visible"
+          method="post"
+          action="styles"
+          target="_parent"
+        >
+          <button type="submit">Save</button>
+          <label for="body">Styles</label>
+          <textarea id="body" name="body"><%= body %></textarea>
+        </form>
+      </div>
     </div>
-    <%= include "footer" %>
+    <script type="module" src="/static/user-styles.js"></script>
   </body>
 </html>

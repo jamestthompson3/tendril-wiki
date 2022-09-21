@@ -284,7 +284,7 @@ details {
   line-height: 2rem;
 }
 .text-block:empty {
-  cursor: pointer;
+  cursor: text;
 }
 
 .text-block:empty::before {
