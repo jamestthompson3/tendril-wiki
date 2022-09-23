@@ -1,4 +1,4 @@
-use build::{build_tags_and_links, install, pages::Builder, update, RefHub, migrate};
+use build::{build_tags_and_links, install, migrate, pages::Builder, update, RefHub};
 use persistance::fs::{
     config::read_config,
     create_journal_entry,
@@ -80,7 +80,7 @@ async fn main() {
 }
 
 fn print_version() {
-    println!("tendril-wiki v{}", env!("CARGO_PKG_VERSION"),);
+    println!("tendril-wiki v{}", env!("CARGO_PKG_VERSION"));
 }
 
 fn print_help() {

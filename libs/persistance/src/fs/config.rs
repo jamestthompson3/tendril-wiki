@@ -20,6 +20,7 @@ pub struct General {
     pub version: String,
     pub media_location: String,
     pub host: String,
+    pub check_for_updates: bool,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]

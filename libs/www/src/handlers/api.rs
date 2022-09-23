@@ -85,6 +85,9 @@ impl Runner {
         let body = form_body.get("body").unwrap();
         tokio::fs::write(style_location, body).await
     }
+    pub fn get_version() -> String {
+        env!("CARGO_PKG_VERSION").to_owned()
+    }
 }
 
 #[allow(clippy::new_without_default)]
@@ -100,6 +103,7 @@ impl APIRouter {
             .or(self.files())
             .or(self.search_from_qs())
             .or(self.search_indicies())
+            .or(self.version())
             .boxed()
     }
     fn search_indicies(&self) -> BoxedFilter<(impl Reply,)> {
@@ -108,6 +112,15 @@ impl APIRouter {
             .and(warp::path("search-idx").then(|| async {
                 let indicies = Runner::dump_search_index().await;
                 warp::reply::json(&indicies)
+            }))
+            .boxed()
+    }
+    fn version(&self) -> BoxedFilter<(impl Reply,)> {
+        warp::get()
+            .and(with_auth())
+            .and(warp::path("version").then(|| async {
+                let version = Runner::get_version();
+                warp::reply::json(&version)
             }))
             .boxed()
     }

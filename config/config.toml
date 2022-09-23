@@ -7,6 +7,8 @@ version = "0.0.2"
 # directory where images / pdfs / other files are stored
 media_location = "~/wiki_media"
 host = "http://localhost:6683"
+# Check if there are any updates available
+check_for_updates = false
 
 [sync]
 use_git = true

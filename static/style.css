@@ -248,3 +248,23 @@ aside h2 {
   height: calc(100vh - 60px);
   padding: 0.5rem 0rem;
 }
+
+.update-available {
+  box-shadow: var(--shadow);
+  width: 160px;
+  height: 70px;
+  position: absolute;
+  top: 50rem;
+  right: 1rem;
+  border-radius: var(--rad);
+  border: 1px solid var(--variant-muted);
+  background-color: var(--bg-darker);
+  padding: 8px;
+}
+.dismiss-notification {
+  position: relative;
+  top: -60px;
+  cursor: pointer;
+  display: inline-block;
+  right: -145px;
+}
