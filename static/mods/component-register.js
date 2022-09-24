@@ -12,13 +12,25 @@ const stateChart = {
     submitting: {
       on: {
         COMPLETE: "idle",
-        ERROR: "error",
+        ERROR: { target: "error", actions: ["showErrors"] },
       },
     },
     error: {
       on: {
-        RESET: "idle",
+        RESET: { target: "idle", actions: ["hideErrors"] },
       },
+    },
+  },
+  actions: {
+    showErrors: (msg) => {
+      const errorMsg = document.querySelector(".error-msg");
+      errorMsg.classList.remove("hidden");
+      errorMsg.textContent = `Could not save text: ${msg}`;
+    },
+    hideErrors: () => {
+      const errorMsg = document.querySelector(".error-msg");
+      errorMsg.classList.add("hidden");
+      errorMsg.textContent = "";
     },
   },
 };
@@ -102,7 +114,7 @@ export class ComponentRegister {
       })
       .catch((e) => {
         console.error(e);
-        this.#machine.send("ERROR");
+        this.#machine.send("ERROR", e);
       });
   };
 }

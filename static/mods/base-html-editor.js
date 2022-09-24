@@ -28,12 +28,14 @@ export class HTMLEditor {
       ...stateChart,
       actions: {
         showErrors: () => {
-          const errorMsg = document.querySelector(this.errorSelector);
+          const errorMsg = document.querySelector(".error-msg");
           errorMsg.classList.remove("hidden");
+          errorMsg.textContent = this.errorMsg;
         },
         hideErrors: () => {
-          const errorMsg = document.querySelector(this.errorSelector);
+          const errorMsg = document.querySelector(".error-msg");
           errorMsg.classList.add("hidden");
+          errorMsg.textContent = "";
         },
       },
     });

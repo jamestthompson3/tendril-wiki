@@ -6,7 +6,8 @@ export class TitleEditor extends HTMLEditor {
   constructor(element) {
     super(element);
     element.addEventListener("click", this.setupEditor);
-    this.errorSelector = ".title ~ .error-msg";
+    this.errorMsg =
+      "Titles cannot contain special characters other than _+—. Titles must not be blank.";
     this.id = "title";
     this.bc.postMessage({
       type: "REGISTER",

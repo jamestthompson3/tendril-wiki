@@ -31,7 +31,7 @@ export class StateMachine {
     this.state = statechart.initial;
     this.#chart = statechart;
   }
-  send = (message, _payload) => {
+  send = (message, payload) => {
     const { on } = this.#chart.states[this.state];
     const requestedNextState = on[message];
     if (requestedNextState) {
@@ -39,7 +39,7 @@ export class StateMachine {
         this.state = on[message];
       } else {
         requestedNextState.actions.forEach((action) => {
-          this.#chart.actions[action]();
+          this.#chart.actions[action](payload);
         });
         this.state = requestedNextState.target;
       }
