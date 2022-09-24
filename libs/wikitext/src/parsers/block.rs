@@ -48,9 +48,14 @@ fn parse_indentation(slice: &StrTendril) -> BlockResult {
             break;
         }
     }
+    let step = if indentation_level > 0 {
+        indentation_level - 1
+    } else {
+        0
+    };
     Ok((
         BlockElement::IndentationLevel(indentation_level as u32),
-        indentation_level - 1,
+        step,
     ))
 }
 
