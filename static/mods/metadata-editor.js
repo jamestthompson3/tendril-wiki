@@ -1,4 +1,5 @@
 import { setAsFocused, updateInputHeight } from "./block-actions.js";
+import { moveCaretToEnd } from "./dom.js";
 
 export class MetaDataEditor {
   constructor(element) {
