@@ -2,11 +2,16 @@
 
 [![Build And Test](https://github.com/jamestthompson3/platform/actions/workflows/rust.yml/badge.svg)](https://github.com/jamestthompson3/platform/actions/workflows/rust.yml)
 
+## Contents
+
+- [Installation](#Installation)
+- [Migration](#migration)
+- [Getting started](#getting-started)
+
 ![Landing Page](assets/home_page.png)
 
 ### Nice features
 
-- Works without JavaScript
 - Self hosted, files can be composed easily with other tools since they are plaintext
 - Both light and dark themes
 - Can build your notebook as a static site
@@ -23,6 +28,18 @@ This requires you to have the Rust toolchain installed. You can install this by 
 ### From latest release
 
 Download the latest binary for your OS from the releases page. After unzipping the folder, run `./tendril -i` to bootstrap your wiki. You will then want to add this to your path with `sudo mv ./tendril /usr/local/bin` or annotating you `.bashrc` to point to the location where you've unzipped the release folder.
+
+## Migration
+
+If you have an existing Tendril Wiki installation that is pre v1.0.0, you will need to do the following steps to migrate it to the latest version:
+
+- Stop your currently running Tendril Wiki server.
+  - Note: You might want to temporarily disable git sync if you have it enabled. This will allow you to check the migration without pushing the changes to your git repository.
+  - v1 of Tendril Wiki uses wikitext instead of markdown and its initial release doesn't support the full markdown spec, so there might be broken text. If you still want full markdown support, do not migrate.
+- Add one addtional field to the `general` section of your config file. This field should be `check_for_updates` and its value is either `true` or `false`. This value determines whether or not the client will show a message when there is a new release of Tendril Wiki.
+- Run the migrate command. This will create a backup of your current wiki directory in the same parent directory as your wiki. This means if your wiki is located in `~/Documents/wiki`, the migration tool will create `~/Documents/tendril-backup`. The command for running the migration tool is `tendril -m`.
+- Restart your Tendril Wiki server and check the changes.
+- If the changes are acceptable, you can re-enable git sync if you turned it off, and restart your server to allow this change to take effect.
 
 ## Getting started
 
