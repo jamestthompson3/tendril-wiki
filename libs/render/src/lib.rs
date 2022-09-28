@@ -133,13 +133,10 @@ pub fn render_page_metadata(metadata: HashMap<String, String>) -> String {
             }
             continue;
         }
-        if value.starts_with("http") {
+        if value.starts_with("http") || value.starts_with("file://") {
             match key.as_str() {
                 "cover" => {
-                    let val = format!(
-                        "<img src=\"{}\" style=\"max-height: 200px; max-width: 200px;\">",
-                        value
-                    );
+                    let val = format!("<img src=\"{}\">", value);
                     write!(metadata_html, "<dd>{}</dd>", val).unwrap();
                 }
                 _ => {

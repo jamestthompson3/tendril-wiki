@@ -48,10 +48,6 @@ pre code {
   line-height: 20px;
 }
 
-dt::after {
-  content: ": ";
-}
-
 .tags ul {
   list-style: none;
   display: flex;
@@ -276,6 +272,21 @@ details {
 
 .metadata[open] {
   overflow-x: auto;
+}
+
+dt::after {
+  content: ": ";
+}
+dt {
+  font-weight: bold;
+}
+
+dd {
+  margin-left: 1rem;
+}
+dd img {
+  max-height: 200px;
+  max-width: 200px;
 }
 
 .text-block {

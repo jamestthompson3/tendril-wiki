@@ -1,4 +1,5 @@
 import { setAsFocused, updateInputHeight } from "./block-actions.js";
+import { htmlToText, textToHtml } from "./parsing.js";
 import { moveCaretToEnd } from "./dom.js";
 
 export class MetaDataEditor {
@@ -10,7 +11,7 @@ export class MetaDataEditor {
     this.content = {};
 
     k.forEach((key, idx) => {
-      this.content[key.textContent] = v[idx].textContent;
+      this.content[key.textContent] = htmlToText(v[idx]);
     });
     element.addEventListener("click", this.handleClick);
 
@@ -52,7 +53,7 @@ export class MetaDataEditor {
       const term = document.createElement("dt");
       term.textContent = key;
       const description = document.createElement("dd");
-      description.textContent = trimmed;
+      description.innerHTML = textToHtml(trimmed);
       container.append(term, description);
     });
     container.id = "metadata";
