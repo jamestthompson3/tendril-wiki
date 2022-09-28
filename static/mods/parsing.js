@@ -10,19 +10,27 @@ const WIKI_LINK_REGEXP = new RegExp(
   /\[\[([a-zA-Z0-9\s?\-?'?:?_?’?(\|)?]+)\]\]/,
   "g"
 );
-const URL_REGEXP = new RegExp(
-  /(?:(?:https?|ftp|file):\/\/|www\.|ftp\.)(?:\([-A-Z0-9+&@#\/%=~_|$?!:.]*\)|[-A-Z0-9+&@#\/%=~_|$?!:.])*(?:\([-A-Z0-9+&@#\/%=~_|$?!:.]*\)|[A-Z0-9+&@#\/%=~_|$])/,
-  "ig"
-);
 const EMAIL_REGEXP = new RegExp(
   /[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*/,
   "igm"
 );
+
+const PUNCT_REGEXP = new RegExp(/(\.|,|:|;|\)\(\]\[\?)$/, "i");
+window.rgx = PUNCT_REGEXP;
 const IMAGE_REGEXP = new RegExp(
   /.*\.(jpg|jpeg|png|gif|webp|apng|avif|jfif|pjpeg|pjp)$/,
   "i"
 );
 const MULTI_MEDIA_REGEXP = new RegExp(/.*\.(mp3|ogg|flac)$/, "i");
+
+function parsesToURL(text) {
+  try {
+    const url = new URL(text);
+    return url;
+  } catch (_) {
+    return undefined;
+  }
+}
 
 function parseWikiLinks(text) {
   let finalString = text;
@@ -61,10 +69,13 @@ function parseQuotes(text) {
 }
 
 function parseURLs(text) {
-  for (const match of text.matchAll(URL_REGEXP)) {
-    const [url, _] = match;
-    const processed = processUrl(url);
-    text = text.replace(url, processed);
+  for (const word of text.split(" ")) {
+    const punctuationRemoved = word.replace(PUNCT_REGEXP, "");
+    const url = parsesToURL(punctuationRemoved);
+    if (url) {
+      const processed = processUrl(url);
+      text = text.replace(punctuationRemoved, processed);
+    }
   }
   return text;
 }
@@ -95,7 +106,7 @@ export function htmlToText(el) {
     } else {
       const path = decodeURIComponent(anchor.pathname).slice(1);
       const linkedPage = anchor.innerText;
-      if (URL_REGEXP.test(linkedPage)) {
+      if (parsesToURL(linkedPage)) {
         anchor.replaceWith(linkedPage);
       } else if (path === linkedPage) {
         anchor.replaceWith(`[[${linkedPage}]]`);
@@ -123,28 +134,30 @@ export function htmlToText(el) {
   return shadow.textContent;
 }
 
-function isSpecialtyUrl(url) {
-  return IMAGE_REGEXP.test(url);
-}
 function processUrl(url) {
+  const { href, pathname, origin } = url;
   // TODO: Try to do this with one pass...
   switch (true) {
-    case IMAGE_REGEXP.test(url):
-      return `<img src="${url}">`;
-    case MULTI_MEDIA_REGEXP.test(url):
-      return `<audio src="${url}" controls></audio>`;
-    case url.includes("youtube.com"):
-    case url.includes("youtu.be"):
-      return transformYoutubeUrl(url);
-    case url.includes("codesandbox.io"):
-      return transformCSUrl(url);
-    case url.includes("codepen.io"):
-      return transformCPUrl(url);
-    case url.includes("vimeo.com"):
-      return transformVimeoUrl(url);
-    case url.includes("spotify.com"):
-      return transformSpotifyUrl(url);
-    default:
-      return `<a href="${url}">${url}</a>`;
+    case IMAGE_REGEXP.test(href):
+      return `<img src="${href}">`;
+    case MULTI_MEDIA_REGEXP.test(href):
+      return `<audio src="${href}" controls></audio>`;
+    case href.includes("youtube.com"):
+    case href.includes("youtu.be"):
+      return transformYoutubeUrl(href);
+    case href.includes("codesandbox.io"):
+      return transformCSUrl(href);
+    case href.includes("codepen.io"):
+      return transformCPUrl(href);
+    case href.includes("vimeo.com"):
+      return transformVimeoUrl(href);
+    case href.includes("spotify.com"):
+      return transformSpotifyUrl(href);
+    default: {
+      if (pathname === "/") {
+        return `<a href="${origin}">${origin}</a>`;
+      }
+      return `<a href="${href}">${href}</a>`;
+    }
   }
 }
