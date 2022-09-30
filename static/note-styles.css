@@ -254,6 +254,7 @@ mark {
 
 .backlinks-container h3 {
   border-bottom: none;
+  margin: 0.5rem 0;
 }
 
 .backlinks a {

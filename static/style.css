@@ -183,6 +183,12 @@ input[type="url"] {
   height: 25px;
 }
 
+input[type="text"]:focus,
+input[type="url"]:focus,
+textarea:focus {
+  outline: 1px solid var(--primary-variant);
+}
+
 button.submit {
   height: 2.25rem;
   font-size: 16px;
