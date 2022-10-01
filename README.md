@@ -35,7 +35,7 @@ If you have an existing Tendril Wiki installation that is pre v1.0.0, you will n
 
 - Stop your currently running Tendril Wiki server.
   - Note: You might want to temporarily disable git sync if you have it enabled. This will allow you to check the migration without pushing the changes to your git repository.
-  - v1 of Tendril Wiki uses wikitext instead of markdown and its initial release doesn't support the full markdown spec, so there might be broken text. If you still want full markdown support, do not migrate.
+  - v1 of Tendril Wiki uses wikitext instead of markdown and its initial release doesn't support the full markdown spec, so there might be broken formatting. If you still want full markdown support, do not migrate.
 - Add one addtional field to the `general` section of your config file. This field should be `check_for_updates` and its value is either `true` or `false`. This value determines whether or not the client will show a message when there is a new release of Tendril Wiki.
 - Run the migrate command. This will create a backup of your current wiki directory in the same parent directory as your wiki. This means if your wiki is located in `~/Documents/wiki`, the migration tool will create `~/Documents/tendril-backup`. The command for running the migration tool is `tendril -m`.
 - Restart your Tendril Wiki server and check the changes.
