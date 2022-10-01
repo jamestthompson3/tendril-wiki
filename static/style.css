@@ -78,7 +78,7 @@ button {
   height: 95%;
   width: 80%;
   margin: 0rem auto;
-  overflow-y: scroll;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
 }
