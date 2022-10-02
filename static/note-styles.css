@@ -1,5 +1,4 @@
 blockquote {
-  font-family: monospace;
   background-color: var(--bg-darker);
   border-left: 4px solid var(--accent);
   padding: 0rem 0.5rem;
@@ -292,8 +291,9 @@ dd img {
 
 .text-block {
   min-height: 40px;
-  font-size: 1.15rem;
-  line-height: 2rem;
+  font-size: 20px;
+  line-height: 30px;
+  margin: 0.5rem 0;
 }
 .text-block:empty {
   cursor: text;

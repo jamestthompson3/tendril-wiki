@@ -26,6 +26,18 @@
     --button-text: #000000;
   }
 }
+@font-face {
+  font-family: Kraskario;
+  src: url("/static/Kraskario.ttf"), url("/static/Kraskario italic.ttf");
+}
+@font-face {
+  font-family: TypoLatin;
+  src: url("/static/TypoLatinserif-Bold.ttf");
+}
+@font-face {
+  font-family: ImperiumSerif;
+  src: url("/static/ImperiumSerif.ttf");
+}
 * {
   margin: 0;
   max-width: 100vw;
@@ -36,13 +48,17 @@ html {
   overflow-y: hidden;
   padding: env(safe-area-inset-top) env(safe-area-inset-right)
     env(safe-area-inset-bottom) env(safe-area-inset-left);
-  font-family: Arial;
+  font-family: ImperiumSerif;
 }
 body {
   -webkit-overflow-scrolling: touch;
   height: 100vh;
   scroll-snap-type: y proximity;
   background-color: var(--bg);
+  /* background: linear-gradient(to right, rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0.7)), */
+  /*   url("/static/tendril-bg.png"); */
+  /* background-repeat: no-repeat; */
+  /* background-size: cover; */
   color: var(--text-color);
 }
 a {
@@ -89,6 +105,7 @@ button {
   padding: 1rem;
   margin: 0rem;
   font-size: 3rem;
+  font-family: Kraskario;
 }
 
 /** Footer **/
