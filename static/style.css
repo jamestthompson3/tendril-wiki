@@ -13,6 +13,14 @@
   --table-border-color: transparent;
   --button-text: #ffffff;
 }
+body {
+  background: linear-gradient(
+      to right,
+      rgba(255, 255, 255, 0.65),
+      rgba(255, 255, 255, 0.7)
+    ),
+    url("/static/tendril-bg.png");
+}
 @media (prefers-color-scheme: dark) {
   :root {
     --primary-variant: rgb(110, 193, 255);
@@ -27,6 +35,14 @@
     --text-secondary: #CCCCC;
     --button-text: #000000;
   }
+  body {
+    background: linear-gradient(
+        to right,
+        rgba(0, 0, 0, 0.65),
+        rgba(0, 0, 0, 0.7)
+      ),
+      url("/static/tendril-bg.png");
+  }
 }
 * {
   margin: 0;
@@ -38,19 +54,27 @@ html {
   overflow-y: hidden;
   padding: env(safe-area-inset-top) env(safe-area-inset-right)
     env(safe-area-inset-bottom) env(safe-area-inset-left);
-  font-family: Arial;
+  font-family: Bahnschrift, "DIN Alternate", "Franklin Gothic Medium",
+    "Nimbus Sans Narrow", sans-serif-condensed, sans-serif;
 }
 body {
   -webkit-overflow-scrolling: touch;
   height: 100vh;
   scroll-snap-type: y proximity;
   background-color: var(--bg);
+  background-repeat: no-repeat;
+  background-size: cover;
   color: var(--text-color);
 }
 a {
   color: var(--primary-variant);
   font-weight: bold;
   text-decoration: none;
+}
+h1,
+h2 {
+  font-family: Superclarendon, "Bookman Old Style", "URW Bookman",
+    "URW Bookman L", "Georgia Pro", Georgia, serif;
 }
 
 h2 {
@@ -213,6 +237,8 @@ aside {
   justify-content: space-between;
   background-color: var(--bg-darker);
   border-radius: var(--rad) var(--rad) 0px 0px;
+  overflow-y: scroll;
+  box-shadow: var(--shadow);
 }
 
 aside ul {
