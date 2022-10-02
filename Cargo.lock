@@ -118,7 +118,7 @@ dependencies = [
 
 [[package]]
 name = "build"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "async-recursion",
  "chrono",
@@ -680,7 +680,7 @@ dependencies = [
 
 [[package]]
 name = "logging"
-version = "0.1.0"
+version = "1.0.0"
 
 [[package]]
 name = "mac"
@@ -910,7 +910,7 @@ checksum = "d4fd5641d01c8f18a23da7b6fe29298ff4b55afcccdf78973b24cf3175fee32e"
 
 [[package]]
 name = "persistance"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "chrono",
  "directories",
@@ -1210,7 +1210,7 @@ dependencies = [
 
 [[package]]
 name = "render"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "async-trait",
  "chrono",
@@ -1343,7 +1343,7 @@ dependencies = [
 
 [[package]]
 name = "search-engine"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "async-trait",
  "build",
@@ -1522,7 +1522,7 @@ dependencies = [
 
 [[package]]
 name = "tasks"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "argon2",
  "async-trait",
@@ -1553,7 +1553,18 @@ dependencies = [
 
 [[package]]
 name = "tendril"
-version = "0.1.27"
+version = "0.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d24a120c5fc464a3458240ee02c299ebcb9d67b5249c8848b09d639dca8d7bb0"
+dependencies = [
+ "futf",
+ "mac",
+ "utf-8",
+]
+
+[[package]]
+name = "tendril"
+version = "1.0.0"
 dependencies = [
  "build",
  "futures",
@@ -1567,17 +1578,6 @@ dependencies = [
  "tokio",
  "wikitext",
  "www",
-]
-
-[[package]]
-name = "tendril"
-version = "0.4.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d24a120c5fc464a3458240ee02c299ebcb9d67b5249c8848b09d639dca8d7bb0"
-dependencies = [
- "futf",
- "mac",
- "utf-8",
 ]
 
 [[package]]
@@ -1656,7 +1656,7 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 
 [[package]]
 name = "todo"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "lazy_static",
  "regex",
@@ -2076,7 +2076,7 @@ dependencies = [
 
 [[package]]
 name = "wikitext"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "chrono",
  "tasks",
@@ -2171,7 +2171,7 @@ dependencies = [
 
 [[package]]
 name = "www"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "base64",
  "build",

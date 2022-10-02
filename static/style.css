@@ -224,7 +224,7 @@ aside ul a {
   max-width: 100%;
 }
 
-aside form button {
+#delete-note form button {
   border: none;
   color: var(--primary-variant);
   font-weight: bold;
