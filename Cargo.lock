@@ -118,7 +118,7 @@ dependencies = [
 
 [[package]]
 name = "build"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "async-recursion",
  "chrono",
@@ -1564,7 +1564,7 @@ dependencies = [
 
 [[package]]
 name = "tendril"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "build",
  "futures",
@@ -2171,7 +2171,7 @@ dependencies = [
 
 [[package]]
 name = "www"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "base64",
  "build",
