@@ -38,12 +38,7 @@ fn prep_files() {
         let path = entry.path();
         if entry.metadata().unwrap().is_dir() {
             let dir_loc = static_dir.join(&entry.file_name());
-            fs::create_dir_all(&dir_loc).unwrap();
-            for entry in fs::read_dir(&dir_loc).unwrap() {
-                let entry = entry.unwrap();
-                let path = entry.path();
-                fs::copy(&path, &dir_loc.join(&entry.file_name())).unwrap();
-            }
+            process_update_dir(&entry.path(), &dir_loc);
         } else {
             fs::copy(&path, &static_dir.join(&entry.file_name())).unwrap();
         }
@@ -52,6 +47,20 @@ fn prep_files() {
         let entry = entry.unwrap();
         let path = entry.path();
         fs::copy(&path, &template_dir.join(&entry.file_name())).unwrap();
+    }
+}
+
+fn process_update_dir(location: &Path, target_location: &Path) {
+    fs::create_dir_all(location).unwrap();
+    for entry in fs::read_dir(location).unwrap() {
+        let entry = entry.unwrap();
+        if entry.metadata().unwrap().is_dir() {
+            process_update_dir(&entry.path(), target_location);
+            continue;
+        }
+        let path = entry.path();
+        let file = target_location.join(&entry.file_name());
+        fs::copy(&path, &file).unwrap();
     }
 }
 
