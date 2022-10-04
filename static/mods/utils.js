@@ -21,27 +21,73 @@ export const nanoid = (size = 21) =>
     return id;
   }, "");
 
+const ACTION_TYPES = {
+  Serialized: "serialized",
+  Assign: "assign",
+};
+
+export function assign(assign) {
+  return { type: ACTION_TYPES.Assign, exec: assign };
+}
 /**
  *
  * Basic state machine, takes a statechart as input.
  */
 export class StateMachine {
   #chart;
+  #messageBuffer;
+  #processingState;
   constructor(statechart) {
     this.state = statechart.initial;
     this.#chart = statechart;
+    this.#messageBuffer = [];
+    this.#processingState = "READY";
   }
+  transformAction = (action) => {
+    if (typeof action === "string") {
+      return {
+        type: ACTION_TYPES.Serialized,
+        exec: this.#chart.actions[action],
+      };
+    }
+    if (typeof action === "function") {
+      return { type: action.name, exec: action };
+    }
+    return action;
+  };
+  context = () => this.#chart.context;
   send = (message, payload) => {
+    if (this.#processingState == "BUSY") {
+      this.#messageBuffer.push([message, payload]);
+      return;
+    }
     const { on } = this.#chart.states[this.state];
     const requestedNextState = on[message];
     if (requestedNextState) {
+      this.#processingState = "BUSY";
       if (typeof requestedNextState === "string") {
         this.state = on[message];
       } else {
-        requestedNextState.actions.forEach((action) => {
-          this.#chart.actions[action](payload);
-        });
+        if (
+          requestedNextState.cond &&
+          !requestedNextState.cond(this.#chart.context)
+        )
+          return;
+        requestedNextState.actions
+          .map((action) => this.transformAction(action))
+          .forEach((action) => {
+            if (action.type === ACTION_TYPES.Assign) {
+              const nextCtx = action.exec(this.#chart.context, payload);
+              this.#chart.context = nextCtx;
+              return;
+            }
+            action.exec(payload);
+          });
         this.state = requestedNextState.target;
+      }
+      this.#processingState = "READY";
+      for (const [message, payload] of this.#messageBuffer) {
+        this.send(message, payload);
       }
     }
   };
