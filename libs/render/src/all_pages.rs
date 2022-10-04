@@ -2,7 +2,7 @@ use async_trait::async_trait;
 
 use crate::{get_template_file, render_includes, render_sidebar, Render};
 
-type PageEntries<'a> = Vec<(&'a String, &'a Vec<String>)>;
+type PageEntries<'a> = Vec<(&'a String, usize)>;
 
 pub struct PageList<'a> {
     entries: PageEntries<'a>,
@@ -20,12 +20,12 @@ impl<'a> Render for PageList<'a> {
         let page_string = self
             .entries
             .iter()
-            .map(|(name, list)| {
+            .map(|(name, num_links)| {
                 format!(
                     "<tr><td><a href=\"{}\">{}</a></td><td style=\"text-align: center;\">{}</td></tr>",
                     name,
                     name,
-                    list.len()
+                    num_links
                 )
             })
             .collect::<Vec<String>>()

@@ -1,5 +1,6 @@
 use std::{collections::HashMap, sync::Arc};
 
+use build::Titles;
 use persistance::fs::utils::get_config_location;
 use render::{
     all_pages::PageList, error_page::ErrorPage, file_upload_page::FileUploader,
@@ -11,7 +12,10 @@ use warp::{filters::BoxedFilter, Filter, Reply};
 
 use crate::handlers::filters::with_location;
 
-use super::filters::{with_auth, with_host, with_links, with_user};
+use super::{
+    filters::{with_auth, with_host, with_links, with_user},
+    with_titles,
+};
 
 struct Runner {}
 
@@ -55,6 +59,7 @@ pub struct StaticPageRouter {
     media_location: Arc<String>,
     host: Arc<String>,
     links: GlobalBacklinks,
+    note_titles: Titles,
 }
 
 impl StaticPageRouter {
@@ -63,12 +68,14 @@ impl StaticPageRouter {
         media_location: Arc<String>,
         host: Arc<String>,
         links: GlobalBacklinks,
+        titles: Titles,
     ) -> Self {
         Self {
             user,
             media_location,
             host,
             links,
+            note_titles: titles,
         }
     }
     pub fn routes(&self) -> BoxedFilter<(impl Reply,)> {
@@ -111,10 +118,19 @@ impl StaticPageRouter {
             .and(with_auth())
             .and(warp::path("all_pages"))
             .and(with_links(self.links.to_owned()))
-            .then(|links: GlobalBacklinks| async move {
+            .and(with_titles(self.note_titles.to_owned()))
+            .then(|links: GlobalBacklinks, titles: Titles| async move {
                 let links = links.lock().await;
-                let note_names = links.iter().collect();
-                let idx_ctx = PageList::new(note_names);
+                let titles = titles.lock().await;
+                let mut name_and_count: Vec<(&String, usize)> = Vec::with_capacity(titles.len());
+                for title in titles.iter() {
+                    if let Some(link_list) = links.get(title) {
+                        name_and_count.push((title, link_list.len()));
+                    } else {
+                        name_and_count.push((title, 0));
+                    }
+                }
+                let idx_ctx = PageList::new(name_and_count);
                 warp::reply::html(idx_ctx.render().await)
             })
             .boxed()

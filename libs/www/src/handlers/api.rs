@@ -1,3 +1,4 @@
+use build::Titles;
 use bytes::{BufMut, Bytes};
 use futures::TryStreamExt;
 use render::{search_results_page::SearchResultsPage, Render};
@@ -19,10 +20,12 @@ use crate::services::{create_jwt, MONTH};
 
 use super::{
     filters::{with_auth, AuthError},
-    MAX_BODY_SIZE,
+    with_titles, MAX_BODY_SIZE,
 };
 
-pub struct APIRouter {}
+pub struct APIRouter {
+    titles: Titles,
+}
 
 struct Runner {}
 
@@ -92,8 +95,8 @@ impl Runner {
 
 #[allow(clippy::new_without_default)]
 impl APIRouter {
-    pub fn new() -> Self {
-        Self {}
+    pub fn new(titles: Titles) -> Self {
+        Self { titles }
     }
     pub fn routes(&self) -> BoxedFilter<(impl Reply,)> {
         self.login()
@@ -101,6 +104,7 @@ impl APIRouter {
             .or(self.styles())
             .or(self.img())
             .or(self.files())
+            .or(self.titles())
             .or(self.search_from_qs())
             .or(self.search_indicies())
             .or(self.version())
@@ -113,6 +117,17 @@ impl APIRouter {
                 let indicies = Runner::dump_search_index().await;
                 warp::reply::json(&indicies)
             }))
+            .boxed()
+    }
+    fn titles(&self) -> BoxedFilter<(impl Reply,)> {
+        warp::get()
+            .and(with_auth())
+            .and(warp::path("titles"))
+            .and(with_titles(self.titles.to_owned()))
+            .then(|titles: Titles| async move {
+                let titles = titles.lock().await;
+                warp::reply::json(&titles.clone())
+            })
             .boxed()
     }
     fn version(&self) -> BoxedFilter<(impl Reply,)> {

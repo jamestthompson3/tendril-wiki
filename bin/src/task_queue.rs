@@ -1,12 +1,8 @@
-use std::{
-    collections::{BTreeMap, HashMap},
-    sync::Arc,
-    time::Duration,
-};
+use std::{collections::HashMap, sync::Arc, time::Duration};
 
 use build::{
     build_tags_and_links, delete_from_global_store, rename_in_global_store, update_global_store,
-    update_mru_cache,
+    update_mru_cache, Titles,
 };
 use futures::{stream, StreamExt};
 use persistance::fs::{
@@ -15,7 +11,7 @@ use persistance::fs::{
     write, write_archive,
 };
 use regex::Regex;
-use render::sanitize_html;
+use render::{sanitize_html, GlobalBacklinks};
 use search_engine::{
     delete_archived_file, delete_entry_from_update, patch_search_from_archive,
     patch_search_from_update,
@@ -25,7 +21,6 @@ use tasks::{
     messages::{Message, PatchData},
     JobQueue, Queue,
 };
-use tokio::sync::Mutex;
 use tokio::time::sleep;
 
 const NUM_JOBS: u32 = 50;
@@ -33,10 +28,12 @@ const NUM_JOBS: u32 = 50;
 lazy_static! {
     static ref TITLE_RGX: Regex = Regex::new(r"\?|\\|/|\||:|;|>|<|,|\.|\n|\$|&").unwrap();
 }
+
 pub async fn process_tasks(
     queue: Arc<JobQueue>,
     location: String,
-    links: Arc<Mutex<BTreeMap<String, Vec<String>>>>,
+    links: GlobalBacklinks,
+    note_titles: Titles,
 ) {
     loop {
         let jobs = match queue.pull(NUM_JOBS).await {
@@ -50,7 +47,7 @@ pub async fn process_tasks(
             .for_each_concurrent(NUM_JOBS as usize, |job| async {
                 match job.message {
                     Message::Rebuild => {
-                        build_tags_and_links(&location, links.clone()).await;
+                        build_tags_and_links(&location, links.clone(), note_titles.clone()).await;
                     }
                     Message::Patch { patch } => {
                         let note = patch.clone().into();

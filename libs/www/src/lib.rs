@@ -1,5 +1,6 @@
 #[cfg(not(debug_assertions))]
 use ::persistance::fs::utils::get_data_dir_location;
+use build::Titles;
 
 use persistance::fs::{config::General, utils::normalize_wiki_location};
 use render::GlobalBacklinks;
@@ -15,22 +16,24 @@ pub mod services;
 
 use crate::handlers::*;
 
-pub(crate) type RefHubParts = (GlobalBacklinks, Arc<JobQueue>);
+pub(crate) type RefHubParts = (GlobalBacklinks, Titles, Arc<JobQueue>);
 
 pub async fn server(config: General, parts: RefHubParts) {
     let media_location = Arc::new(normalize_wiki_location(&config.media_location));
+    let cloned = parts.clone();
     let static_page_router = StaticPageRouter::new(
         Arc::new(config.user),
         media_location.clone(),
         Arc::new(config.host),
-        parts.clone().0
+        cloned.0,
+        cloned.1
     );
     let wiki_router = WikiPageRouter::new(parts.clone());
 
     let task_router = TaskPageRouter::new();
     let static_files_router = StaticFileRouter::new(media_location.clone());
-    let api_router = APIRouter::new();
-    let bookmark_router = bookmarks_page::BookmarkPageRouter::new(parts.1.clone());
+    let api_router = APIRouter::new(parts.1.clone());
+    let bookmark_router = bookmarks_page::BookmarkPageRouter::new(parts.2.clone());
     pretty_env_logger::init();
     // Order matters!!
     let log = warp::log("toplevel");

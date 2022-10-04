@@ -2,26 +2,33 @@ use std::{collections::BTreeMap, fs::read_dir, io, path::PathBuf, sync::Arc};
 
 use async_recursion::async_recursion;
 use futures::{stream, StreamExt};
-use wikitext::{parsers::Note, processors::to_template};
 use persistance::fs::{
     path_to_data_structure, read_note_cache, utils::get_file_path, write_note_cache,
 };
 use render::GlobalBacklinks;
 use tokio::{fs, sync::Mutex};
+use wikitext::{parsers::Note, processors::to_template};
+
+pub type Titles = Arc<Mutex<Vec<String>>>;
 
 #[derive(Debug)]
 pub struct RefHub {
     pub backlinks: GlobalBacklinks,
+    pub note_titles: Titles,
 }
 
 impl RefHub {
     pub fn new() -> Self {
         RefHub {
             backlinks: Arc::new(Mutex::new(BTreeMap::new())),
+            note_titles: Arc::new(Mutex::new(Vec::new())),
         }
     }
     pub fn links(&self) -> GlobalBacklinks {
         Arc::clone(&self.backlinks)
+    }
+    pub fn titles(&self) -> Titles {
+        Arc::clone(&self.note_titles)
     }
 }
 
@@ -33,21 +40,32 @@ impl Default for RefHub {
 
 // TODO: Reduce these duplicated functions, think of a better abstraction
 #[async_recursion]
-pub async fn parse_entries(entrypoint: PathBuf, backlinks: GlobalBacklinks) {
+pub async fn parse_entries(entrypoint: PathBuf, backlinks: GlobalBacklinks, titles: Titles) {
     let entries = read_dir(entrypoint).unwrap();
     let pipeline = stream::iter(entries).for_each(|entry| async {
         let links = Arc::clone(&backlinks);
+        let titles = Arc::clone(&titles);
         let entry = entry.unwrap();
         if entry.file_type().unwrap().is_file()
             && entry.file_name().to_str().unwrap().ends_with(".txt")
         {
+            let mut titles = titles.lock().await;
+            let note_name = entry.file_name();
+            titles.push(
+                note_name
+                    .into_string()
+                    .unwrap()
+                    .strip_suffix(".txt")
+                    .unwrap()
+                    .to_owned(),
+            );
             tokio::spawn(async move { process_file(entry.path(), links).await })
                 .await
                 .unwrap();
         } else if entry.file_type().unwrap().is_dir()
             && !entry.path().to_str().unwrap().contains(".git")
         {
-            parse_entries(entry.path(), links).await;
+            parse_entries(entry.path(), links, titles).await;
         }
     });
     pipeline.await;
@@ -105,9 +123,9 @@ pub async fn build_global_store(
     }
 }
 
-pub async fn build_tags_and_links(wiki_location: &str, links: GlobalBacklinks) {
+pub async fn build_tags_and_links(wiki_location: &str, links: GlobalBacklinks, titles: Titles) {
     links.lock().await.clear();
-    parse_entries(PathBuf::from(wiki_location), links.clone()).await;
+    parse_entries(PathBuf::from(wiki_location), links.clone(), titles.clone()).await;
 }
 
 pub async fn update_global_store(current_title: &str, note: &Note, links: GlobalBacklinks) {

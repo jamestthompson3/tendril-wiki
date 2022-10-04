@@ -193,7 +193,7 @@ impl WikiPageRouter {
     }
 
     fn get(&self) -> BoxedFilter<(impl Reply,)> {
-        let (links, _) = &self.parts;
+        let (links, _, _) = &self.parts;
         warp::get()
             .and(with_auth())
             .and(warp::path::param())
@@ -214,7 +214,7 @@ impl WikiPageRouter {
     }
 
     fn get_nested(&self) -> BoxedFilter<(impl Reply,)> {
-        let (links, _) = &self.parts;
+        let (links, _, _) = &self.parts;
         warp::get()
             .and(with_auth())
             .and(warp::path!(String / String))
@@ -234,7 +234,7 @@ impl WikiPageRouter {
     }
 
     fn delete(&self) -> BoxedFilter<(impl Reply,)> {
-        let (_, queue) = &self.parts;
+        let (_, _, queue) = &self.parts;
         warp::post()
             .and(with_auth())
             .and(warp::path("delete"))
@@ -265,7 +265,7 @@ impl WikiPageRouter {
     }
 
     fn edit(&self) -> BoxedFilter<(impl Reply,)> {
-        let (_, queue) = &self.parts;
+        let (_, _, queue) = &self.parts;
         warp::post()
             .and(with_auth())
             .and(
@@ -282,7 +282,7 @@ impl WikiPageRouter {
     }
 
     fn quick_add(&self) -> BoxedFilter<(impl Reply,)> {
-        let (_, queue) = &self.parts;
+        let (_, _, queue) = &self.parts;
         warp::post()
             .and(with_auth())
             .and(
