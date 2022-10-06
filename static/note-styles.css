@@ -78,6 +78,7 @@ pre code {
 
 .error-msg {
   color: red;
+  text-align: center;
 }
 
 #title-edit:invalid ~ .title-error-msg {

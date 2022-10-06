@@ -18,13 +18,13 @@ const stateChart = {
 };
 
 export class HTMLEditor {
-  #machine;
+  machine;
   constructor(element) {
     this.element = element;
     // plain-text tag array
     this.content = htmlToText(this.element);
     this.bc = new BroadcastChannel(`tendril-wiki${location.pathname}`);
-    this.#machine = new StateMachine({
+    this.machine = new StateMachine({
       ...stateChart,
       actions: {
         showErrors: () => {
@@ -53,15 +53,15 @@ export class HTMLEditor {
   change = (e) => {
     this.content = e.target.value;
     if (e.target.checkValidity()) {
-      if (this.#machine.state === "error") {
-        this.#machine.send("RESET");
+      if (this.machine.state === "error") {
+        this.machine.send("RESET");
       }
       this.bc.postMessage({
         type: "SAVE",
         data: { id: this.id, content: this.content },
       });
     } else {
-      this.#machine.send("ERROR");
+      this.machine.send("ERROR");
     }
   };
 }
