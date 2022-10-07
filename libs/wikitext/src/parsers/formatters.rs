@@ -59,7 +59,10 @@ impl BlockElement {
                     || content.ends_with(".flac")
                 {
                     write_to_string(target, transform_audio_url(content));
-                } else if content.contains("vimeo.com") {
+                } else if content.ends_with(".png") || content.ends_with(".jpg") || content.ends_with(".jpeg") || content.ends_with(".webp") {
+                    write_to_string(target, transform_image_url(content));
+                }
+                else if content.contains("vimeo.com") {
                     write_to_string(target, transform_vimeo_url(content));
                 } else if content.contains("spotify.com") {
                     write_to_string(target, transform_spotify_url(content));
@@ -80,6 +83,10 @@ fn write_to_string(target: &mut String, incl: String) {
 
 pub fn transform_audio_url(text: &StrTendril) -> String {
     format!(r#"<audio src="{}" controls></audio>"#, text)
+}
+
+pub fn transform_image_url(text: &StrTendril) -> String {
+    format!(r#"<img src={} />"#, text)
 }
 
 pub fn format_links(link: &str) -> String {

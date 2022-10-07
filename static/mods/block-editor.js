@@ -159,6 +159,7 @@ export class BlockEditor extends HTMLEditor {
           .then(() => {
             // TODO figure out alt text...
             e.target.value += `${window.location.origin}/files/${blob.name}`;
+            e.target.dispatchEvent(new Event("change"));
           })
           .catch((e) => {
             console.error(e);
