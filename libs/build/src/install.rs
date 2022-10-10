@@ -16,11 +16,16 @@ use crate::{gen_config_interactive, ConfigOptions};
 fn prep_files() {
     let data_dir = get_data_dir_location();
     let static_dir = data_dir.join("static");
+    // TODO: Don't hardcode this stuff...
+    let mods_dir = data_dir.join("static/mods");
+    let vendors_dir = data_dir.join("static/vendors");
     let template_dir = data_dir.join("templates");
     let archive_dir = data_dir.join("archive");
     let cache_file = data_dir.join("note_cache");
     fs::create_dir_all(&archive_dir).unwrap();
     fs::create_dir_all(&static_dir).unwrap();
+    fs::create_dir_all(&mods_dir).unwrap();
+    fs::create_dir_all(&vendors_dir).unwrap();
     fs::create_dir_all(&template_dir).unwrap();
     if !cache_file.exists() {
         fs::File::create(cache_file).unwrap();
