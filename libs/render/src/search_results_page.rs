@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use std::fmt::Write as _;
+use std::{fmt::Write as _, time::Duration};
 use wikitext::parsers::format_links;
 
 use crate::{get_template_file, render_includes, Render};
@@ -8,17 +8,29 @@ type SearchResult = Vec<(String, String)>;
 
 pub struct SearchResultsPage {
     pub pages: SearchResult,
+    pub num_results: usize,
+    pub time: Duration,
 }
 
 impl SearchResultsPage {
-    pub fn new(pages: SearchResult) -> Self {
-        SearchResultsPage { pages }
+    pub fn new(pages: SearchResult, num_results: usize, time: Duration) -> Self {
+        SearchResultsPage {
+            pages,
+            num_results,
+            time,
+        }
     }
     async fn render_pages(&self) -> String {
         if self.pages.is_empty() {
             return String::from("<h3>No search results.</h3>");
         }
         let mut page_list = String::new();
+        write!(
+            page_list,
+            r#"<h4><strong>{}</strong> results in <strong>{:?}</strong>"#,
+            self.num_results, self.time
+        )
+        .unwrap();
         for (page, matched_text) in self.pages.iter() {
             write!(
                 page_list,

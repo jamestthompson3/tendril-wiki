@@ -69,12 +69,12 @@ impl Runner {
     pub async fn note_search(term: String) -> String {
         let now = Instant::now();
         let found_pages = semantic_search(&term).await;
-        println!(
-            "Search Time [{:?}]  Search Results [{}]",
-            now.elapsed(),
-            found_pages.len()
-        );
-        let ctx = SearchResultsPage { pages: found_pages };
+        let num_results = found_pages.len();
+        let ctx = SearchResultsPage {
+            pages: found_pages,
+            num_results,
+            time: now.elapsed(),
+        };
         ctx.render().await
     }
 
