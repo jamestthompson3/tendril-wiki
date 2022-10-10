@@ -118,6 +118,9 @@ export function htmlToText(el) {
   for (const image of shadow.querySelectorAll("img")) {
     image.replaceWith(image.src);
   }
+  for (const audio of shadow.querySelectorAll("audio")) {
+    audio.replaceWith(audio.src);
+  }
   for (const header of shadow.querySelectorAll("h1,h2,h3,h4,h5,h6")) {
     header.replaceWith(`# ${header.innerText}`);
   }
