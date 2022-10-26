@@ -21,6 +21,7 @@ export class HTMLEditor {
   machine;
   constructor(element) {
     this.element = element;
+    this.eventTarget = undefined;
     // plain-text tag array
     this.content = htmlToText(this.element);
     this.bc = new BroadcastChannel(`tendril-wiki${location.pathname}`);
@@ -41,11 +42,27 @@ export class HTMLEditor {
     });
   }
   setupTextblockListeners = (element) => {
-    element.addEventListener("blur", this.setupViewer);
+    this.eventTarget = element;
+    document.addEventListener("click", this.handleOutsideClick);
     element.addEventListener("keyup", this.handleInput);
     element.addEventListener("keydown", this.handleKeydown);
     element.addEventListener("paste", this.detectImagePaste);
     element.addEventListener("change", this.change);
+  };
+  handleOutsideClick = (e) => {
+    if (!e.target.nextSibling || e.target === this.eventTarget) return;
+    let currentTag = e.target;
+    let sibling = false;
+    while (currentTag.nextSibling) {
+      if (currentTag.nextSibling === this.eventTarget) {
+        sibling = true;
+      }
+      currentTag = currentTag.nextSibling;
+    }
+    if (!sibling) {
+      document.removeEventListener("click", this.handleOutsideClick);
+      this.setupViewer(this.eventTarget);
+    }
   };
   detectImagePaste = () => {};
   handleKeydown = () => {};

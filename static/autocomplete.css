@@ -1,0 +1,29 @@
+.autocomplete-menu {
+  background-color: var(--bg-darker);
+  max-height: 250px;
+  box-shadow: var(--shadow);
+  border-radius: var(--rad);
+}
+.autocomplete-menu li {
+  list-style: none;
+}
+.autocomplete-menu ul {
+  padding: 0;
+  margin: 0;
+}
+.autocomplete-menu button {
+  background-color: transparent;
+  padding: 8px 12px;
+  color: var(--text-color);
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: center;
+}
+
+.autocomplete-menu button:active,
+.autocomplete-menu button:hover {
+  background-color: var(--bg);
+  border: 1px solid var(--accent);
+  border-radius: var(--rad);
+}

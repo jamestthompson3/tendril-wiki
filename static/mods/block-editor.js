@@ -7,6 +7,7 @@ import {
   updateInputHeight,
   deleteBlock,
 } from "./block-actions.js";
+import { autocomplete, removeAutoCompleteMenu } from "./autocomplete.js";
 
 const stateChart = {
   initial: "not-cleared",
@@ -38,8 +39,9 @@ export class BlockEditor extends HTMLEditor {
       data: { id: this.id, content: this.prepareContent(this.content) },
     });
   }
-  setupViewer = (e) => {
-    const html = textToHtml(e.target.value);
+  setupViewer = (element) => {
+    removeAutoCompleteMenu();
+    const html = textToHtml(element.value);
     const el = document.createElement("div");
     el.innerHTML = html;
     el.classList.add("text-block");
@@ -94,12 +96,14 @@ export class BlockEditor extends HTMLEditor {
           );
           const indentation = this.indent;
           this.addBlock(indentation);
+          this.setupViewer(this.element);
           break;
         }
         break;
       }
       case "Escape": {
         this.element.blur();
+        this.setupViewer(this.element);
         break;
       }
       case "Home": {
@@ -112,6 +116,7 @@ export class BlockEditor extends HTMLEditor {
   };
 
   handleKeydown = (e) => {
+    autocomplete(e);
     if (e.key === "Tab") {
       e.preventDefault();
       if (this.indent) {

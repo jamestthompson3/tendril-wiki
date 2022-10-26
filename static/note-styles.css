@@ -291,10 +291,14 @@ dd img {
   max-width: 200px;
 }
 
+textarea.text-block {
+  outline: 1px solid var(--primary-variant);
+}
 .text-block {
   min-height: 40px;
   font-size: 1.15rem;
   line-height: 2rem;
+  cursor: text;
 }
 .text-block:empty {
   cursor: text;

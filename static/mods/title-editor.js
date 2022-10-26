@@ -19,8 +19,8 @@ export class TitleEditor extends HTMLEditor {
         this.titles = titles.map((t) => t.toLowerCase());
       });
   }
-  setupViewer = (e) => {
-    const html = textToHtml(e.target.value);
+  setupViewer = (element) => {
+    const html = textToHtml(element.value);
     const el = document.createElement("h1");
     el.classList.add("title");
     el.innerHTML = html;
