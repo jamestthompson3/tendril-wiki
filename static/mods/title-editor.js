@@ -3,21 +3,19 @@ import { HTMLEditor } from "./base-html-editor.js";
 import { setAsFocused } from "./block-actions.js";
 
 export class TitleEditor extends HTMLEditor {
-  constructor(element) {
+  #titles;
+  constructor(element, store) {
     super(element);
     element.addEventListener("click", this.setupEditor);
     this.errorMsg =
       "Titles cannot contain special characters other than _+—. Titles must not be blank.";
     this.id = "title";
+    this.#titles = store.get("titles");
+    store.on("update", "titles", (titles) => (this.#titles = titles));
     this.bc.postMessage({
       type: "REGISTER",
       data: { id: this.id, content: this.content },
     });
-    fetch("/titles")
-      .then((res) => res.json())
-      .then((titles) => {
-        this.titles = titles.map((t) => t.toLowerCase());
-      });
   }
   setupViewer = (element) => {
     const html = textToHtml(element.value);
@@ -49,7 +47,7 @@ export class TitleEditor extends HTMLEditor {
 
   change = (e) => {
     this.content = e.target.value;
-    if (this.titles.includes(e.target.value.toLowerCase())) {
+    if (this.#titles.includes(e.target.value.toLowerCase())) {
       this.errorMsg = "A note by this title already exists!";
       this.machine.send("ERROR");
       return;

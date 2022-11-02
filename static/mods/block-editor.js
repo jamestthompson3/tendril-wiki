@@ -23,11 +23,14 @@ const stateChart = {
 
 export class BlockEditor extends HTMLEditor {
   #machine;
-  constructor(element) {
+  #titles;
+  constructor(element, store) {
     super(element);
     this.id = `block@${nanoid()}`;
     this.indent = parseInt(element.dataset.indent || 0, 10);
     this.#machine = new StateMachine(stateChart);
+    this.#titles = store.get("titles");
+    store.on("update", "titles", (titles) => (this.#titles = titles));
     if (element.nodeName === "TEXTAREA") {
       this.setupTextblockListeners(element);
     } else {

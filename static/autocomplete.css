@@ -3,6 +3,7 @@
   max-height: 250px;
   box-shadow: var(--shadow);
   border-radius: var(--rad);
+  overflow-y: scroll;
 }
 .autocomplete-menu li {
   list-style: none;

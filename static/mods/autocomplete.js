@@ -1,3 +1,4 @@
+import { appContext } from "./app-context.js";
 import { assign, StateMachine } from "./utils.js";
 import caretPos from "/static/vendors/caretposition.js";
 
@@ -77,7 +78,7 @@ function setupMenu(e) {
 
   suggestions.style.left = `${e.target.offsetLeft + caret.left}px`;
 
-  const opts = ["cat", "dog", "dolphin"];
+  const opts = appContext.get("titles");
 
   const list = document.createElement("ul");
 
@@ -86,7 +87,10 @@ function setupMenu(e) {
     const innerButton = document.createElement("button");
     innerButton.innerText = opt;
     innerButton.setAttribute("data-idx", idx);
-    innerButton.addEventListener("click", handleClick);
+    innerButton.addEventListener("click", (clickEvent) => {
+      e.target.value += clickEvent.target.innerText + "]]";
+      machine.send("reset");
+    });
     item.appendChild(innerButton);
     list.appendChild(item);
   });
@@ -95,9 +99,6 @@ function setupMenu(e) {
   machine.send("done", suggestions);
 }
 
-function handleClick(e) {
-  console.log(e.target.innerText);
-}
 function teardownMenu() {
   if (machine.context().suggestions) {
     machine.context().suggestions.remove();
