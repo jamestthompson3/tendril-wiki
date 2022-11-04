@@ -77,13 +77,18 @@ export class StateMachine {
           .map((action) => this.transformAction(action))
           .forEach((action) => {
             if (action.type === ACTION_TYPES.Assign) {
-              const nextCtx = action.exec(this.#chart.context, payload);
-              this.#chart.context = nextCtx;
+              Object.assign(
+                this.#chart.context,
+                action.exec(this.#chart.context, payload)
+              );
               return;
             }
             action.exec(payload);
           });
-        this.state = requestedNextState.target;
+        this.state =
+          requestedNextState.target === "."
+            ? this.state
+            : requestedNextState.target;
       }
       this.#processingState = "READY";
       for (const [message, payload] of this.#messageBuffer) {
