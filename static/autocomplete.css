@@ -1,6 +1,7 @@
 .autocomplete-menu {
   background-color: var(--bg-darker);
   max-height: 250px;
+  width: 315px;
   box-shadow: var(--shadow);
   border-radius: var(--rad);
   overflow-y: scroll;
@@ -21,7 +22,7 @@
   width: 100%;
   text-align: center;
 }
-
+.autocomplete-menu button:focus,
 .autocomplete-menu button:active,
 .autocomplete-menu button:hover {
   background-color: var(--bg);
