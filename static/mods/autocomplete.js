@@ -1,11 +1,12 @@
-import { appContext } from "./app-context.js";
 import { assign, StateMachine } from "./utils.js";
+import { Scorer } from "./score.js";
 import caretPos from "/static/vendors/caretposition.js";
 
 const stateChart = {
   initial: "idle",
   context: {
-    suggestions: undefined,
+    completionContext: "",
+    focused: false,
   },
   states: {
     idle: {
@@ -19,19 +20,16 @@ const stateChart = {
         },
         reset: {
           target: "idle",
-          actions: [teardownMenu, assign(() => ({ suggestions: undefined }))],
+          actions: [teardownMenu, assign(() => ({ completionContext: "" }))],
         },
       },
     },
     setup: {
       on: {
-        done: {
-          target: "completing",
-          actions: [assign((_, payload) => ({ suggestions: payload }))],
-        },
+        done: "completing",
         reset: {
           target: "idle",
-          actions: [teardownMenu, assign(() => ({ suggestions: undefined }))],
+          actions: [teardownMenu],
         },
       },
     },
@@ -39,11 +37,47 @@ const stateChart = {
       on: {
         "]": {
           target: "idle",
-          actions: [teardownMenu, assign(() => ({ suggestions: undefined }))],
+          actions: [teardownMenu],
+        },
+        append: {
+          target: ".",
+          actions: [
+            assign((ctx, payload) => {
+              return {
+                completionContext: ctx.completionContext.concat(payload),
+              };
+            }),
+            updateSuggestionMenu,
+          ],
+        },
+        focus: {
+          target: ".",
+          actions: [
+            assign((_, payload) => ({
+              focused: payload,
+            })),
+          ],
+        },
+        truncate: {
+          target: ".",
+          actions: [
+            assign((ctx) => {
+              return {
+                completionContext: ctx.completionContext.slice(
+                  0,
+                  ctx.completionContext.length - 1
+                ),
+              };
+            }),
+            updateSuggestionMenu,
+          ],
         },
         reset: {
           target: "idle",
-          actions: [teardownMenu, assign(() => ({ suggestions: undefined }))],
+          actions: [
+            teardownMenu,
+            assign(() => ({ completionContext: "", focused: false })),
+          ],
         },
       },
     },
@@ -51,21 +85,48 @@ const stateChart = {
 };
 
 const machine = new StateMachine(stateChart);
+// Returns true when key listeners in parent should not be run.
 export function autocomplete(e) {
-  const { suggestions } = machine.context();
-  if (e.key === "[") {
-    machine.send("[", e);
-  }
-  if (e.key === "]") {
-    machine.send("]", e);
-  }
-  if (e.key === "ArrowDown") {
-    if (machine.state === "completing" && suggestions) {
-      const candidate = suggestions.querySelector('button[data-idx="0"]');
-      candidate.focus();
+  const { completionContext, focused } = machine.context();
+  switch (e.key) {
+    case "[":
+      machine.send("[", e);
+      break;
+    case "]":
+      machine.send("]", e);
+      break;
+    case "Tab":
+    case "ArrowDown":
+      if (machine.state === "completing" && !focused) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        const menu = document.getElementById("autocomplete-menu");
+        const candidate = menu.querySelector(`button[data-idx="0"]`);
+        candidate.focus();
+        machine.send("focus", true);
+        return true;
+      }
+    case "Enter": {
+      if (machine.state === "completing") {
+        return true;
+      }
+      break;
     }
+    case "Backspace": {
+      if (completionContext.length > 0) {
+        machine.send("truncate");
+      } else {
+        machine.send("reset");
+      }
+      break;
+    }
+    default:
+      machine.send("append", e.key);
+      break;
   }
 }
+
+const matcher = new Scorer(3);
 
 function setupMenu(e) {
   caretPos();
@@ -78,31 +139,52 @@ function setupMenu(e) {
 
   suggestions.style.left = `${e.target.offsetLeft + caret.left}px`;
 
-  const opts = appContext.get("titles");
-
   const list = document.createElement("ul");
+  list.id = "autocomplete-list";
 
-  opts.forEach((opt, idx) => {
+  suggestions.appendChild(list);
+  suggestions.id = "autocomplete-menu";
+  e.target.parentElement.appendChild(suggestions);
+  machine.send("done");
+}
+
+function updateSuggestionMenu() {
+  const context = machine.context().completionContext;
+  if (context.length < 2) return;
+  const opts = matcher
+    .test(context)
+    .sort((a, b) => a.score - b.score)
+    .slice(0, 15);
+  const container = document.getElementById("autocomplete-list");
+  const elements = opts.map(({ value: opt }, idx) => {
     const item = document.createElement("li");
     const innerButton = document.createElement("button");
     innerButton.innerText = opt;
     innerButton.setAttribute("data-idx", idx);
-    innerButton.addEventListener("click", (clickEvent) => {
-      e.target.value += clickEvent.target.innerText + "]]";
+    innerButton.addEventListener("click", () => {
+      const textarea = document.querySelector("textarea");
+      textarea.value =
+        textarea.value
+          .slice(0, textarea.value.length - context.length)
+          .concat(opt) + "]]";
+      textarea.dispatchEvent(new Event("change"));
       machine.send("reset");
     });
     item.appendChild(innerButton);
-    list.appendChild(item);
+    return item;
   });
-  suggestions.appendChild(list);
-  e.target.parentElement.appendChild(suggestions);
-  machine.send("done", suggestions);
+  if (container.childElementCount === 0) {
+    container.append(...elements);
+  } else {
+    // TODO: Perf check. Might get slow?
+    container.replaceChildren(...elements);
+  }
 }
 
 function teardownMenu() {
-  if (machine.context().suggestions) {
-    machine.context().suggestions.remove();
-  }
+  document.getElementById("autocomplete-menu").remove();
+  const textarea = document.querySelector("textarea");
+  textarea.focus();
 }
 
 export function removeAutoCompleteMenu() {
