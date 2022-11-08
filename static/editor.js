@@ -4,14 +4,13 @@ import { BlockEditor } from "./mods/block-editor.js";
 import { MetaDataEditor } from "./mods/metadata-editor.js";
 import { ComponentRegister } from "./mods/component-register.js";
 import { appContext } from "./mods/app-context.js";
-import { Scorer } from "./mods/score.js";
 
 new ComponentRegister();
 
 (function () {
   const content = document.getElementById("content-block");
   content.querySelectorAll(".text-block").forEach(function (el) {
-    new BlockEditor(el, appContext);
+    new BlockEditor(el);
   });
 
   const title = document.querySelector(".title");
@@ -30,9 +29,6 @@ new ComponentRegister();
         "titles",
         titles.map((t) => t.toLowerCase())
       );
-
-      const matcher = new Scorer(3);
-      console.log(matcher.test("reality"));
     });
 })();
 

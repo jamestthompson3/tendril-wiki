@@ -23,14 +23,11 @@ const stateChart = {
 
 export class BlockEditor extends HTMLEditor {
   #machine;
-  #titles;
-  constructor(element, store) {
+  constructor(element) {
     super(element);
     this.id = `block@${nanoid()}`;
     this.indent = parseInt(element.dataset.indent || 0, 10);
     this.#machine = new StateMachine(stateChart);
-    this.#titles = store.get("titles");
-    store.on("update", "titles", (titles) => (this.#titles = titles));
     if (element.nodeName === "TEXTAREA") {
       this.setupTextblockListeners(element);
     } else {
@@ -69,6 +66,7 @@ export class BlockEditor extends HTMLEditor {
     for (const datapoint in this.element.dataset) {
       textblock.dataset[datapoint] = this.element.dataset[datapoint];
     }
+    textblock.setAttribute("spellcheck", true);
     textblock.classList.add("text-block");
     this.setupTextblockListeners(textblock);
     this.element.replaceWith(textblock);
@@ -91,19 +89,6 @@ export class BlockEditor extends HTMLEditor {
         }
         break;
       }
-      case "Enter": {
-        if (!e.shiftKey) {
-          this.element.value = this.element.value.slice(
-            0,
-            this.element.value.length - 1
-          );
-          const indentation = this.indent;
-          this.addBlock(indentation);
-          this.setupViewer(this.element);
-          break;
-        }
-        break;
-      }
       case "Escape": {
         this.element.blur();
         this.setupViewer(this.element);
@@ -119,23 +104,45 @@ export class BlockEditor extends HTMLEditor {
   };
 
   handleKeydown = (e) => {
-    autocomplete(e);
-    if (e.key === "Tab") {
-      e.preventDefault();
-      if (this.indent) {
-        // Max indent is 3 levels, min is 0
-        const indentationLevel = e.shiftKey
-          ? Math.max(this.indent - 1, 0)
-          : Math.min(this.indent + 1, 3);
-        e.target.dataset.indent = this.indent = indentationLevel;
-      } else if (!e.shiftKey) {
-        e.target.dataset.indent = this.indent = 1;
+    const shouldStopExecution = autocomplete(e);
+    switch (e.key) {
+      case "Tab": {
+        if (!shouldStopExecution) {
+          e.preventDefault();
+          if (this.indent) {
+            // Max indent is 3 levels, min is 0
+            const indentationLevel = e.shiftKey
+              ? Math.max(this.indent - 1, 0)
+              : Math.min(this.indent + 1, 3);
+            e.target.dataset.indent = this.indent = indentationLevel;
+          } else if (!e.shiftKey) {
+            e.target.dataset.indent = this.indent = 1;
+          }
+          this.change(e);
+        }
+        break;
       }
-      this.change(e);
-    }
-    if (e.key !== "Backspace") {
-      if (this.#machine.state === "cleared") {
-        this.#machine.send("RESET");
+      case "Enter": {
+        if (!e.shiftKey && !shouldStopExecution) {
+          if (this.element.value.endsWith("\n")) {
+            this.element.value = this.element.value.slice(
+              0,
+              this.element.value.length - 1
+            );
+          }
+          const indentation = this.indent;
+          this.addBlock(indentation);
+          this.setupViewer(this.element);
+          break;
+        }
+        break;
+      }
+      default: {
+        if (e.key !== "Backspace") {
+          if (this.#machine.state === "cleared") {
+            this.#machine.send("RESET");
+          }
+        }
       }
     }
     updateInputHeight(e.target);
@@ -189,6 +196,13 @@ export class BlockEditor extends HTMLEditor {
   };
   change = (e) => {
     this.content = e.target.value;
+    // Check to see if we're about to commit invalid syntax with unclosed link brackets
+    // This occurs when we insert an option from autocomplete.
+    const words = e.target.value.split(" ");
+    const lastWord = words[words.length - 1];
+    if (lastWord.startsWith("[[") && !lastWord.endsWith("]]")) {
+      return;
+    }
     this.bc.postMessage({
       type: "SAVE",
       data: {
