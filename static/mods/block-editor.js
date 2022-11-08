@@ -23,6 +23,7 @@ const stateChart = {
 
 export class BlockEditor extends HTMLEditor {
   #machine;
+  #shouldStopExecution;
   constructor(element) {
     super(element);
     this.id = `block@${nanoid()}`;
@@ -89,6 +90,19 @@ export class BlockEditor extends HTMLEditor {
         }
         break;
       }
+      case "Enter": {
+        if (!e.shiftKey && !this.#shouldStopExecution) {
+          this.element.value = this.element.value.slice(
+            0,
+            this.element.value.length - 1
+          );
+          const indentation = this.indent;
+          this.addBlock(indentation);
+          this.setupViewer(this.element);
+          break;
+        }
+        break;
+      }
       case "Escape": {
         this.element.blur();
         this.setupViewer(this.element);
@@ -104,10 +118,10 @@ export class BlockEditor extends HTMLEditor {
   };
 
   handleKeydown = (e) => {
-    const shouldStopExecution = autocomplete(e);
+    this.#shouldStopExecution = autocomplete(e);
     switch (e.key) {
       case "Tab": {
-        if (!shouldStopExecution) {
+        if (!this.#shouldStopExecution) {
           e.preventDefault();
           if (this.indent) {
             // Max indent is 3 levels, min is 0
@@ -119,21 +133,6 @@ export class BlockEditor extends HTMLEditor {
             e.target.dataset.indent = this.indent = 1;
           }
           this.change(e);
-        }
-        break;
-      }
-      case "Enter": {
-        if (!e.shiftKey && !shouldStopExecution) {
-          if (this.element.value.endsWith("\n")) {
-            this.element.value = this.element.value.slice(
-              0,
-              this.element.value.length - 1
-            );
-          }
-          const indentation = this.indent;
-          this.addBlock(indentation);
-          this.setupViewer(this.element);
-          break;
         }
         break;
       }
