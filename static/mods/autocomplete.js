@@ -134,10 +134,9 @@ function setupMenu(e) {
   const suggestions = document.createElement("div");
   suggestions.classList.add("autocomplete-menu");
   suggestions.style.position = "absolute";
-  const HEIGHT = 95;
-  suggestions.style.top = `${e.target.scrollHeight + HEIGHT * 2}px`;
-
-  suggestions.style.left = `${e.target.offsetLeft + caret.left}px`;
+  const rect = e.target.getBoundingClientRect();
+  suggestions.style.top = `${rect.y + caret.top + caret.height}px`;
+  suggestions.style.left = `${caret.left + rect.x}px`;
 
   const list = document.createElement("ul");
   list.id = "autocomplete-list";
