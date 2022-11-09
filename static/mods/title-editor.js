@@ -10,8 +10,11 @@ export class TitleEditor extends HTMLEditor {
     this.errorMsg =
       "Titles cannot contain special characters other than _+—. Titles must not be blank.";
     this.id = "title";
-    this.#titles = store.get("titles");
-    store.on("update", "titles", (titles) => (this.#titles = titles));
+    store.on(
+      "update",
+      "titles",
+      (titles) => (this.#titles = titles.map((t) => t.toLowerCase()))
+    );
     this.bc.postMessage({
       type: "REGISTER",
       data: { id: this.id, content: this.content },

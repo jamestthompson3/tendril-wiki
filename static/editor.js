@@ -25,10 +25,7 @@ new ComponentRegister();
   fetch("/titles")
     .then((res) => res.json())
     .then((titles) => {
-      appContext.set(
-        "titles",
-        titles.map((t) => t.toLowerCase())
-      );
+      appContext.set("titles", titles);
     });
 })();
 
