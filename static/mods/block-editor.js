@@ -105,7 +105,6 @@ export class BlockEditor extends HTMLEditor {
       }
       case "Escape": {
         this.element.blur();
-        this.setupViewer(this.element);
         break;
       }
       case "Home": {
@@ -187,6 +186,7 @@ export class BlockEditor extends HTMLEditor {
     if (indentationLevel) {
       textblock.dataset.indent = indentationLevel;
     }
+    textblock.setAttribute("spellcheck", true);
     new BlockEditor(textblock);
     // insert the new block directly after the current block
     const { parentNode, nextSibling } = this.element;
