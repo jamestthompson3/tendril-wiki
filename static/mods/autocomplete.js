@@ -39,6 +39,10 @@ const stateChart = {
           target: "idle",
           actions: [teardownMenu],
         },
+        "[": {
+          target: "idle",
+          actions: [teardownMenu],
+        },
         append: {
           target: ".",
           actions: [
