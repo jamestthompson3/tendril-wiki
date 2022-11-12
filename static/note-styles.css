@@ -58,6 +58,13 @@ pre code {
   min-height: 35px;
 }
 
+.tags ul:empty::before {
+  content: "add tags";
+  font-style: italic;
+  color: var(--text-secondary);
+  width: 5rem;
+}
+
 .tags li {
   background-color: var(--accent);
   box-shadow: 0 3px 1px -2px rgba(0, 0, 0, 0.2), 0 2px 2px 0 rgba(0, 0, 0, 0.14),
