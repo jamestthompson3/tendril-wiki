@@ -21,13 +21,7 @@ impl<'a> WikiPage<'a> {
         self.page
             .body
             .split('\n')
-            .filter_map(|line| {
-                if line.is_empty() {
-                    None
-                } else {
-                    Some(line.to_owned())
-                }
-            })
+            .map(|line| line.to_owned())
             .collect::<Vec<String>>()
             .join("\n")
     }
