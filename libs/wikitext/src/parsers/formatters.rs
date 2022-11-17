@@ -1,18 +1,13 @@
 use std::fmt::Write as _;
-use tendril::StrTendril;
 use urlencoding::encode;
 
 use super::block::BlockElement;
 
-impl BlockElement {
+impl BlockElement<'_> {
     pub fn collapse_to(&self, target: &mut String) {
         match self {
             BlockElement::Heading(content) => {
-                write!(target, "<h2>").unwrap();
-                for part in content {
-                    part.collapse_to(target);
-                }
-                write!(target, "</h2>").unwrap();
+                write!(target, "<h2>{}</h2>", content).unwrap();
             }
             BlockElement::PageLink(content) => {
                 let aliases = content.split('|').collect::<Vec<&str>>();
@@ -42,10 +37,7 @@ impl BlockElement {
                 write!(target, "</blockquote>").unwrap();
             }
             BlockElement::EmptySpace(content) | BlockElement::Text(content) => {
-                write_to_string(
-                    target,
-                    content.replace('<', "&lt;").replace('>', "&gt;"),
-                );
+                write_to_string(target, content.replace('<', "&lt;").replace('>', "&gt;"));
             }
             BlockElement::HyperLink(content) => {
                 if content.contains("youtube.com") || content.contains("youtu.be") {
@@ -59,10 +51,13 @@ impl BlockElement {
                     || content.ends_with(".flac")
                 {
                     write_to_string(target, transform_audio_url(content));
-                } else if content.ends_with(".png") || content.ends_with(".jpg") || content.ends_with(".jpeg") || content.ends_with(".webp") {
+                } else if content.ends_with(".png")
+                    || content.ends_with(".jpg")
+                    || content.ends_with(".jpeg")
+                    || content.ends_with(".webp")
+                {
                     write_to_string(target, transform_image_url(content));
-                }
-                else if content.contains("vimeo.com") {
+                } else if content.contains("vimeo.com") {
                     write_to_string(target, transform_vimeo_url(content));
                 } else if content.contains("spotify.com") {
                     write_to_string(target, transform_spotify_url(content));
@@ -81,11 +76,11 @@ fn write_to_string(target: &mut String, incl: String) {
     write!(target, "{}", incl).unwrap();
 }
 
-pub fn transform_audio_url(text: &StrTendril) -> String {
+pub fn transform_audio_url(text: &str) -> String {
     format!(r#"<audio src="{}" controls></audio>"#, text)
 }
 
-pub fn transform_image_url(text: &StrTendril) -> String {
+pub fn transform_image_url(text: &str) -> String {
     format!(r#"<img src={} />"#, text)
 }
 
@@ -108,12 +103,12 @@ const CS_FMT_STRING: &str = r#"<iframe frameborder="0" title="Code Sandbox" allo
     allow-same-origin allow-scripts""#;
 const CP_FMT_STRING: &str = r#"<iframe frameborder="0" title="CodePen" scrolling="no" allowtransparency="true" allowfullscreen="true" loading="lazy""#;
 
-pub(crate) fn transform_cs_url(link: &StrTendril) -> String {
+pub(crate) fn transform_cs_url(link: &str) -> String {
     let link = link.replace(".io/s", ".io/embed");
     format!(r#"{} src="{}"></iframe>"#, CS_FMT_STRING, link)
 }
 
-pub(crate) fn transform_cp_url(text: &StrTendril) -> String {
+pub(crate) fn transform_cp_url(text: &str) -> String {
     if !text.contains("/embed/") {
         let link = text.replace("/pen/", "/embed/");
         return format!(r#"{} src="{}"></iframe>"#, CP_FMT_STRING, link);
@@ -121,7 +116,7 @@ pub(crate) fn transform_cp_url(text: &StrTendril) -> String {
     format!(r#"{} src="{}"></iframe>"#, CP_FMT_STRING, text)
 }
 
-pub(crate) fn transform_spotify_url(text: &StrTendril) -> String {
+pub(crate) fn transform_spotify_url(text: &str) -> String {
     if !text.contains(".com/embed") {
         let link = text.replace(".com/track", ".com/embed/track");
         return format!(r#"{} src="{}"></iframe>"#, MEDIA_FMT_STRING, link);
@@ -129,7 +124,7 @@ pub(crate) fn transform_spotify_url(text: &StrTendril) -> String {
     format!(r#"{} src="{}"></iframe>"#, MEDIA_FMT_STRING, text)
 }
 
-pub(crate) fn transform_youtube_url(link: &StrTendril) -> String {
+pub(crate) fn transform_youtube_url(link: &str) -> String {
     if link.contains("watch?v=") {
         let mut formatted_link = link.replace("watch?v=", "embed/");
         let extra_params_start = formatted_link.find('&');
@@ -150,7 +145,7 @@ pub(crate) fn format_yt_url(src: String) -> String {
     format!(r#"{} src="{}"></iframe>"#, MEDIA_FMT_STRING, src)
 }
 
-pub(crate) fn transform_vimeo_url(text: &StrTendril) -> String {
+pub(crate) fn transform_vimeo_url(text: &str) -> String {
     if !text.contains("player.vimeo.com") {
         let link = text.replace("vimeo.com", "player.vimeo.com/video");
         return format!(r#"{} src="{}"></iframe>"#, MEDIA_FMT_STRING, link);
@@ -171,34 +166,32 @@ mod tests {
 
     #[test]
     fn transforms_youtube_urls_to_embedable() {
-        let link = StrTendril::from_slice("https://youtube.com/watch?v=giEnkiRHJ9Y");
+        let link = "https://youtube.com/watch?v=giEnkiRHJ9Y";
         let final_string = r#"<iframe title="Video player" frameborder="0" allow="autoplay;" allowfullscreen src="https://youtube.com/embed/giEnkiRHJ9Y"></iframe>"#;
-        let transformed_string = transform_youtube_url(&link);
+        let transformed_string = transform_youtube_url(link);
         assert_eq!(*final_string, transformed_string);
     }
 
     #[test]
     fn transforms_vimeo_urls_to_embedable() {
-        let link = StrTendril::from_slice("https://vimeo.com/665036978#t=20s");
+        let link = "https://vimeo.com/665036978#t=20s";
         let final_string = r#"<iframe title="Video player" frameborder="0" allow="autoplay;" allowfullscreen src="https://player.vimeo.com/video/665036978#t=20s"></iframe>"#;
-        let transformed_string = transform_vimeo_url(&link);
+        let transformed_string = transform_vimeo_url(link);
         assert_eq!(*final_string, transformed_string);
     }
     #[test]
     fn transforms_spotify_urls_to_embedable() {
-        let link = StrTendril::from_slice(
-            "https://open.spotify.com/track/3YD9EehnGOf88rGSZFrnHg?si=8c669e6880f54c88",
-        );
+        let link = "https://open.spotify.com/track/3YD9EehnGOf88rGSZFrnHg?si=8c669e6880f54c88";
         let final_string = r#"<iframe title="Video player" frameborder="0" allow="autoplay;" allowfullscreen src="https://open.spotify.com/embed/track/3YD9EehnGOf88rGSZFrnHg?si=8c669e6880f54c88"></iframe>"#;
-        let transformed_string = transform_spotify_url(&link);
+        let transformed_string = transform_spotify_url(link);
         assert_eq!(*final_string, transformed_string);
     }
 
     #[test]
     fn transforms_codepen_urls_to_embedable() {
-        let link = StrTendril::from_slice("https://codepen.io/P1N2O/pen/pyBNzX");
+        let link = "https://codepen.io/P1N2O/pen/pyBNzX";
         let final_string = r#"<iframe frameborder="0" title="CodePen" scrolling="no" allowtransparency="true" allowfullscreen="true" loading="lazy" src="https://codepen.io/P1N2O/embed/pyBNzX"></iframe>"#;
-        let transformed_string = transform_cp_url(&link);
+        let transformed_string = transform_cp_url(link);
         assert_eq!(*final_string, transformed_string);
     }
 }

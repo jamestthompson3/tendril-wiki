@@ -25,6 +25,7 @@ impl Proccessor for Notebook {
                     let entry = entry.unwrap();
                     if let Some(fname) = entry.file_name().to_str() {
                         if fname.ends_with(".txt") {
+                            println!(">>> {} <<<", fname);
                             let mut content = path_to_data_structure(&entry.path()).await.unwrap();
                             if content.header.get("title").is_none() {
                                 let fixed_name = fname.strip_suffix(".txt").unwrap();

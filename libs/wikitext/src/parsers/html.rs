@@ -33,7 +33,7 @@ pub fn to_html(text: &str) -> Html {
     let mut outlinks = Vec::new();
     let mut page_blocks: Vec<Vec<BlockElement>> = Vec::new();
     for line in text.lines() {
-        let blocks = parse_block(line.as_bytes());
+        let blocks = parse_block(line);
         page_blocks.push(blocks);
     }
     let output = page_blocks
