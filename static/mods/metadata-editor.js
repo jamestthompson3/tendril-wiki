@@ -1,5 +1,6 @@
 import { setAsFocused, updateInputHeight } from "./block-actions.js";
 import { htmlToText, textToHtml } from "./parsing.js";
+import { isIOS } from "./utils.js";
 import { moveCaretToEnd } from "./dom.js";
 
 export class MetaDataEditor {
@@ -40,6 +41,9 @@ export class MetaDataEditor {
     textblock.addEventListener("blur", this.setupViewer);
     textblock.addEventListener("change", this.handleChange);
     textblock.addEventListener("keyup", () => updateInputHeight(textblock));
+    if (isIOS()) {
+      normalizePunction(textblock);
+    }
     this.element.replaceWith(textblock);
     setAsFocused(textblock);
     moveCaretToEnd(textblock);

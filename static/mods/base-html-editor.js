@@ -1,5 +1,5 @@
 import { htmlToText } from "./parsing.js";
-import { StateMachine } from "./utils.js";
+import { StateMachine, isIOS, normalizePunction } from "./utils.js";
 
 const stateChart = {
   initial: "idle",
@@ -51,6 +51,9 @@ export class HTMLEditor {
     element.addEventListener("keydown", this.handleKeydown);
     element.addEventListener("paste", this.detectImagePaste);
     element.addEventListener("change", this.change);
+    if (isIOS()) {
+      normalizePunction(element);
+    }
   };
   detectImagePaste = () => {};
   handleKeydown = () => {};

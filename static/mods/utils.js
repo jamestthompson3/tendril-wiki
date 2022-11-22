@@ -97,3 +97,46 @@ export class StateMachine {
     }
   };
 }
+
+const punctMap = {
+  // Open-quotes: http://www.fileformat.info/info/unicode/category/Pi/list.htm
+  [0x2018]: "'",
+  [0x201b]: "'",
+  [0x201c]: '"',
+  [0x201f]: '"',
+  // Close-quotes: http://www.fileformat.info/info/unicode/category/Pf/list.htm
+  [0x2019]: "'",
+  [0x201d]: '"',
+  // Primes: http://www.fileformat.info/info/unicode/category/Po/list.htm
+  [0x2032]: "'",
+  [0x2033]: '"',
+  [0x2035]: "'",
+  [0x2036]: '"',
+  [0x2014]: "-", // iOS 11 also replaces dashes with em-dash
+  [0x2013]: "-", // and "--" with en-dash
+};
+
+export function isIOS() {
+  return (
+    ["iPad", "iPhone", "iPod"].some((p) => navigator.platform.includes(p)) ||
+    (navigator.userAgent.includes("Mac") && "ontouchend" in document)
+  );
+}
+
+/**
+ * iOS swaps out perfectly normal, ascii punctuation with the unicode equivalents.
+ * We handle unicode just fine, but that doesn't really mean everyone does.
+ * If users want to move their notes outside of Tendril, we should be considerate and convert to ascii.
+ */
+export function normalizePunction(node) {
+  node.addEventListener("keypress", function (e) {
+    if (e.key.length != 1) return;
+
+    const code = e.key.codePointAt(0);
+    const replacement = conversionMap[code];
+    if (replacement) {
+      e.preventDefault();
+      document.execCommand("insertText", 0, replacement);
+    }
+  });
+}
