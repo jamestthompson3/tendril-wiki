@@ -180,15 +180,33 @@ fn iterate_slice(input: &str) -> Vec<BlockElement> {
     elements
 }
 
-// fn cut(slice: &str, at: usize) -> Result<&str, ParseError> {
-//     if at == 0 {
-//         return Ok(slice);
-//     }
-//     Ok(window(slice, at, slice.len()))
-// }
-
 fn window(slice: &str, start: usize, end: usize) -> &str {
-    slice.get(start..end).unwrap()
+    let mut win_end = end;
+    if !slice.is_char_boundary(end) {
+        let mut chars = slice.char_indices().peekable();
+        chars.nth(end);
+        while let Some(&(index, _)) = chars.peek() {
+            if slice.is_char_boundary(index) {
+                win_end = index;
+                break;
+            } else {
+                chars.next();
+            }
+        }
+        // we didn't find the non-char boundary, just take the whole slice...
+        if win_end == end {
+            win_end = slice.len();
+        }
+    }
+    match slice.get(start..win_end) {
+        Some(subslice) => subslice,
+        None => {
+            panic!(
+                "Slice: |{}|, Start: {} End: {} WEnd: {}",
+                slice, start, end, win_end
+            );
+        }
+    }
 }
 
 fn until_empty_space(slice: &str) -> SliceWithIndex {
@@ -209,11 +227,14 @@ fn until_empty_space(slice: &str) -> SliceWithIndex {
             }
         };
     }
-    let window_offset = if end == 0 && unicode_offset > 0 {
+    let mut window_offset = if end == 0 && unicode_offset > 0 {
         end + unicode_offset
     } else {
         end + 1
     };
+    if !slice.is_char_boundary(window_offset) && window_offset != (slice.len() - 1) {
+        window_offset = end + slice.chars().nth(end).unwrap().len_utf8();
+    }
     let windowed = window(slice, 0, window_offset);
     let steps = if end > 0 && end > unicode_offset && unicode_offset > 0 {
         // I don't know exactly why this works, but it does...
