@@ -129,7 +129,7 @@ dependencies = [
  "rpassword",
  "serde",
  "serde_derive",
- "tasks",
+ "task_runners",
  "tokio",
  "toml",
  "wikitext",
@@ -917,7 +917,7 @@ dependencies = [
  "lazy_static",
  "serde",
  "serde_derive",
- "tasks",
+ "task_runners",
  "thiserror",
  "tokio",
  "toml",
@@ -1521,7 +1521,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "tasks"
+name = "task_runners"
 version = "1.0.0"
 dependencies = [
  "argon2",
@@ -1574,7 +1574,7 @@ dependencies = [
  "regex",
  "render",
  "search-engine",
- "tasks",
+ "task_runners",
  "tokio",
  "wikitext",
  "www",
@@ -1655,7 +1655,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 
 [[package]]
-name = "todo"
+name = "todo_list"
 version = "1.0.0"
 dependencies = [
  "lazy_static",
@@ -2079,7 +2079,7 @@ name = "wikitext"
 version = "1.0.0"
 dependencies = [
  "chrono",
- "tasks",
+ "task_runners",
  "tendril 0.4.3",
  "thiserror",
  "tokio",
@@ -2188,9 +2188,9 @@ dependencies = [
  "render",
  "search-engine",
  "serde",
- "tasks",
+ "task_runners",
  "thiserror",
- "todo",
+ "todo_list",
  "tokio",
  "urlencoding",
  "warp",

@@ -9,7 +9,7 @@ edition = "2021"
 [dependencies]
 chrono = "0.4.19"
 tendril = "0.4.3"
-tasks = { path = "../tasks" }
+task_runners = { path = "../task-runners" }
 thiserror = "1.0.30"
 tokio = { version = "1.17.0", features = ["fs"], default-features = false }
 urlencoding = "2.1.0"

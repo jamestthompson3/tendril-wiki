@@ -16,7 +16,7 @@ use search_engine::{
     delete_archived_file, delete_entry_from_update, patch_search_from_archive,
     patch_search_from_update,
 };
-use tasks::{
+use task_runners::{
     archive::{compress, extract},
     messages::{Message, PatchData},
     JobQueue, Queue,

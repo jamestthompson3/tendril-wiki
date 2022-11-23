@@ -8,7 +8,7 @@ use persistance::fs::{
     config::Config,
     utils::{get_config_location, get_data_dir_location, get_wiki_location},
 };
-use tasks::hash_password;
+use task_runners::hash_password;
 use wikitext::parsers::Note;
 
 use crate::{gen_config_interactive, ConfigOptions};

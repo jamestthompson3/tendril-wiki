@@ -17,6 +17,6 @@ render = { path = "../render" }
 rpassword = "6.0.1"
 serde = "1.0.136"
 serde_derive = "1.0.136"
-tasks = { path = "../tasks" }
+task_runners = { path = "../task-runners" }
 tokio = { version = "1.17.0", features = ["sync", "macros"], default-features = false }
 toml = "0.5.8"

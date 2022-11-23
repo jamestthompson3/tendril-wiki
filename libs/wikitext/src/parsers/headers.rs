@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::fmt::Write as _;
 
-use tasks::messages::PatchData;
+use task_runners::messages::PatchData;
 
 use crate::processors::tags::TagsArray;
 

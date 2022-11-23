@@ -5,7 +5,7 @@ use jsonwebtoken::{Algorithm, DecodingKey, Validation};
 use persistance::fs::config::read_config;
 use render::GlobalBacklinks;
 use serde::{Deserialize, Serialize};
-use tasks::JobQueue;
+use task_runners::JobQueue;
 use thiserror::Error;
 use warp::{hyper::StatusCode, reply::WithStatus, Filter, Rejection};
 

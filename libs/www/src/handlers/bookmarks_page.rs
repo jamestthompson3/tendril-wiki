@@ -3,7 +3,7 @@ use std::{collections::HashMap, time::Duration};
 use persistance::fs::write;
 use regex::Regex;
 use render::{bookmark_page::BookmarkAddPage, Render, sanitize_html};
-use tasks::{
+use task_runners::{
     archive::extract,
     messages::{Message, PatchData},
     Queue,

@@ -9,7 +9,7 @@ use std::{
 
 use chrono::{DateTime, FixedOffset, Local};
 use directories::ProjectDirs;
-use tasks::messages::PatchData;
+use task_runners::messages::PatchData;
 use tokio::fs::{self, read_to_string};
 use wikitext::parsers::{parse_meta, Note};
 

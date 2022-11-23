@@ -2,7 +2,7 @@ use chrono::prelude::*;
 use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
 
 use persistance::fs::config::read_config;
-use tasks::verify_password;
+use task_runners::verify_password;
 
 use crate::handlers::filters::{AuthError, Claims};
 

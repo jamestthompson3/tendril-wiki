@@ -7,7 +7,7 @@ use persistance::fs::{
 use search_engine::build_search_index;
 use std::{path::PathBuf, process::exit, sync::Arc, time::Instant};
 use task_queue::process_tasks;
-use tasks::{git_update, sync, JobQueue};
+use task_runners::{git_update, sync, JobQueue};
 use tokio::fs;
 use www::server;
 

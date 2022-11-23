@@ -5,7 +5,7 @@ use build::Titles;
 use persistance::fs::{config::General, utils::normalize_wiki_location};
 use render::GlobalBacklinks;
 use std::{path::PathBuf, sync::Arc};
-use tasks::JobQueue;
+use task_runners::JobQueue;
 use warp::Filter;
 
 #[macro_use]

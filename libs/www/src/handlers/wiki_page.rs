@@ -6,7 +6,7 @@ use persistance::fs::{create_journal_entry, read, write, ReadPageError, WriteWik
 use render::{
     injected_html::InjectedHTML, new_page::NewPage, wiki_page::WikiPage, GlobalBacklinks, Render,
 };
-use tasks::{
+use task_runners::{
     messages::{Message, PatchData},
     Queue,
 };

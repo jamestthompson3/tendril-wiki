@@ -3,7 +3,7 @@ use std::{io::ErrorKind, str::FromStr};
 use persistance::fs::utils::get_todo_location;
 use render::{tasks_page::TasksPage, Render};
 use serde::{Deserialize, Serialize};
-use todo::{Task, TaskUpdate, UpdateType};
+use todo_list::{Task, TaskUpdate, UpdateType};
 use tokio::fs;
 use warp::{filters::BoxedFilter, Filter, Reply};
 

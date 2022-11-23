@@ -16,6 +16,6 @@ persistance = { path = "../libs/persistance" }
 render = { path = "../libs/render" }
 regex = "1.5.5"
 search-engine = { path = "../libs/search-engine" }
-tasks = { path = "../libs/tasks" }
+task_runners = { path = "../libs/task-runners" }
 tokio = { version = "1.17.0", features = ["fs", "macros", "rt-multi-thread"], default-features = false }
 www = { path = "../libs/www" }
