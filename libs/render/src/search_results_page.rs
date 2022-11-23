@@ -49,8 +49,9 @@ impl SearchResultsPage {
 #[async_trait]
 impl Render for SearchResultsPage {
     async fn render(&self) -> String {
+        let nav = get_template_file("nav").await.unwrap();
         let mut ctx = get_template_file("search_results").await.unwrap();
         ctx = ctx.replace("<%= pages %>", &self.render_pages().await);
-        render_includes(ctx, None).await
+        render_includes(ctx, None).await.replace("<%= nav %>", &nav)
     }
 }
