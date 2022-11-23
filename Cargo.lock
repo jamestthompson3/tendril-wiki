@@ -1535,6 +1535,7 @@ dependencies = [
  "thiserror",
  "tokio",
  "ulid",
+ "wikitext",
 ]
 
 [[package]]
@@ -2079,7 +2080,7 @@ name = "wikitext"
 version = "1.0.0"
 dependencies = [
  "chrono",
- "task_runners",
+ "serde",
  "tendril 0.4.3",
  "thiserror",
  "tokio",

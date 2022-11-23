@@ -18,10 +18,11 @@ use search_engine::{
 };
 use task_runners::{
     archive::{compress, extract},
-    messages::{Message, PatchData},
+    messages::Message,
     JobQueue, Queue,
 };
 use tokio::time::sleep;
+use wikitext::PatchData;
 
 const NUM_JOBS: u32 = 50;
 

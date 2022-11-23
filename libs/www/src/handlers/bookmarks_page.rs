@@ -2,15 +2,12 @@ use std::{collections::HashMap, time::Duration};
 
 use persistance::fs::write;
 use regex::Regex;
-use render::{bookmark_page::BookmarkAddPage, Render, sanitize_html};
-use task_runners::{
-    archive::extract,
-    messages::{Message, PatchData},
-    Queue,
-};
+use render::{bookmark_page::BookmarkAddPage, sanitize_html, Render};
+use task_runners::{archive::extract, messages::Message, Queue};
 use tokio::time::timeout;
 use urlencoding::encode;
 use warp::{filters::BoxedFilter, hyper::Uri, Filter, Reply};
+use wikitext::PatchData;
 
 use super::{
     filters::{with_auth, with_queue},
@@ -28,11 +25,6 @@ pub struct BookmarkPageRouter {
 struct Runner {}
 
 impl Runner {
-    async fn render() -> String {
-        let ctx = BookmarkAddPage {};
-        ctx.render().await
-    }
-
     async fn new_from_url(url: String, tags: Vec<String>) -> Result<(String, PatchData), ()> {
         let mut metadata = HashMap::new();
         metadata.insert(String::from("url"), url.clone());
@@ -124,7 +116,8 @@ impl BookmarkPageRouter {
         warp::get()
             .and(with_auth())
             .then(|| async {
-                let template = Runner::render().await;
+                let ctx = BookmarkAddPage {};
+                let template = ctx.render().await;
                 warp::reply::html(template)
             })
             .boxed()
@@ -167,9 +160,13 @@ mod tests {
         let result = normalize_title(test_title);
         assert_ne!(String::from(test_title), result);
         assert_eq!(String::from("testing a neat thing"), result);
-        test_title = "lots of characters. A really long title. Maybe with some / and \\ and -- chars";
+        test_title =
+            "lots of characters. A really long title. Maybe with some / and \\ and -- chars";
         let result = normalize_title(test_title);
         assert_ne!(String::from(test_title), result);
-        assert_eq!(String::from("lots of characters A really long title Maybe with..."), result);
+        assert_eq!(
+            String::from("lots of characters A really long title Maybe with..."),
+            result
+        );
     }
 }

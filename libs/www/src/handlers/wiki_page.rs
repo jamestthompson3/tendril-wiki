@@ -6,13 +6,10 @@ use persistance::fs::{create_journal_entry, read, write, ReadPageError, WriteWik
 use render::{
     injected_html::InjectedHTML, new_page::NewPage, wiki_page::WikiPage, GlobalBacklinks, Render,
 };
-use task_runners::{
-    messages::{Message, PatchData},
-    Queue,
-};
+use task_runners::{messages::Message, Queue};
 use urlencoding::decode;
 use warp::{filters::BoxedFilter, hyper::Uri, Filter, Reply};
-use wikitext::{parsers::Note, processors::to_template};
+use wikitext::{parsers::Note, processors::to_template, PatchData};
 
 use crate::RefHubParts;
 
