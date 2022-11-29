@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use std::fmt::Write as _;
-use std::{collections::BTreeMap, io, sync::Arc};
+use std::io;
 
 use chrono::{DateTime, FixedOffset};
 #[cfg(not(debug_assertions))]
@@ -9,7 +9,7 @@ use directories::ProjectDirs;
 use async_trait::async_trait;
 use futures::{stream, StreamExt};
 use persistance::fs::read_note_cache;
-use tokio::{fs, sync::Mutex};
+use tokio::fs;
 use wikitext::parsers::{format_links, TemplattedPage};
 
 pub mod all_pages;
@@ -34,10 +34,6 @@ pub enum CompileState {
     Dynamic,
 }
 
-pub type GlobalBacklinks = Arc<Mutex<BTreeMap<String, Vec<String>>>>;
-
-const FORBIDDEN_TAGS: [&str; 5] = ["noscript", "script", "object", "embed", "link"];
-
 #[async_trait]
 pub trait Render {
     async fn render(&self) -> String;
@@ -51,21 +47,6 @@ pub fn parse_includes(include_str: &str) -> String {
         .strip_suffix("\" %>")
         .unwrap();
     included_file.to_string()
-}
-
-pub fn sanitize_html(html: &str) -> String {
-    let mut sanitized = String::from(html);
-    for tag in FORBIDDEN_TAGS {
-        if sanitized.contains(tag) {
-            sanitized = sanitized
-                .replace(&format!("<{}>", tag), &format!("&lt;{}&gt;", tag))
-                .replace(&format!("</{}>", tag), &format!("&lt;/{}&gt;", tag))
-                .replace(&format!("{}>", tag), &format!("{}&gt;", tag))
-                .replace(&format!("<{}", tag), &format!("&lt;{}", tag))
-                .replace(&format!("</{}", tag), &format!("&lt;/{}", tag));
-        }
-    }
-    sanitized
 }
 
 async fn process_included_file(file: String, page: Option<&TemplattedPage>) -> String {
@@ -209,33 +190,4 @@ fn get_template_location(requested_file: &str) -> String {
     data_dir.to_string_lossy().into()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
 
-    #[test]
-    fn sanitizes_html() {
-        for tag in FORBIDDEN_TAGS {
-            let test_string = format!("<{}>asdf</{}>", tag, tag);
-            let result = sanitize_html(&test_string);
-            assert_ne!(test_string, result);
-            assert!(result.find('>').is_none());
-            assert!(result.find('<').is_none());
-        }
-        // broken html
-        for tag in FORBIDDEN_TAGS {
-            let test_string = format!("<{}asdf</{}>", tag, tag);
-            let result = sanitize_html(&test_string);
-            assert_ne!(test_string, result);
-            assert!(result.find('>').is_none());
-            assert!(result.find('<').is_none());
-        }
-        for tag in FORBIDDEN_TAGS {
-            let test_string = format!("{}>asdf</{}>", tag, tag);
-            let result = sanitize_html(&test_string);
-            assert_ne!(test_string, result);
-            assert!(result.find('>').is_none());
-            assert!(result.find('<').is_none());
-        }
-    }
-}

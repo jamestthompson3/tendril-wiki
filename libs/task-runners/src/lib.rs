@@ -7,12 +7,17 @@ use thiserror::Error;
 use ulid::Ulid;
 
 pub mod archive;
+pub mod cache;
 pub mod messages;
 pub mod password;
+pub mod runners;
 pub mod sync;
 
 pub use self::password::*;
 pub use self::sync::*;
+
+#[macro_use]
+extern crate lazy_static;
 
 /// Shout out to Sylvain Kerkour's [blog post](https://kerkour.com/rust-job-queue-with-postgresql) for code snippets and inspiration!
 
@@ -112,3 +117,5 @@ impl Queue for JobQueue {
         }
     }
 }
+
+pub type QueueHandle = Arc<JobQueue>;

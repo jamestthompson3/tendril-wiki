@@ -10,12 +10,11 @@ edition = "2021"
 build = { path = "../libs/build" }
 futures = "0.3.21"
 lazy_static = "1.4.0"
-logging = { path = "../libs/logging" }
 wikitext = { path = "../libs/wikitext" }
 persistance = { path = "../libs/persistance" }
 render = { path = "../libs/render" }
 regex = "1.5.5"
-search-engine = { path = "../libs/search-engine" }
+search_engine = { path = "../libs/search-engine" }
 task_runners = { path = "../libs/task-runners" }
 tokio = { version = "1.17.0", features = ["fs", "macros", "rt-multi-thread"], default-features = false }
 www = { path = "../libs/www" }

@@ -1,26 +1,16 @@
 use std::collections::HashMap;
 use std::fmt::Write as _;
 
-use build::purge_mru_cache;
 use persistance::fs::{create_journal_entry, read, write, ReadPageError, WriteWikiError};
-use render::{
-    injected_html::InjectedHTML, new_page::NewPage, wiki_page::WikiPage, GlobalBacklinks, Render,
-};
-use task_runners::{messages::Message, Queue};
+use render::{injected_html::InjectedHTML, new_page::NewPage, wiki_page::WikiPage, Render};
 use urlencoding::decode;
-use warp::{filters::BoxedFilter, hyper::Uri, Filter, Reply};
-use wikitext::{parsers::Note, processors::to_template, PatchData};
+use wikitext::{parsers::Note, processors::to_template, GlobalBacklinks, PatchData};
 
-use crate::RefHubParts;
+use crate::{cache::purge_mru_cache, messages::Message, Queue, QueueHandle};
 
-use super::{
-    filters::{reply_on_result, with_auth, with_links, with_queue},
-    QueueHandle, MAX_BODY_SIZE,
-};
+pub struct WikiRunner {}
 
-struct Runner {}
-
-impl Runner {
+impl WikiRunner {
     pub async fn render_file(
         &self,
         path: String,
@@ -157,7 +147,7 @@ impl Runner {
         }
     }
 
-    pub async fn delete(queue: QueueHandle, form_body: HashMap<String, String>) -> Uri {
+    pub async fn delete(queue: QueueHandle, form_body: HashMap<String, String>) -> String {
         let title = form_body.get("title").unwrap();
         queue
             .push(Message::Delete {
@@ -167,131 +157,6 @@ impl Runner {
             .unwrap();
 
         purge_mru_cache(title).await;
-        Uri::from_static("/")
-    }
-}
-
-pub struct WikiPageRouter {
-    parts: RefHubParts,
-}
-
-impl WikiPageRouter {
-    pub fn new(parts: RefHubParts) -> Self {
-        Self { parts }
-    }
-    pub fn routes(&self) -> BoxedFilter<(impl Reply,)> {
-        self.get_nested()
-            .or(self.delete())
-            .or(self.edit())
-            .or(self.quick_add())
-            .or(self.new_page())
-            .or(self.get())
-            .boxed()
-    }
-
-    fn get(&self) -> BoxedFilter<(impl Reply,)> {
-        let (links, _, _) = &self.parts;
-        warp::get()
-            .and(with_auth())
-            .and(warp::path::param())
-            .and(with_links(links.clone()))
-            .and(warp::query::<HashMap<String, String>>())
-            .then(
-                |path: String,
-                 reflinks: GlobalBacklinks,
-                 query_params: HashMap<String, String>| async move {
-                    let runner = Runner {};
-                    let response = runner
-                        .render_file(path, reflinks, query_params)
-                        .await;
-                    warp::reply::html(response)
-                },
-            )
-            .boxed()
-    }
-
-    fn get_nested(&self) -> BoxedFilter<(impl Reply,)> {
-        let (links, _, _) = &self.parts;
-        warp::get()
-            .and(with_auth())
-            .and(warp::path!(String / String))
-            .and(with_links(links.to_owned()))
-            .then(
-                |main_path: String, sub_path: String, reflinks: GlobalBacklinks| async move {
-                    let runner = Runner {};
-                    let main_path = decode(&main_path).unwrap().to_string();
-                    let sub_path = decode(&sub_path).unwrap().to_string();
-                    let response = runner
-                        .render_nested_file(main_path, sub_path, reflinks)
-                        .await;
-                    warp::reply::html(response.unwrap())
-                },
-            )
-            .boxed()
-    }
-
-    fn delete(&self) -> BoxedFilter<(impl Reply,)> {
-        let (_, _, queue) = &self.parts;
-        warp::post()
-            .and(with_auth())
-            .and(warp::path("delete"))
-            .and(with_queue(queue.to_owned()))
-            .and(warp::body::content_length_limit(MAX_BODY_SIZE))
-            .and(warp::body::form())
-            .then(
-                |queue: QueueHandle, form_body: HashMap<String, String>| async {
-                    let response = Runner::delete(queue, form_body).await;
-                    warp::redirect(response)
-                },
-            )
-            .boxed()
-    }
-
-    fn new_page(&self) -> BoxedFilter<(impl Reply,)> {
-        warp::get()
-            .and(with_auth())
-            .and(
-                warp::path("new")
-                    .and(warp::query::<HashMap<String, String>>())
-                    .then(|query_params: HashMap<String, String>| async {
-                        let response = Runner::render_new(query_params).await;
-                        warp::reply::html(response)
-                    }),
-            )
-            .boxed()
-    }
-
-    fn edit(&self) -> BoxedFilter<(impl Reply,)> {
-        let (_, _, queue) = &self.parts;
-        warp::post()
-            .and(with_auth())
-            .and(
-                warp::path("edit").and(
-                    warp::body::content_length_limit(MAX_BODY_SIZE)
-                        .and(warp::body::json())
-                        .and(with_queue(queue.to_owned()))
-                        .then(|body: PatchData, queue: QueueHandle| async {
-                            reply_on_result(Runner::edit(body, queue).await)
-                        }),
-                ),
-            )
-            .boxed()
-    }
-
-    fn quick_add(&self) -> BoxedFilter<(impl Reply,)> {
-        let (_, _, queue) = &self.parts;
-        warp::post()
-            .and(with_auth())
-            .and(
-                warp::path("quick-add").and(
-                    warp::body::content_length_limit(MAX_BODY_SIZE)
-                        .and(warp::body::json())
-                        .and(with_queue(queue.to_owned()))
-                        .then(|body: PatchData, queue: QueueHandle| async {
-                            reply_on_result(Runner::append(body, queue).await)
-                        }),
-                ),
-            )
-            .boxed()
+        String::from("/")
     }
 }

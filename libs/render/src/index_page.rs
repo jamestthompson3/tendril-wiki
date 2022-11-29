@@ -1,10 +1,10 @@
 use crate::{
     get_template_file, render_includes, render_page_backlinks, render_page_metadata,
-    render_sidebar, GlobalBacklinks, Render,
+    render_sidebar, Render,
 };
 use async_trait::async_trait;
-use persistance::fs::{ReadPageError, config::read_config};
-use wikitext::processors::to_template;
+use persistance::fs::{config::read_config, ReadPageError};
+use wikitext::{processors::to_template, GlobalBacklinks};
 
 pub struct IndexPage {
     pub user: String,
@@ -29,11 +29,9 @@ impl IndexPage {
         let config = read_config();
         if config.general.check_for_updates {
             String::from(r#"<script src="static/update-check.js" type="module"></script>"#)
-
         } else {
             String::with_capacity(0)
         }
-
     }
     async fn render_today(&self) -> String {
         let mut content = get_template_file("content").await.unwrap();

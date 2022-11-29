@@ -11,15 +11,12 @@ bytes = "1.1.0"
 chrono = "0.4.19"
 futures = "0.3.21"
 jsonwebtoken = "8.0.1"
-lazy_static = "1.4.0"
-logging = { path = "../logging" }
 log = "0.4.16"
 wikitext = { path = "../wikitext" }
 persistance = { path = "../persistance" }
 pretty_env_logger = "0.4.0"
 render = { path = "../render" }
-regex = "1.5.5"
-search-engine = { path = "../search-engine" }
+search_engine = { path = "../search-engine" }
 serde = { version = "1.0.136", features = ["derive"] }
 task_runners = { path = "../task-runners" }
 thiserror = "1.0.30"

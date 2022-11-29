@@ -7,9 +7,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-chrono = "0.4.19"
 serde = { version = "1.0.136", features = ["derive"] }
-tendril = "0.4.3"
 thiserror = "1.0.30"
 tokio = { version = "1.17.0", features = ["fs"], default-features = false }
 urlencoding = "2.1.0"

@@ -2,11 +2,11 @@ use async_recursion::async_recursion;
 use futures::{stream, StreamExt};
 
 use render::static_site_page::StaticSitePage;
-use wikitext::parsers::{ParsedPages, TemplattedPage};
+use wikitext::{parsers::{ParsedPages, TemplattedPage}, GlobalBacklinks};
 
 use persistance::fs::path_to_data_structure;
 use persistance::fs::utils::get_config_location;
-use render::{GlobalBacklinks, Render};
+use render::Render;
 use tokio::sync::Mutex;
 use wikitext::processors::{to_template, update_templatted_pages};
 

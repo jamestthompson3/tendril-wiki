@@ -2,7 +2,7 @@ use std::{collections::HashMap, sync::Arc, time::Duration};
 
 use build::{
     build_tags_and_links, delete_from_global_store, rename_in_global_store, update_global_store,
-    update_mru_cache, Titles,
+    Titles,
 };
 use futures::{stream, StreamExt};
 use persistance::fs::{
@@ -11,18 +11,18 @@ use persistance::fs::{
     write, write_archive,
 };
 use regex::Regex;
-use render::{sanitize_html, GlobalBacklinks};
 use search_engine::{
     delete_archived_file, delete_entry_from_update, patch_search_from_archive,
     patch_search_from_update,
 };
 use task_runners::{
     archive::{compress, extract},
+    cache::update_mru_cache,
     messages::Message,
     JobQueue, Queue,
 };
 use tokio::time::sleep;
-use wikitext::PatchData;
+use wikitext::{processors::sanitize_html, GlobalBacklinks, PatchData};
 
 const NUM_JOBS: u32 = 50;
 

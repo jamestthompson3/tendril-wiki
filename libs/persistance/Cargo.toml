@@ -12,7 +12,6 @@ lazy_static = "1.4.0"
 wikitext = { path = "../wikitext" }
 serde = "1.0.136"
 serde_derive = "1.0.136"
-task_runners = { path = "../task-runners" }
 thiserror = "1.0.30"
 tokio = { version = "1.17.0", features = ["fs"], default-features = false }
 toml = "0.5.8"

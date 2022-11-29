@@ -1,30 +1,26 @@
-pub mod api;
-pub mod bookmarks_page;
+pub mod api_handler;
+pub mod bookmark_handler;
 pub mod filters;
-pub mod static_files;
-pub mod static_pages;
-pub mod tasks_page;
-pub mod wiki_page;
+pub mod static_file_handler;
+pub mod static_page_handler;
+pub mod todo_handler;
+pub mod wiki_handler;
 
-pub use self::api::*;
+pub use self::api_handler::*;
 pub use self::filters::*;
-pub use self::static_files::*;
-pub use self::static_pages::*;
-pub use self::tasks_page::*;
-pub use self::wiki_page::*;
+pub use self::static_file_handler::*;
+pub use self::static_page_handler::*;
+pub use self::todo_handler::*;
+pub use self::wiki_handler::*;
 
 use std::convert::Infallible;
-use std::sync::Arc;
 
 use render::{login_page::LoginPage, Render};
-use task_runners::JobQueue;
 use warp::body::BodyDeserializeError;
 use warp::{http::StatusCode, Rejection, Reply};
 
 // 40MB file limit
 pub const MAX_BODY_SIZE: u64 = 40_000_000;
-
-pub(crate) type QueueHandle = Arc<JobQueue>;
 
 pub async fn handle_rejection(err: Rejection) -> std::result::Result<impl Reply, Infallible> {
     let (code, message) = if err.is_not_found() {

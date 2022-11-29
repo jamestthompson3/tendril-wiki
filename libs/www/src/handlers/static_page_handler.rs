@@ -1,14 +1,12 @@
-use std::{collections::HashMap, sync::Arc};
-
 use build::Titles;
-use persistance::fs::utils::get_config_location;
 use render::{
-    all_pages::PageList, error_page::ErrorPage, file_upload_page::FileUploader,
-    help_page::HelpPage, index_page::IndexPage, opensearch_page::OpenSearchPage,
-    styles_page::StylesPage, uploaded_files_page::UploadedFilesPage, GlobalBacklinks, Render,
+    all_pages::PageList, file_upload_page::FileUploader, help_page::HelpPage,
+    index_page::IndexPage, opensearch_page::OpenSearchPage, Render,
 };
-use tokio::fs::{self, read_dir};
+use std::{collections::HashMap, sync::Arc};
+use task_runners::runners::static_page_runner::StaticPageRunner;
 use warp::{filters::BoxedFilter, Filter, Reply};
+use wikitext::GlobalBacklinks;
 
 use crate::handlers::filters::with_location;
 
@@ -16,43 +14,6 @@ use super::{
     filters::{with_auth, with_host, with_links, with_user},
     with_titles,
 };
-
-struct Runner {}
-
-impl Runner {
-    pub async fn list_files(media_location: String) -> String {
-        let mut entry_list = Vec::new();
-        let mut entries = read_dir(media_location).await.unwrap();
-        while let Ok(entry) = entries.next_entry().await {
-            if entry.is_some() {
-                let entry = entry.unwrap();
-                entry_list.push(entry.file_name().into_string().unwrap());
-            } else {
-                break;
-            }
-        }
-        let ctx = UploadedFilesPage {
-            entries: entry_list,
-        };
-        ctx.render().await
-    }
-    pub async fn render_styles() -> String {
-        let (path, _) = get_config_location();
-        let style_location = path.join("userstyles.css");
-        let body = fs::read_to_string(style_location).await.unwrap();
-        let body = body.replace('\n', "\r\n");
-        let ctx = StylesPage { body };
-        ctx.render().await
-    }
-    pub async fn show_error(params: HashMap<String, String>) -> String {
-        let msg = params
-            .get("msg")
-            .unwrap_or(&String::from("Error could not be determined."))
-            .to_string();
-        let ctx = ErrorPage { msg };
-        ctx.render().await
-    }
-}
 
 pub struct StaticPageRouter {
     user: Arc<String>,
@@ -167,7 +128,7 @@ impl StaticPageRouter {
     fn styles(&self) -> BoxedFilter<(impl Reply,)> {
         warp::path("styles")
             .and(warp::get().and(with_auth()).then(|| async {
-                let response = Runner::render_styles().await;
+                let response = StaticPageRunner::render_styles().await;
                 warp::reply::html(response)
             }))
             .boxed()
@@ -178,7 +139,7 @@ impl StaticPageRouter {
             .and(warp::path!("files" / "list"))
             .and(with_location(self.media_location.clone()))
             .then(move |location: String| async move {
-                let response = Runner::list_files(location).await;
+                let response = StaticPageRunner::list_files(location).await;
                 warp::reply::html(response)
             })
             .boxed()
@@ -188,7 +149,7 @@ impl StaticPageRouter {
             .and(warp::path("error"))
             .and(warp::query::<HashMap<String, String>>())
             .then(move |params: HashMap<String, String>| async move {
-                let response = Runner::show_error(params).await;
+                let response = StaticPageRunner::show_error(params).await;
                 warp::reply::html(response)
             })
             .boxed()

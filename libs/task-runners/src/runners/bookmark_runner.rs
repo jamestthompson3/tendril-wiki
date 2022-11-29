@@ -2,29 +2,15 @@ use std::{collections::HashMap, time::Duration};
 
 use persistance::fs::write;
 use regex::Regex;
-use render::{bookmark_page::BookmarkAddPage, sanitize_html, Render};
-use task_runners::{archive::extract, messages::Message, Queue};
 use tokio::time::timeout;
 use urlencoding::encode;
-use warp::{filters::BoxedFilter, hyper::Uri, Filter, Reply};
-use wikitext::PatchData;
+use wikitext::{processors::sanitize_html, PatchData};
 
-use super::{
-    filters::{with_auth, with_queue},
-    QueueHandle, MAX_BODY_SIZE,
-};
+use crate::{archive::extract, messages::Message, Queue, QueueHandle};
 
-lazy_static! {
-    static ref TITLE_RGX: Regex = Regex::new(r"\?|\\|/|\||:|;|>|<|,|\.|\n|\$|&").unwrap();
-}
+pub struct BookmarkRunner {}
 
-pub struct BookmarkPageRouter {
-    queue: QueueHandle,
-}
-
-struct Runner {}
-
-impl Runner {
+impl BookmarkRunner {
     async fn new_from_url(url: String, tags: Vec<String>) -> Result<(String, PatchData), ()> {
         let mut metadata = HashMap::new();
         metadata.insert(String::from("url"), url.clone());
@@ -45,7 +31,7 @@ impl Runner {
         }
     }
 
-    async fn create(form_body: HashMap<String, String>, queue: QueueHandle) -> Uri {
+    pub async fn create(form_body: HashMap<String, String>, queue: QueueHandle) -> String {
         let url = form_body.get("url").unwrap();
         let mut tags = form_body
             .get("tags")
@@ -56,7 +42,7 @@ impl Runner {
         tags.push(String::from("bookmark"));
         if let Ok((archive_body, patch)) = timeout(
             Duration::from_millis(2000),
-            Runner::new_from_url(url.clone(), tags.clone()),
+            BookmarkRunner::new_from_url(url.clone(), tags.clone()),
         )
         .await
         .unwrap()
@@ -77,15 +63,11 @@ impl Runner {
                         })
                         .await
                         .unwrap();
-                    let encoded_title = encode(&patch.title);
-                    let redirect_url = &format!("/{}", encoded_title);
-
-                    return redirect_url.parse::<Uri>().unwrap();
+                    return format!("/{}", encode(&patch.title));
                 }
                 Err(e) => {
                     eprintln!("  {}\n", e);
-                    let redir_url = format!("/error?msg={}", encode(&format!("{:?}", e)));
-                    return redir_url.parse::<Uri>().unwrap();
+                    return format!("/error?msg={}", encode(&format!("{:?}", e)));
                 }
             }
         } else {
@@ -97,42 +79,12 @@ impl Runner {
                 .await
                 .unwrap();
         }
-        let redir_uri = "/bookmark";
-        redir_uri.parse::<Uri>().unwrap()
+        String::from("/bookmark")
     }
 }
 
-impl BookmarkPageRouter {
-    pub fn new(queue: QueueHandle) -> Self {
-        Self { queue }
-    }
-    pub fn routes(&self) -> BoxedFilter<(impl Reply,)> {
-        warp::any()
-            .and(warp::path("new_bookmark"))
-            .and(self.get().or(self.post()))
-            .boxed()
-    }
-    fn get(&self) -> BoxedFilter<(impl Reply,)> {
-        warp::get()
-            .and(with_auth())
-            .then(|| async {
-                let ctx = BookmarkAddPage {};
-                let template = ctx.render().await;
-                warp::reply::html(template)
-            })
-            .boxed()
-    }
-    fn post(&self) -> BoxedFilter<(impl Reply,)> {
-        warp::post()
-            .and(with_auth())
-            .and(warp::body::content_length_limit(MAX_BODY_SIZE).and(warp::body::form()))
-            .and(with_queue(self.queue.to_owned()))
-            .then(|form: HashMap<String, String>, queue: QueueHandle| async {
-                let response = Runner::create(form, queue).await;
-                warp::redirect(response)
-            })
-            .boxed()
-    }
+lazy_static! {
+    static ref TITLE_RGX: Regex = Regex::new(r"\?|\\|/|\||:|;|>|<|,|\.|\n|\$|&").unwrap();
 }
 
 fn normalize_title(title: &str) -> String {

@@ -679,10 +679,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "logging"
-version = "1.0.0"
-
-[[package]]
 name = "mac"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -917,7 +913,6 @@ dependencies = [
  "lazy_static",
  "serde",
  "serde_derive",
- "task_runners",
  "thiserror",
  "tokio",
  "toml",
@@ -1342,11 +1337,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "search-engine"
+name = "search_engine"
 version = "1.0.0"
 dependencies = [
  "async-trait",
- "build",
  "compression",
  "futures",
  "lazy_static",
@@ -1526,15 +1520,22 @@ version = "1.0.0"
 dependencies = [
  "argon2",
  "async-trait",
+ "bytes",
  "compression",
  "directories",
- "futures",
+ "lazy_static",
+ "persistance",
  "rand_core 0.6.3",
  "readability",
+ "regex",
+ "render",
+ "search_engine",
  "serde",
  "thiserror",
+ "todo_list",
  "tokio",
  "ulid",
+ "urlencoding",
  "wikitext",
 ]
 
@@ -1570,11 +1571,10 @@ dependencies = [
  "build",
  "futures",
  "lazy_static",
- "logging",
  "persistance",
  "regex",
  "render",
- "search-engine",
+ "search_engine",
  "task_runners",
  "tokio",
  "wikitext",
@@ -1661,9 +1661,9 @@ version = "1.0.0"
 dependencies = [
  "lazy_static",
  "regex",
- "render",
  "serde",
  "thiserror",
+ "wikitext",
 ]
 
 [[package]]
@@ -2079,9 +2079,7 @@ dependencies = [
 name = "wikitext"
 version = "1.0.0"
 dependencies = [
- "chrono",
  "serde",
- "tendril 0.4.3",
  "thiserror",
  "tokio",
  "urlencoding",
@@ -2180,14 +2178,11 @@ dependencies = [
  "chrono",
  "futures",
  "jsonwebtoken",
- "lazy_static",
  "log",
- "logging",
  "persistance",
  "pretty_env_logger",
- "regex",
  "render",
- "search-engine",
+ "search_engine",
  "serde",
  "task_runners",
  "thiserror",

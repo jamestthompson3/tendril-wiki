@@ -3,13 +3,10 @@ use ::persistance::fs::utils::get_data_dir_location;
 use build::Titles;
 
 use persistance::fs::{config::General, utils::normalize_wiki_location};
-use render::GlobalBacklinks;
+use wikitext::GlobalBacklinks;
 use std::{path::PathBuf, sync::Arc};
 use task_runners::JobQueue;
 use warp::Filter;
-
-#[macro_use]
-extern crate lazy_static;
 
 pub mod handlers;
 pub mod services;
@@ -33,7 +30,7 @@ pub async fn server(config: General, parts: RefHubParts) {
     let task_router = TaskPageRouter::new();
     let static_files_router = StaticFileRouter::new(media_location.clone());
     let api_router = APIRouter::new(parts.1.clone());
-    let bookmark_router = bookmarks_page::BookmarkPageRouter::new(parts.2.clone());
+    let bookmark_router = bookmark_handler::BookmarkPageRouter::new(parts.2.clone());
     pretty_env_logger::init();
     // Order matters!!
     let log = warp::log("toplevel");

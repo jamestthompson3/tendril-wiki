@@ -7,8 +7,8 @@ use parse::{
     parse_completed, parse_context, parse_created, parse_meta, parse_priority, parse_project,
     META_RGX, PRIO_RGX,
 };
-use render::sanitize_html;
 use serde::{Deserialize, Serialize};
+use wikitext::processors::sanitize_html;
 use std::fmt::Write as _;
 use std::{collections::HashMap, str::FromStr};
 use thiserror::Error;

@@ -1,13 +1,10 @@
+use crate::services::{create_jwt, MONTH};
 use build::Titles;
-use bytes::{BufMut, Bytes};
+use bytes::BufMut;
 use futures::TryStreamExt;
-use render::{search_results_page::SearchResultsPage, Render};
-use search_engine::{semantic_search, Indicies};
-use std::{collections::HashMap, io, time::Instant};
-use thiserror::Error;
+use std::collections::HashMap;
+use task_runners::runners::api_runner::{APIRunner, FileError};
 use urlencoding::encode;
-
-use persistance::fs::{utils::get_config_location, write_media};
 use warp::{
     filters::BoxedFilter,
     http::{header, HeaderValue, Response},
@@ -16,8 +13,6 @@ use warp::{
     Filter, Reply,
 };
 
-use crate::services::{create_jwt, MONTH};
-
 use super::{
     filters::{with_auth, AuthError},
     with_titles, MAX_BODY_SIZE,
@@ -25,72 +20,6 @@ use super::{
 
 pub struct APIRouter {
     titles: Titles,
-}
-
-struct Runner {}
-
-#[derive(Error, Debug)]
-enum FileError {
-    #[error("Could not parse form body")]
-    FormBodyRead,
-    #[error("Could not write media")]
-    FileWrite,
-}
-
-impl Runner {
-    pub async fn file(form: multipart::FormData) -> Result<(), FileError> {
-        let parts: Vec<Part> = form.try_collect().await.map_err(|e| {
-            eprint!("Parsing form err: {}", e);
-            FileError::FormBodyRead
-        })?;
-        let file = parts.into_iter().find(|p| p.name() == "file").unwrap();
-        let filename = String::from(file.filename().unwrap());
-        let data = file
-            .stream()
-            .try_fold(Vec::new(), |mut vec, data| {
-                vec.put(data);
-                async { Ok(vec) }
-            })
-            .await
-            .unwrap_or_default();
-        match write_media(&filename, &data).await {
-            Ok(()) => Ok(()),
-            Err(e) => {
-                eprintln!("Could not write media: {}", e);
-                Err(FileError::FileWrite)
-            }
-        }
-    }
-
-    pub async fn process_image(filename: String, bytes: Bytes) -> Result<(), io::Error> {
-        write_media(&filename, bytes.as_ref()).await
-    }
-
-    pub async fn note_search(term: String) -> String {
-        let now = Instant::now();
-        let found_pages = semantic_search(&term).await;
-        let num_results = found_pages.len();
-        let ctx = SearchResultsPage {
-            pages: found_pages,
-            num_results,
-            time: now.elapsed(),
-        };
-        ctx.render().await
-    }
-
-    pub async fn dump_search_index() -> Indicies {
-        search_engine::dump_search_index().await
-    }
-
-    pub async fn update_styles(form_body: HashMap<String, String>) -> Result<(), io::Error> {
-        let (path, _) = get_config_location();
-        let style_location = path.join("userstyles.css");
-        let body = form_body.get("body").unwrap();
-        tokio::fs::write(style_location, body).await
-    }
-    pub fn get_version() -> String {
-        env!("CARGO_PKG_VERSION").to_owned()
-    }
 }
 
 #[allow(clippy::new_without_default)]
@@ -114,7 +43,7 @@ impl APIRouter {
         warp::get()
             .and(with_auth())
             .and(warp::path("search-idx").then(|| async {
-                let indicies = Runner::dump_search_index().await;
+                let indicies = APIRunner::dump_search_index().await;
                 warp::reply::json(&indicies)
             }))
             .boxed()
@@ -134,7 +63,7 @@ impl APIRouter {
         warp::get()
             .and(with_auth())
             .and(warp::path("version").then(|| async {
-                let version = Runner::get_version();
+                let version = APIRunner::get_version();
                 warp::reply::json(&version)
             }))
             .boxed()
@@ -148,7 +77,7 @@ impl APIRouter {
                         .and(warp::header::<String>("filename"))
                         .and(warp::body::bytes())
                         .then(|filename, bytes| async {
-                            match Runner::process_image(filename, bytes).await {
+                            match APIRunner::process_image(filename, bytes).await {
                                 Ok(()) => warp::reply::with_status("ok", StatusCode::OK),
                                 Err(e) => {
                                     eprintln!("{}", e);
@@ -168,8 +97,26 @@ impl APIRouter {
             .and(with_auth())
             .and(warp::body::content_length_limit(MAX_BODY_SIZE))
             .and(warp::filters::multipart::form())
-            .then(|form_body| async {
-                match Runner::file(form_body).await {
+            .then(|form_body: multipart::FormData| async {
+                let parts: Vec<Part> = form_body
+                    .try_collect()
+                    .await
+                    .map_err(|e| {
+                        eprint!("Parsing form err: {}", e);
+                        FileError::FormBodyRead
+                    })
+                    .unwrap();
+                let file = parts.into_iter().find(|p| p.name() == "file").unwrap();
+                let filename = String::from(file.filename().unwrap());
+                let data = file
+                    .stream()
+                    .try_fold(Vec::new(), |mut vec, data| {
+                        vec.put(data);
+                        async { Ok(vec) }
+                    })
+                    .await
+                    .unwrap_or_default();
+                match APIRunner::file(filename, data).await {
                     Ok(()) => warp::redirect(Uri::from_static("/")),
                     Err(e) => {
                         eprintln!("{}", e);
@@ -243,7 +190,7 @@ impl APIRouter {
             .and(warp::query::<HashMap<String, String>>())
             .then(|query_params: HashMap<String, String>| async move {
                 let term = query_params.get("term").unwrap();
-                let results_page = Runner::note_search(term.clone()).await;
+                let results_page = APIRunner::note_search(term.clone()).await;
                 warp::reply::html(results_page)
             })
             .boxed()
@@ -253,7 +200,7 @@ impl APIRouter {
             .and(warp::post().and(with_auth()).and(
                 warp::body::content_length_limit(MAX_BODY_SIZE).and(warp::body::form().then(
                     |form_body| async {
-                        match Runner::update_styles(form_body).await {
+                        match APIRunner::update_styles(form_body).await {
                             Ok(()) => warp::redirect(Uri::from_static("/")),
                             Err(e) => {
                                 eprintln!("{}", e);

@@ -2,27 +2,21 @@ use std::{io::ErrorKind, str::FromStr};
 
 use persistance::fs::utils::get_todo_location;
 use render::{tasks_page::TasksPage, Render};
-use serde::{Deserialize, Serialize};
+use serde::{Serialize, Deserialize};
 use todo_list::{Task, TaskUpdate, UpdateType};
 use tokio::fs;
-use warp::{filters::BoxedFilter, Filter, Reply};
-
-use super::{filters::with_auth, MAX_BODY_SIZE};
-
-pub struct TaskPageRouter {}
 
 #[derive(Debug, Serialize, Deserialize)]
-struct NewTask {
+pub struct NewTask {
     content: String,
 }
 
-// Keep all business logic here so it is easier to test and profile.
-struct Runner {}
+pub struct TodoRunner {}
 
-impl Runner {
-    async fn render() -> String {
+impl TodoRunner {
+    pub async fn render() -> String {
         let todo_file_loc = get_todo_location();
-        let todo_file = match fs::read_to_string(&todo_file_loc).await {
+        let todo_file = match tokio::fs::read_to_string(&todo_file_loc).await {
             Ok(files) => files,
             Err(e) => match e.kind() {
                 ErrorKind::NotFound => {
@@ -44,7 +38,7 @@ impl Runner {
         ctx.render().await
     }
 
-    async fn update(idx: usize, update: TaskUpdate) -> String {
+    pub async fn update(idx: usize, update: TaskUpdate) -> String {
         let file_location = get_todo_location();
         let todo_file = fs::read_to_string(&file_location).await.unwrap();
         let mut tasks = todo_file.lines().collect::<Vec<&str>>();
@@ -91,74 +85,5 @@ impl Runner {
             .await
             .unwrap();
         parsed_todo.to_html(Some(0))
-    }
-}
-
-impl TaskPageRouter {
-    pub fn new() -> Self {
-        Self {}
-    }
-    pub fn routes(&self) -> BoxedFilter<(impl Reply,)> {
-        warp::any()
-            .and(warp::path("tasks"))
-            .and(
-                self.delete()
-                    .or(self.update())
-                    .or(self.create())
-                    .or(self.get()),
-            )
-            .boxed()
-    }
-
-    fn get(&self) -> BoxedFilter<(impl Reply,)> {
-        warp::get()
-            .and(with_auth())
-            .then(|| async {
-                let template: String = Runner::render().await;
-                warp::reply::html(template)
-            })
-            .boxed()
-    }
-
-    fn create(&self) -> BoxedFilter<(impl Reply,)> {
-        warp::post()
-            .and(with_auth())
-            .and(warp::body::content_length_limit(MAX_BODY_SIZE))
-            .and(warp::body::json())
-            .then(|new_task: NewTask| async {
-                let response = Runner::create(new_task).await;
-                warp::reply::json(&response)
-            })
-            .boxed()
-    }
-
-    fn delete(&self) -> BoxedFilter<(impl Reply,)> {
-        warp::delete()
-            .and(with_auth())
-            .and(warp::path!("delete" / usize))
-            .then(|idx: usize| async move {
-                let response = Runner::delete(idx).await;
-                warp::reply::json(&response)
-            })
-            .boxed()
-    }
-
-    fn update(&self) -> BoxedFilter<(impl Reply,)> {
-        warp::path!("update" / usize)
-            .and(with_auth())
-            .and(warp::put())
-            .and(warp::body::content_length_limit(MAX_BODY_SIZE))
-            .and(warp::body::json())
-            .then(move |idx: usize, update: TaskUpdate| async move {
-                let response = Runner::update(idx, update).await;
-                warp::reply::json(&response)
-            })
-            .boxed()
-    }
-}
-
-impl Default for TaskPageRouter {
-    fn default() -> Self {
-        Self::new()
     }
 }
