@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 
-use wikitext::parsers::TemplattedPage;
+use wikitext::{parsers::TemplattedPage, processors::sanitize_html};
 
 use crate::{
     get_template_file, render_includes, render_page_backlinks, render_page_metadata,
@@ -40,10 +40,9 @@ impl<'a> Render for InjectedHTML<'a> {
         ctx = ctx
             .replace("<%= sidebar %>", &render_sidebar().await)
             .replace("<%= content %>", &content)
-            .replace("<%= body %>", &page.body)
+            .replace("<%= body %>", &sanitize_html(&page.body))
             .replace("<%= tags %>", &tag_string)
             .replace("<%= links %>", &render_page_backlinks(&backlinks))
-            .replace("<%= title %>", &page.title)
             .replace(
                 "<%= metadata %>",
                 &render_page_metadata(page.metadata.clone()),
@@ -51,5 +50,6 @@ impl<'a> Render for InjectedHTML<'a> {
         render_includes(ctx, Some(page))
             .await
             .replace("<%= nav %>", &nav)
+            .replace("<%= title %>", &page.title)
     }
 }
