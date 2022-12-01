@@ -1,11 +1,13 @@
-use std::{collections::{HashMap, BTreeMap}, sync::Arc};
+use std::{
+    collections::{BTreeMap, HashMap},
+    sync::Arc,
+};
 
 use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;
 
 pub mod parsers;
 pub mod processors;
-
 
 pub type GlobalBacklinks = Arc<Mutex<BTreeMap<String, Vec<String>>>>;
 

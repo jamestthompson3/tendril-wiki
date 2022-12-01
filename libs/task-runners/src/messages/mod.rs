@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 use wikitext::PatchData;
 
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Message {
     Patch {

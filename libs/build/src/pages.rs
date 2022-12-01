@@ -2,7 +2,10 @@ use async_recursion::async_recursion;
 use futures::{stream, StreamExt};
 
 use render::static_site_page::StaticSitePage;
-use wikitext::{parsers::{ParsedPages, TemplattedPage}, GlobalBacklinks};
+use wikitext::{
+    parsers::{ParsedPages, TemplattedPage},
+    GlobalBacklinks,
+};
 
 use persistance::fs::path_to_data_structure;
 use persistance::fs::utils::get_config_location;

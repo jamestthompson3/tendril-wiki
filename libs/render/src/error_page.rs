@@ -2,9 +2,8 @@ use crate::{get_template_file, render_includes, Render};
 use async_trait::async_trait;
 
 pub struct ErrorPage {
-    pub msg: String
+    pub msg: String,
 }
-
 
 impl ErrorPage {
     pub fn new(msg: String) -> Self {

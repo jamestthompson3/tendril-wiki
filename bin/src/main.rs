@@ -75,7 +75,12 @@ async fn main() {
         let titles = ref_hub.titles();
         build_tags_and_links(&location, links.clone(), titles.clone()).await;
         let queue = job_queue.clone();
-        tokio::spawn(process_tasks(queue, location.clone(), links.clone(), titles.clone()));
+        tokio::spawn(process_tasks(
+            queue,
+            location.clone(),
+            links.clone(),
+            titles.clone(),
+        ));
         server(config.general, (links, titles, job_queue.clone())).await
     }
 }

@@ -189,5 +189,3 @@ fn get_template_location(requested_file: &str) -> String {
     }
     data_dir.to_string_lossy().into()
 }
-
-

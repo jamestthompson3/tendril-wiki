@@ -1,10 +1,10 @@
 use indexer::notebook::{tokenize_note_meta, Notebook};
-use wikitext::parsers::Note;
 use persistance::fs::utils::{get_archive_location, get_data_dir_location};
 use searcher::{highlight_matches, search};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, path::PathBuf, usize};
 use tokenizer::tokenize;
+use wikitext::parsers::Note;
 
 /// Heavy inspiration / code taken from: https://github.com/thesephist/monocle
 use tokio::fs::{read_to_string, remove_file, write};

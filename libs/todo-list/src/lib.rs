@@ -8,10 +8,10 @@ use parse::{
     META_RGX, PRIO_RGX,
 };
 use serde::{Deserialize, Serialize};
-use wikitext::processors::sanitize_html;
 use std::fmt::Write as _;
 use std::{collections::HashMap, str::FromStr};
 use thiserror::Error;
+use wikitext::processors::sanitize_html;
 
 // use this to prevent a million if let(Some) = ...  code branches in the `patch` method
 #[derive(Debug, Serialize, Deserialize)]

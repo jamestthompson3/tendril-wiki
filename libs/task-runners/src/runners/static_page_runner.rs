@@ -1,9 +1,10 @@
 use std::collections::HashMap;
 
 use persistance::fs::utils::get_config_location;
-use render::{uploaded_files_page::UploadedFilesPage, Render, styles_page::StylesPage, error_page::ErrorPage};
-use tokio::fs::{read_dir, self};
-
+use render::{
+    error_page::ErrorPage, styles_page::StylesPage, uploaded_files_page::UploadedFilesPage, Render,
+};
+use tokio::fs::{self, read_dir};
 
 pub struct StaticPageRunner {}
 

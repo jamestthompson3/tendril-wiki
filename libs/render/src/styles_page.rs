@@ -1,4 +1,4 @@
-use crate::{get_template_file, render_includes, Render, render_sidebar};
+use crate::{get_template_file, render_includes, render_sidebar, Render};
 use async_trait::async_trait;
 
 pub struct StylesPage {

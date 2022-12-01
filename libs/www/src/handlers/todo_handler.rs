@@ -1,4 +1,4 @@
-use task_runners::runners::todo_runner::{TodoRunner, NewTask};
+use task_runners::runners::todo_runner::{NewTask, TodoRunner};
 use todo_list::TaskUpdate;
 use warp::{filters::BoxedFilter, Filter, Reply};
 

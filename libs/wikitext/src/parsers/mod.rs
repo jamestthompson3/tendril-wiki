@@ -1,10 +1,10 @@
-pub mod html;
-pub mod headers;
 pub mod block;
-pub mod templates;
 pub mod formatters;
+pub mod headers;
+pub mod html;
+pub mod templates;
 
-pub use self::html::*;
-pub use self::headers::*;
-pub use self::templates::*;
 pub use self::formatters::*;
+pub use self::headers::*;
+pub use self::html::*;
+pub use self::templates::*;
