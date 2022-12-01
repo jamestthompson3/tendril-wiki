@@ -206,7 +206,7 @@ pub async fn create_journal_entry(entry: String) -> Result<PatchData, std::io::E
     if path.exists() {
         let mut entry_file = read_to_string(&path).await.unwrap();
         write!(entry_file, "\n\n[{}] {}", now.format("%H:%M"), entry).unwrap();
-        println!("\x1b[38;5;47mdaily journal updated\x1b[0m");
+        println!("<daily journal updated>");
         fs::write(path, &entry_file).await?;
         Ok(Note::from(entry_file).into())
     } else {
@@ -224,7 +224,7 @@ created: {:?}
             now.format("%H:%M"),
             entry
         );
-        println!("\x1b[38;5;47mdaily journal updated\x1b[0m");
+        println!("<daily journal updated>");
         fs::write(get_file_path(&daily_file).unwrap(), docstring.clone()).await?;
         Ok(Note::from(docstring).into())
     }
@@ -257,10 +257,7 @@ pub async fn path_to_data_structure(path: &Path) -> Result<Note, ReadPageError> 
         }
         Err(e) => match e.kind() {
             io::ErrorKind::NotFound => Err(ReadPageError::PageNotFoundError),
-            e => {
-                println!("___ {:?}", e);
-                Err(ReadPageError::DeserializationError)
-            }
+            _ => Err(ReadPageError::DeserializationError),
         },
     }
 }

@@ -65,7 +65,6 @@ pub fn to_html(text: &str) -> Html {
         })
         .collect::<Vec<String>>()
         .join("");
-    // println!("Parsed to HTML in {:?}", now.elapsed());
 
     Html {
         body: output,

@@ -36,13 +36,11 @@ pub async fn build_search_index(location: PathBuf) {
     let archive_location = get_archive_location();
     let mut n = Notebook::default();
     let mut a = Archive::default();
-    println!("Indexing notes...");
+    println!("<indexing notes>");
     n.load(&location).await;
     a.load(&archive_location).await;
     let (search_idx, doc_idx) = index_sources(vec![n.documents, a.documents]);
-    println!("Writing persistent index...");
     write_search_index(&search_idx).await;
-    println!("Writing document files...");
     write_doc_index(doc_idx).await;
 }
 

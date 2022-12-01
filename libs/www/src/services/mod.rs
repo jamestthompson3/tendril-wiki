@@ -9,7 +9,6 @@ use crate::handlers::filters::{AuthError, Claims};
 pub const MONTH: usize = 2629800;
 
 pub fn create_jwt(username: &str, password: &str) -> Result<String, AuthError> {
-    println!("creating JWT");
     let config = read_config();
 
     if username != config.general.user {

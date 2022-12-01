@@ -85,8 +85,7 @@ impl Git {
         loop {
             let changed_file_count = self.status();
             if changed_file_count > 0 {
-                println!("│");
-                println!("└─> Syncing");
+                println!("<syncing>");
                 self.add();
                 self.commit();
                 self.pull(&branch);
@@ -109,5 +108,5 @@ pub fn git_update(wiki_location: &str, branch: String) {
     git.commit();
     git.pull(&branch);
     git.push(&branch);
-    println!("\x1b[38;5;47mchanges synced\x1b[0m");
+    println!("<changes synced>");
 }

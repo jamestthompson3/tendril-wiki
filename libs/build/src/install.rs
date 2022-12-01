@@ -77,7 +77,7 @@ pub fn install() {
 
 pub fn update() {
     prep_files();
-    println!("Files updated!");
+    println!("<files updated>");
 }
 
 pub fn migrate() {
@@ -196,7 +196,7 @@ fn bootstrap_initial_files(options: ConfigOptions) {
         dir.push("userstyles.css");
         fs::copy("./config/userstyles.css", dir).unwrap();
     } else {
-        println!("\nWiki location already exists, exiting...");
+        println!("<wiki location already exists, exiting...>");
         exit(0);
     }
 }
