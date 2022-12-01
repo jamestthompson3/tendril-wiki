@@ -12,6 +12,7 @@ pub mod messages;
 pub mod password;
 pub mod runners;
 pub mod sync;
+pub mod verify;
 
 pub use self::password::*;
 pub use self::sync::*;

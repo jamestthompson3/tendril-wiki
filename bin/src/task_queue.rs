@@ -19,6 +19,7 @@ use task_runners::{
     archive::{compress, extract},
     cache::update_mru_cache,
     messages::Message,
+    verify::verify_data_installation,
     JobQueue, Queue,
 };
 use tokio::time::sleep;
@@ -115,6 +116,9 @@ pub async fn process_tasks(
                         let compressed = compress(&body);
                         write_archive(compressed, &title).await;
                         patch_search_from_archive((title.clone(), body)).await;
+                    }
+                    Message::VerifyDataInstallation { dataset, install_location } => {
+                        verify_data_installation(dataset, install_location).await;
                     }
                 }
             })

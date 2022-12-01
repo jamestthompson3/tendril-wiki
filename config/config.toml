@@ -16,3 +16,6 @@ use_git = true
 sync_interval = 60
 # branch it will try and push to
 branch = "main"
+
+[externals]
+data = ["word_vecs"]

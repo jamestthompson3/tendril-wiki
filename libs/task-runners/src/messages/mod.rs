@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use serde::{Deserialize, Serialize};
 use wikitext::PatchData;
 
@@ -26,4 +28,8 @@ pub enum Message {
         title: String,
         body: String,
     },
+    VerifyDataInstallation {
+        dataset: Vec<String>,
+        install_location: PathBuf
+    }
 }

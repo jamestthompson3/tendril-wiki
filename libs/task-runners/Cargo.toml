@@ -22,7 +22,7 @@ search_engine = { path = "../search-engine" }
 serde = { version = "1.0.136", features = ["derive"] }
 thiserror = "1.0.30"
 todo_list = { path = "../todo-list" }
-tokio = { version = "1.17.0", features = ["time", "rt", "sync"], default-features = false }
+tokio = { version = "1.17.0", features = ["time", "rt", "sync", "process"], default-features = false }
 ulid = { version = "0.5.0", features = ["serde"] }
 urlencoding = "2.1.0"
 wikitext = { path = "../wikitext" }
