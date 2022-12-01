@@ -160,7 +160,9 @@ function processUrl(url) {
       if (pathname === "/") {
         return `<a href="${origin}">${origin}</a>`;
       }
-      return `<a href="${href}">${href}</a>`;
+      return `<a href="${href}"  ${
+        !href.includes(window.location.hostname) ? 'target="__blank"' : ""
+      }>${href}</a>`;
     }
   }
 }

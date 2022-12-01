@@ -121,7 +121,7 @@ pub fn render_page_metadata(metadata: HashMap<String, String>) -> String {
                     write!(metadata_html, "<dd>{}</dd>", val).unwrap();
                 }
                 _ => {
-                    let val = format!("<a href=\"{}\">{}</a>", value, value);
+                    let val = format!("<a href=\"{}\" target=\"__blank\">{}</a>", value, value);
                     write!(metadata_html, "<dd>{}</dd>", val).unwrap();
                 }
             }
