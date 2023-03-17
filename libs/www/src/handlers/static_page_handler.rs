@@ -1,4 +1,4 @@
-use build::Titles;
+use persistance::fs::get_note_titles;
 use render::{
     all_pages::PageList, file_upload_page::FileUploader, help_page::HelpPage,
     index_page::IndexPage, opensearch_page::OpenSearchPage, Render,
@@ -10,17 +10,13 @@ use wikitext::GlobalBacklinks;
 
 use crate::handlers::filters::with_location;
 
-use super::{
-    filters::{with_auth, with_host, with_links, with_user},
-    with_titles,
-};
+use super::filters::{with_auth, with_host, with_links, with_user};
 
 pub struct StaticPageRouter {
     user: Arc<String>,
     media_location: Arc<String>,
     host: Arc<String>,
     links: GlobalBacklinks,
-    note_titles: Titles,
 }
 
 impl StaticPageRouter {
@@ -29,14 +25,12 @@ impl StaticPageRouter {
         media_location: Arc<String>,
         host: Arc<String>,
         links: GlobalBacklinks,
-        titles: Titles,
     ) -> Self {
         Self {
             user,
             media_location,
             host,
             links,
-            note_titles: titles,
         }
     }
     pub fn routes(&self) -> BoxedFilter<(impl Reply,)> {
@@ -79,10 +73,9 @@ impl StaticPageRouter {
             .and(with_auth())
             .and(warp::path("all_pages"))
             .and(with_links(self.links.to_owned()))
-            .and(with_titles(self.note_titles.to_owned()))
-            .then(|links: GlobalBacklinks, titles: Titles| async move {
+            .then(|links: GlobalBacklinks| async move {
                 let links = links.lock().await;
-                let titles = titles.lock().await;
+                let titles = get_note_titles().unwrap();
                 let mut name_and_count: Vec<(&String, usize)> = Vec::with_capacity(titles.len());
                 for title in titles.iter() {
                     if let Some(link_list) = links.get(title) {

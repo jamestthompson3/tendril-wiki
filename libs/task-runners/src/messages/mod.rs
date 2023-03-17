@@ -30,6 +30,6 @@ pub enum Message {
     },
     VerifyDataInstallation {
         dataset: Vec<String>,
-        install_location: PathBuf
-    }
+        install_location: PathBuf,
+    },
 }

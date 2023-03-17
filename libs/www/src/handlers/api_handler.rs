@@ -1,7 +1,7 @@
 use crate::services::{create_jwt, MONTH};
-use build::Titles;
 use bytes::BufMut;
 use futures::TryStreamExt;
+use persistance::fs::get_note_titles;
 use std::collections::HashMap;
 use task_runners::runners::api_runner::{APIRunner, FileError};
 use urlencoding::encode;
@@ -15,17 +15,15 @@ use warp::{
 
 use super::{
     filters::{with_auth, AuthError},
-    with_titles, MAX_BODY_SIZE,
+    MAX_BODY_SIZE,
 };
 
-pub struct APIRouter {
-    titles: Titles,
-}
+pub struct APIRouter {}
 
 #[allow(clippy::new_without_default)]
 impl APIRouter {
-    pub fn new(titles: Titles) -> Self {
-        Self { titles }
+    pub fn new() -> Self {
+        Self {}
     }
     pub fn routes(&self) -> BoxedFilter<(impl Reply,)> {
         self.login()
@@ -52,10 +50,9 @@ impl APIRouter {
         warp::get()
             .and(with_auth())
             .and(warp::path("titles"))
-            .and(with_titles(self.titles.to_owned()))
-            .then(|titles: Titles| async move {
-                let titles = titles.lock().await;
-                warp::reply::json(&titles.clone())
+            .then(|| async move {
+                let titles = get_note_titles().unwrap();
+                warp::reply::json(&titles)
             })
             .boxed()
     }

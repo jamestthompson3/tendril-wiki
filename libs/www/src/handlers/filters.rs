@@ -1,6 +1,5 @@
 use std::{fmt::Display, sync::Arc};
 
-use build::Titles;
 use jsonwebtoken::{Algorithm, DecodingKey, Validation};
 use persistance::fs::config::read_config;
 use serde::{Deserialize, Serialize};
@@ -59,10 +58,6 @@ pub fn with_links(
     links: GlobalBacklinks,
 ) -> impl Filter<Extract = (GlobalBacklinks,), Error = Rejection> + Clone {
     warp::any().map(move || links.clone()).boxed()
-}
-
-pub fn with_titles(titles: Titles) -> impl Filter<Extract = (Titles,), Error = Rejection> + Clone {
-    warp::any().map(move || titles.clone()).boxed()
 }
 
 pub fn with_auth() -> impl Filter<Extract = (), Error = Rejection> + Clone {

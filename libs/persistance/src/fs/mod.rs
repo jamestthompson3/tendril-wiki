@@ -2,6 +2,7 @@ pub mod config;
 pub mod utils;
 
 use std::fmt::Write as _;
+use std::time::Instant;
 use std::{
     env, io,
     path::{Path, PathBuf},
@@ -260,6 +261,26 @@ pub async fn path_to_data_structure(path: &Path) -> Result<Note, ReadPageError> 
             _ => Err(ReadPageError::DeserializationError),
         },
     }
+}
+
+pub fn get_note_titles() -> Result<Vec<String>, io::Error> {
+    let now = Instant::now();
+    let entries = std::fs::read_dir(WIKI_LOCATION.clone())?;
+    let titles = entries
+        .filter_map(|entry| {
+            let entry = entry.unwrap();
+            if entry.file_type().unwrap().is_file()
+                && entry.file_name().to_str().unwrap().ends_with(".txt")
+            {
+                let fname = entry.file_name().to_str().unwrap().to_owned();
+                Some(fname.strip_suffix(".txt").unwrap().to_owned())
+            } else {
+                None
+            }
+        })
+        .collect();
+    println!("[Titles] collected titles in: {:?}", now.elapsed());
+    Ok(titles)
 }
 
 #[cfg(test)]

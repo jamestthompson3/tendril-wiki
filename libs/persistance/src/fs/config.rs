@@ -27,12 +27,12 @@ pub struct General {
 pub struct Config {
     pub general: General,
     pub sync: Sync,
-    pub externals: Option<Externals>
+    pub externals: Option<Externals>,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Externals {
-    pub data: Vec<String>
+    pub data: Vec<String>,
 }
 
 pub fn read_config() -> Config {

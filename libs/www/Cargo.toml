@@ -6,7 +6,6 @@ edition = "2021"
 
 [dependencies]
 base64 = "0.13.0"
-build = { path = "../build" }
 bytes = "1.1.0"
 chrono = "0.4.19"
 futures = "0.3.21"

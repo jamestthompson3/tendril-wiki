@@ -2,7 +2,6 @@ use std::{collections::HashMap, sync::Arc, time::Duration};
 
 use build::{
     build_tags_and_links, delete_from_global_store, rename_in_global_store, update_global_store,
-    Titles,
 };
 use futures::{stream, StreamExt};
 use persistance::fs::{
@@ -31,12 +30,7 @@ lazy_static! {
     static ref TITLE_RGX: Regex = Regex::new(r"\?|\\|/|\||:|;|>|<|,|\.|\n|\$|&").unwrap();
 }
 
-pub async fn process_tasks(
-    queue: Arc<JobQueue>,
-    location: String,
-    links: GlobalBacklinks,
-    note_titles: Titles,
-) {
+pub async fn process_tasks(queue: Arc<JobQueue>, location: String, links: GlobalBacklinks) {
     loop {
         let jobs = match queue.pull(NUM_JOBS).await {
             Ok(jobs) => jobs,
@@ -49,7 +43,7 @@ pub async fn process_tasks(
             .for_each_concurrent(NUM_JOBS as usize, |job| async {
                 match job.message {
                     Message::Rebuild => {
-                        build_tags_and_links(&location, links.clone(), note_titles.clone()).await;
+                        build_tags_and_links(&location, links.clone()).await;
                     }
                     Message::Patch { patch } => {
                         let note = patch.clone().into();
@@ -117,7 +111,10 @@ pub async fn process_tasks(
                         write_archive(compressed, &title).await;
                         patch_search_from_archive((title.clone(), body)).await;
                     }
-                    Message::VerifyDataInstallation { dataset, install_location } => {
+                    Message::VerifyDataInstallation {
+                        dataset,
+                        install_location,
+                    } => {
                         verify_data_installation(dataset, install_location).await;
                     }
                 }
