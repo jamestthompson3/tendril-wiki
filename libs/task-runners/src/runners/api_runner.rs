@@ -1,10 +1,12 @@
 use std::{collections::HashMap, io, time::Instant};
 
 use bytes::Bytes;
-use persistance::fs::{utils::get_config_location, write_media};
+use persistance::fs::{read, utils::get_config_location, write_media};
 use render::{search_results_page::SearchResultsPage, Render};
 use search_engine::{semantic_search, Indicies};
 use thiserror::Error;
+use urlencoding::decode;
+use wikitext::parsers::Note;
 
 pub struct APIRunner {}
 
@@ -24,6 +26,14 @@ impl APIRunner {
                 eprintln!("Could not write media: {}", e);
                 Err(FileError::FileWrite)
             }
+        }
+    }
+
+    pub async fn get_note(filename: String) -> Note {
+        let path = decode(&filename).unwrap();
+        match read(path.into()).await {
+            Ok(note) => note,
+            _ => panic!("Failed to read note {}", filename),
         }
     }
 

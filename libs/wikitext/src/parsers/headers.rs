@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 use std::fmt::Write as _;
 
+use serde::{Deserialize, Serialize};
+
 use crate::processors::tags::TagsArray;
 use crate::PatchData;
 
@@ -10,7 +12,7 @@ enum MetaParserState {
     End,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Deserialize, Serialize)]
 pub struct Note {
     pub header: HashMap<String, String>,
     pub content: String,

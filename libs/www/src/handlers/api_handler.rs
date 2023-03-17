@@ -32,9 +32,20 @@ impl APIRouter {
             .or(self.img())
             .or(self.files())
             .or(self.titles())
+            .or(self.json_page())
             .or(self.search_from_qs())
             .or(self.search_indicies())
             .or(self.version())
+            .boxed()
+    }
+    fn json_page(&self) -> BoxedFilter<(impl Reply,)> {
+        warp::get()
+            .and(with_auth())
+            .and(warp::path!("api" / String).then(|note: String| async {
+                let note = APIRunner::get_note(note).await;
+                warp::reply::json(&note)
+            }))
+            .with(warp::cors().allow_any_origin())
             .boxed()
     }
     fn search_indicies(&self) -> BoxedFilter<(impl Reply,)> {
