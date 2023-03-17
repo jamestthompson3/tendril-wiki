@@ -25,12 +25,14 @@ impl StaticFileRouter {
                 warp::reply::with_header(res, "service-worker-allowed", "/")
             }))
             .or(warp::path("config").and(warp::fs::file(user_stylesheet)))
+            .with(warp::cors().allow_any_origin())
             .boxed()
     }
     fn files(&self) -> BoxedFilter<(impl Reply,)> {
         let media_location = self.media_location.clone();
         warp::path("files")
             .and(warp::fs::dir(PathBuf::from(media_location.as_str())))
+            .with(warp::cors().allow_any_origin())
             .boxed()
     }
 }

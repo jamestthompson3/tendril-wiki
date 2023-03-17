@@ -68,6 +68,19 @@ function parseQuotes(text) {
   }
 }
 
+function parseIndents(text) {
+  if (text.startsWith("\t")) {
+    let indent = 0;
+    const parts = text.split("\t");
+    while (parts[indent] === "") {
+      indent++;
+    }
+    const content = parts.slice(indent).join("");
+    return `<p data-indent="${indent}">${content}</p>`;
+  }
+  return text;
+}
+
 function parseURLs(text) {
   for (const word of text.split(" ")) {
     const punctuationRemoved = word.replace(PUNCT_REGEXP, "");
@@ -92,7 +105,9 @@ export function textToHtml(text) {
   return text
     .split("\n")
     .map((line) =>
-      parseQuotes(parseHeadings(parseEmails(parseURLs(parseWikiLinks(line)))))
+      parseIndents(
+        parseQuotes(parseHeadings(parseEmails(parseURLs(parseWikiLinks(line)))))
+      )
     )
     .join("<br>");
 }
