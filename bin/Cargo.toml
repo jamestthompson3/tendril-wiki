@@ -1,6 +1,6 @@
 [package]
 name = "tendril"
-version = "1.0.5"
+version = "1.0.6"
 authors = ["taylor <taylor@teukka.tech>"]
 edition = "2021"
 
