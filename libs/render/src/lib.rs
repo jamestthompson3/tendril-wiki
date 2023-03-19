@@ -105,28 +105,37 @@ pub fn render_page_metadata(metadata: HashMap<String, String>) -> String {
         write!(metadata_html, "<dt>{}</dt>", key).unwrap();
         // TODO: Add "created" date here as well
         // TODO: Modify dates to be compliant with DT parsing
-        if key == "modified" || key == "created" {
-            if let Ok(val) = value.parse::<DateTime<FixedOffset>>() {
-                let val = val.format("%Y-%m-%d %H:%M").to_string();
-                write!(metadata_html, "<dd>{}</dd>", val).unwrap();
-            } else {
-                write!(metadata_html, "<dd>{}</dd>", value).unwrap();
+        match key.as_str() {
+            "modified" | "created" => {
+                if let Ok(val) = value.parse::<DateTime<FixedOffset>>() {
+                    let val = val.format("%Y-%m-%d %H:%M").to_string();
+                    write!(metadata_html, "<dd>{}</dd>", val).unwrap();
+                } else {
+                    write!(metadata_html, "<dd>{}</dd>", value).unwrap();
+                }
             }
-            continue;
-        }
-        if value.starts_with("http") || value.starts_with("file://") {
-            match key.as_str() {
-                "cover" => {
+            "cover" => {
+                if value.starts_with("http") || value.starts_with("file://") {
                     let val = format!("<img src=\"{}\">", value);
                     write!(metadata_html, "<dd>{}</dd>", val).unwrap();
                 }
-                _ => {
-                    let val = format!("<a href=\"{}\" target=\"__blank\">{}</a>", value, value);
+            }
+            "isbn" => {
+                write!(
+                    metadata_html,
+                    "<dd>{}<br><img src=\"https://covers.openlibrary.org/b/isbn/{}-M.jpg\"></dd>",
+                    &value, value
+                )
+                .unwrap();
+            }
+            _ => {
+                if value.starts_with("http") || value.starts_with("file://") {
+                    let val = format!("<a href=\"{}\">{}</a>", value, value);
                     write!(metadata_html, "<dd>{}</dd>", val).unwrap();
+                } else {
+                    write!(metadata_html, "<dd>{}</dd>", &value).unwrap();
                 }
             }
-        } else {
-            write!(metadata_html, "<dd>{}</dd>", &value).unwrap();
         }
     }
     metadata_html
