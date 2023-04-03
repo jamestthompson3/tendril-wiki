@@ -98,7 +98,9 @@ export class BlockEditor extends HTMLEditor {
           );
           const indentation = this.indent;
           this.addBlock(indentation);
-          this.setupViewer(this.element);
+          if (this.element.type === "TEXTAREA") {
+            this.setupViewer(this.element);
+          }
           break;
         }
         break;
