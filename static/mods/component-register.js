@@ -1,4 +1,5 @@
 import { updateMRU } from "./dom.js";
+import { htmlToText } from "./parsing.js";
 import { StateMachine } from "./utils.js";
 
 const stateChart = {
@@ -87,8 +88,15 @@ export class ComponentRegister {
     }
     // TODO: Implement patching API?
     const title = this.components.title.content;
-    const body = this.getType("block")
-      .map((b) => b.content)
+    const body = Array.from(document.querySelectorAll(".text-block"))
+      .map((block) => {
+        let content = htmlToText(block);
+        const indentLevel = parseInt(block.dataset.indent);
+        if (indentLevel > 0) {
+          content = `${"\t".repeat(indentLevel)}${content}`;
+        }
+        return content;
+      })
       .join("\n");
     const tags = this.components.tag.content;
     const metadata = this.components.metadata.content;
