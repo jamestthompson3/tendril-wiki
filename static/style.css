@@ -237,7 +237,7 @@ aside {
   justify-content: space-between;
   background-color: var(--bg-darker);
   border-radius: var(--rad) var(--rad) 0px 0px;
-  overflow-y: scroll;
+  overflow-y: auto;
   box-shadow: var(--shadow);
 }
 
