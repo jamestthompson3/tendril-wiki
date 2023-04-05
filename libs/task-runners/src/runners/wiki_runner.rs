@@ -4,7 +4,7 @@ use std::fmt::Write as _;
 use persistance::fs::{create_journal_entry, read, write, ReadPageError, WriteWikiError};
 use render::{injected_html::InjectedHTML, new_page::NewPage, wiki_page::WikiPage, Render};
 use urlencoding::decode;
-use wikitext::{parsers::Note, processors::to_template, GlobalBacklinks, PatchData};
+use wikitext::{parsers::Note, GlobalBacklinks, PatchData};
 
 use crate::{cache::purge_mru_cache, messages::Message, Queue, QueueHandle};
 
@@ -24,7 +24,7 @@ impl WikiRunner {
     }
 
     async fn note_to_html(&self, note: Note, reflinks: GlobalBacklinks) -> String {
-        let templatted = to_template(&note);
+        let templatted = note.to_template();
         let link_vals = reflinks.lock().await;
         let links = link_vals.get(&templatted.page.title);
         match note.header.get("content-type") {

@@ -11,7 +11,7 @@ use persistance::fs::path_to_data_structure;
 use persistance::fs::utils::get_config_location;
 use render::Render;
 use tokio::sync::Mutex;
-use wikitext::processors::{to_template, update_templatted_pages};
+use wikitext::processors::update_templatted_pages;
 
 use std::{
     collections::{BTreeMap, HashMap},
@@ -80,7 +80,7 @@ impl Default for Builder {
 
 async fn process_file(path: PathBuf, backlinks: GlobalBacklinks, pages: ParsedPages) {
     let note = path_to_data_structure(&path).await.unwrap();
-    let templatted = to_template(&note);
+    let templatted = note.to_template();
     build_global_store(
         &templatted.page.title,
         &templatted.outlinks,

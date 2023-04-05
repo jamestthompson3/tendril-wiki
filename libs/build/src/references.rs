@@ -4,7 +4,7 @@ use async_recursion::async_recursion;
 use futures::{stream, StreamExt};
 use persistance::fs::{path_to_data_structure, utils::get_file_path};
 use tokio::{fs, sync::Mutex};
-use wikitext::{parsers::Note, processors::to_template, GlobalBacklinks};
+use wikitext::{parsers::Note, GlobalBacklinks};
 
 #[derive(Debug)]
 pub struct RefHub {
@@ -52,7 +52,7 @@ pub async fn parse_entries(entrypoint: PathBuf, backlinks: GlobalBacklinks) {
 
 async fn process_file(path: PathBuf, backlinks: GlobalBacklinks) {
     let note = path_to_data_structure(&path).await.unwrap();
-    let templatted = to_template(&note);
+    let templatted = note.to_template();
     build_global_store(
         &templatted.page.title,
         &templatted.outlinks,
@@ -109,7 +109,7 @@ pub async fn build_tags_and_links(wiki_location: &str, links: GlobalBacklinks) {
 
 pub async fn update_global_store(current_title: &str, note: &Note, links: GlobalBacklinks) {
     let mut links = links.lock().await;
-    let templatted = to_template(note);
+    let templatted = note.to_template();
     for link in templatted.outlinks {
         match links.get_mut(&link) {
             Some(exists) => {
@@ -142,7 +142,7 @@ pub async fn update_global_store(current_title: &str, note: &Note, links: Global
 
 pub async fn delete_from_global_store(title: &str, note: &Note, links: GlobalBacklinks) {
     let mut links = links.lock().await;
-    let templatted = to_template(note);
+    let templatted = note.to_template();
     for link in templatted.outlinks {
         if let Some(exists) = links.get(&link) {
             if exists.contains(&String::from(title)) {

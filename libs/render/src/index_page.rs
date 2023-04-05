@@ -4,7 +4,7 @@ use crate::{
 };
 use async_trait::async_trait;
 use persistance::fs::{config::read_config, ReadPageError};
-use wikitext::{processors::to_template, GlobalBacklinks};
+use wikitext::GlobalBacklinks;
 
 pub struct IndexPage {
     pub user: String,
@@ -37,7 +37,7 @@ impl IndexPage {
         let mut content = get_template_file("content").await.unwrap();
         match persistance::fs::read(self.today.clone()).await {
             Ok(note) => {
-                let templatted = to_template(&note);
+                let templatted = note.to_template();
                 let link_vals = self.links.lock().await;
                 let mut links = match link_vals.get(&templatted.page.title) {
                     Some(links) => links.to_owned(),
