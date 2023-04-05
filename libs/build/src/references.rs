@@ -52,12 +52,12 @@ pub async fn parse_entries(entrypoint: PathBuf, backlinks: GlobalBacklinks) {
 
 async fn process_file(path: PathBuf, backlinks: GlobalBacklinks) {
     let note = path_to_data_structure(&path).await.unwrap();
-    let templatted = note.to_template();
+    let structured = note.to_structured();
     build_global_store(
-        &templatted.page.title,
-        &templatted.outlinks,
+        &structured.title,
+        &structured.outlinks,
         backlinks,
-        &templatted.page.tags,
+        &structured.tags,
     )
     .await;
 }

@@ -3,7 +3,7 @@ use std::{fs::read_dir, path::Path};
 use async_trait::async_trait;
 use futures::{stream, StreamExt};
 use persistance::fs::path_to_data_structure;
-use wikitext::parsers::{to_html, Note};
+use wikitext::parsers::Note;
 
 use crate::{tokenizer::tokenize, Doc};
 
@@ -68,20 +68,10 @@ pub(crate) fn tokenize_note_meta(content: &Note) -> Doc {
             println!("Failed to tokenize {} in {:?}", token, tokenized_entry);
         }
     }
-    let doc_content = match content.header.get("content-type") {
-        Some(content_type) => {
-            if content_type == "html" {
-                content.content.clone()
-            } else {
-                to_html(&content.content).body
-            }
-        }
-        None => to_html(&content.content).body,
-    };
 
     Doc {
         id: title.unwrap().to_owned(),
         tokens: tokenized_entry,
-        content: doc_content,
+        content: content.content.to_owned(),
     }
 }

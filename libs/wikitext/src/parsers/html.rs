@@ -72,6 +72,25 @@ pub fn to_html(text: &str) -> Html {
     }
 }
 
+// TODO: Move this somewhere more logical...
+pub fn get_outlinks(text: &str) -> Vec<String> {
+    let mut outlinks = Vec::new();
+    for line in text.lines() {
+        let blocks = parse_block(line);
+        for block in blocks {
+            if let BlockElement::PageLink(link) = block {
+                let aliases = link.split('|').collect::<Vec<&str>>();
+                if aliases.len() > 1 {
+                    outlinks.push(aliases[1].to_string());
+                } else {
+                    outlinks.push(aliases[0].to_string());
+                }
+            }
+        }
+    }
+    outlinks
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

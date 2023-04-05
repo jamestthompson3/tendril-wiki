@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use crate::processors::tags::TagsArray;
 use crate::PatchData;
 
-use super::{ParsedTemplate, TemplattedPage, Html, to_html};
+use super::{get_outlinks, to_html, Html, ParsedTemplate, TemplattedPage};
 
 #[derive(Copy, Clone, PartialEq, Debug)]
 enum MetaParserState {
@@ -20,7 +20,27 @@ pub struct Note {
     pub content: String,
 }
 
+#[derive(Debug, Default, Deserialize, Serialize)]
+pub struct StructuredNote {
+    pub title: String,
+    pub outlinks: Vec<String>,
+    pub tags: Vec<String>,
+}
+
 impl Note {
+    fn parse_title(&self) -> String {
+        let default_title = "Untitled".to_string();
+        self.header
+            .get("title")
+            .unwrap_or(&default_title)
+            .to_owned()
+    }
+    fn parse_tags(&self) -> Vec<String> {
+        match self.header.get("tags") {
+            None => Vec::with_capacity(0),
+            Some(raw_tags) => TagsArray::new(raw_tags).values,
+        }
+    }
     pub fn to_template(&self) -> ParsedTemplate {
         let content_type = if let Some(content_type) = self.header.get("content-type") {
             content_type.as_str()
@@ -35,16 +55,8 @@ impl Note {
         } else {
             to_html(&self.content)
         };
-        let default_title = "Untitled".to_string();
-        let title = self
-            .header
-            .get("title")
-            .unwrap_or(&default_title)
-            .to_owned();
-        let tags = match self.header.get("tags") {
-            None => Vec::with_capacity(0),
-            Some(raw_tags) => TagsArray::new(raw_tags).values,
-        };
+        let title = self.parse_title();
+        let tags = self.parse_tags();
         let mut rendered_metadata = self.header.to_owned();
         // We're already showing this, so no need to dump it in the table...
         rendered_metadata.remove("title");
@@ -71,6 +83,13 @@ impl Note {
         ParsedTemplate {
             outlinks: html.outlinks,
             page,
+        }
+    }
+    pub fn to_structured(&self) -> StructuredNote {
+        StructuredNote {
+            title: self.parse_title(),
+            outlinks: get_outlinks(&self.content),
+            tags: self.parse_tags(),
         }
     }
 }
