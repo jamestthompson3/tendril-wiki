@@ -59,7 +59,10 @@ async fn main() {
         println!("Built static site in: {}ms", now.elapsed().as_millis());
     } else {
         let job_queue = Arc::new(JobQueue::default());
-
+        let now = Instant::now();
+        let links = build_links(&location).await;
+        build_search_index(&location);
+        println!("<indexing took: {:?}>", now.elapsed());
         if config.sync.use_git {
             sync(
                 &location,
@@ -69,10 +72,6 @@ async fn main() {
             )
             .await;
         }
-        let now = Instant::now();
-        build_search_index(location.clone().into()).await;
-        let links = build_links(&location).await;
-        println!("<indexing took: {:?}>", now.elapsed());
         let links = Arc::new(Mutex::new(links));
         let queue = job_queue.clone();
         tokio::spawn(process_tasks(queue, location.clone(), links.clone()));

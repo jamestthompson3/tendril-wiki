@@ -32,12 +32,12 @@ pub struct Indicies {
     doc_idx: DocIdx,
 }
 
-pub fn build_search_index(location: PathBuf) {
+pub fn build_search_index(location: &str) {
     let archive_location = get_archive_location();
     let mut n = Notebook::default();
     let mut a = Archive::default();
     println!("<indexing notes>");
-    n.load(&location);
+    n.load(&PathBuf::from(location));
     a.load(&archive_location);
     let (search_idx, doc_idx) = index_sources(vec![n.documents, a.documents]);
     write_search_index(&search_idx);
