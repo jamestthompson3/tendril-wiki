@@ -8,6 +8,7 @@ use thiserror::Error;
 use warp::{hyper::StatusCode, reply::WithStatus, Filter, Rejection};
 use wikitext::GlobalBacklinks;
 
+
 #[derive(Error, Debug)]
 pub enum AuthError {
     #[error("missing authentication")]

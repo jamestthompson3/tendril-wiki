@@ -4,16 +4,16 @@ use wikitext::{parsers::TemplattedPage, processors::sanitize_html};
 
 use crate::{
     get_template_file, render_includes, render_page_backlinks, render_page_metadata,
-    render_sidebar, Render,
+    render_sidebar, PageRenderLinks, Render,
 };
 
 pub struct InjectedHTML<'a> {
     page: &'a TemplattedPage,
-    links: Option<&'a Vec<String>>,
+    links: PageRenderLinks<'a>,
 }
 
 impl<'a> InjectedHTML<'a> {
-    pub fn new(page: &'a TemplattedPage, links: Option<&'a Vec<String>>) -> Self {
+    pub fn new(page: &'a TemplattedPage, links: PageRenderLinks<'a>) -> Self {
         Self { page, links }
     }
 }
@@ -42,7 +42,7 @@ impl<'a> Render for InjectedHTML<'a> {
             .replace("<%= content %>", &content)
             .replace("<%= body %>", &sanitize_html(&page.body))
             .replace("<%= tags %>", &tag_string)
-            .replace("<%= links %>", &render_page_backlinks(&backlinks))
+            .replace("<%= links %>", &render_page_backlinks(backlinks))
             .replace(
                 "<%= metadata %>",
                 &render_page_metadata(page.metadata.clone()),

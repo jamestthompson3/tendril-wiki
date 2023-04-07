@@ -34,6 +34,8 @@ pub enum CompileState {
     Dynamic,
 }
 
+pub type PageRenderLinks<'a> = Option<&'a Vec<String>>;
+
 #[async_trait]
 pub trait Render {
     async fn render(&self) -> String;
@@ -164,7 +166,7 @@ fn get_template_location(requested_file: &str) -> String {
     format!("templates/{}.html", requested_file)
 }
 
-pub fn render_page_backlinks(links: &[String]) -> String {
+pub fn render_page_backlinks(links: Vec<String>) -> String {
     if !links.is_empty() {
         let backlinks_string = links
             .iter()

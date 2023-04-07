@@ -1,7 +1,7 @@
 use super::block::{parse_block, BlockElement};
 
-pub struct Html {
-    pub outlinks: Vec<String>,
+pub struct Html<'a> {
+    pub outlinks: Vec<&'a str>,
     pub body: String,
 }
 
@@ -48,9 +48,9 @@ pub fn to_html(text: &str) -> Html {
                     BlockElement::PageLink(outlink) => {
                         let aliases = outlink.split('|').collect::<Vec<&str>>();
                         if aliases.len() > 1 {
-                            outlinks.push(aliases[1].to_string());
+                            outlinks.push(aliases[1]);
                         } else {
-                            outlinks.push(aliases[0].to_string());
+                            outlinks.push(aliases[0]);
                         }
                     }
                     BlockElement::IndentationLevel(level) => {
@@ -73,7 +73,7 @@ pub fn to_html(text: &str) -> Html {
 }
 
 // TODO: Move this somewhere more logical...
-pub fn get_outlinks(text: &str) -> Vec<String> {
+pub fn get_outlinks(text: &str) -> Vec<&str> {
     let mut outlinks = Vec::new();
     for line in text.lines() {
         let blocks = parse_block(line);
@@ -81,9 +81,9 @@ pub fn get_outlinks(text: &str) -> Vec<String> {
             if let BlockElement::PageLink(link) = block {
                 let aliases = link.split('|').collect::<Vec<&str>>();
                 if aliases.len() > 1 {
-                    outlinks.push(aliases[1].to_string());
+                    outlinks.push(aliases[1]);
                 } else {
-                    outlinks.push(aliases[0].to_string());
+                    outlinks.push(aliases[0]);
                 }
             }
         }
@@ -98,7 +98,7 @@ mod tests {
     fn parses_wikitext_to_html_with_wikilinks() {
         let test_string = "[[Some Page]]";
         let test_html = Html {
-            outlinks: vec!["Some Page".into()],
+            outlinks: vec!["Some Page"],
             body: r#"<div data-indent="0" class="text-block"><a href="/Some%20Page">Some Page</a></div>"#.into(),
         };
         let parsed = to_html(test_string);
@@ -107,7 +107,7 @@ mod tests {
 
         let test_string = "# Title\n[[Some Page]]. Another thing\n * Hi\n * List\n * Output";
         let test_html = Html {
-            outlinks: vec!["Some Page".into()],
+            outlinks: vec!["Some Page"],
             body: r#"<div data-indent="0" class="text-block"><h2>Title</h2></div><div data-indent="0" class="text-block"><a href="/Some%20Page">Some Page</a>. Another thing</div><div data-indent="0" class="text-block"> * Hi</div><div data-indent="0" class="text-block"> * List</div><div data-indent="0" class="text-block"> * Output</div>"#.into()
         };
         let parsed = to_html(test_string);

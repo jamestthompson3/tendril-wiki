@@ -9,7 +9,8 @@ use tokio::sync::Mutex;
 pub mod parsers;
 pub mod processors;
 
-pub type GlobalBacklinks = Arc<Mutex<BTreeMap<String, Vec<String>>>>;
+pub type GlobalBacklinks = Arc<Mutex<Backlinks>>;
+pub type Backlinks = BTreeMap<String, Vec<String>>;
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct PatchData {

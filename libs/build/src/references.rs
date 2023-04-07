@@ -1,65 +1,39 @@
-use std::{collections::BTreeMap, fs::read_dir, io, path::PathBuf, sync::Arc};
+use std::{collections::BTreeMap, io, path::PathBuf};
 
 use async_recursion::async_recursion;
 use futures::{stream, StreamExt};
 use persistance::fs::{path_to_data_structure, utils::get_file_path};
-use tokio::{fs, sync::Mutex};
-use wikitext::{parsers::Note, GlobalBacklinks};
-
-#[derive(Debug)]
-pub struct RefHub {
-    pub backlinks: GlobalBacklinks,
-}
-
-impl RefHub {
-    pub fn new() -> Self {
-        RefHub {
-            backlinks: Arc::new(Mutex::new(BTreeMap::new())),
-        }
-    }
-    pub fn links(&self) -> GlobalBacklinks {
-        Arc::clone(&self.backlinks)
-    }
-}
-
-impl Default for RefHub {
-    fn default() -> Self {
-        RefHub::new()
-    }
-}
+use tokio::fs::{self, read_dir};
+use wikitext::{parsers::Note, Backlinks, GlobalBacklinks};
 
 // TODO: Reduce these duplicated functions, think of a better abstraction
 #[async_recursion]
-pub async fn parse_entries(entrypoint: PathBuf, backlinks: GlobalBacklinks) {
-    let entries = read_dir(entrypoint).unwrap();
-    let pipeline = stream::iter(entries).for_each(|entry| async {
-        let links = Arc::clone(&backlinks);
-        let entry = entry.unwrap();
-        if entry.file_type().unwrap().is_file()
+pub async fn parse_entries(entrypoint: PathBuf) -> Vec<(String, Vec<String>)> {
+    let mut entries = read_dir(entrypoint).await.unwrap();
+    let mut result = Vec::new();
+    while let Some(entry) = entries.next_entry().await.unwrap() {
+        if entry.file_type().await.unwrap().is_file()
             && entry.file_name().to_str().unwrap().ends_with(".txt")
         {
-            tokio::spawn(process_file(entry.path(), links))
-                .await
-                .unwrap();
-        } else if entry.file_type().unwrap().is_dir()
+            let note = path_to_data_structure(&entry.path()).await.unwrap();
+            let structured = note.to_structured();
+            result.push(structured.as_owned());
+        } else if entry.file_type().await.unwrap().is_dir()
             && !entry.path().to_str().unwrap().contains(".git")
         {
-            parse_entries(entry.path(), links).await;
+            let results = parse_entries(entry.path()).await;
+            result.extend(results);
         }
-    });
-    pipeline.await;
+    }
+    result
 }
 
-async fn process_file(path: PathBuf, backlinks: GlobalBacklinks) {
-    let note = path_to_data_structure(&path).await.unwrap();
-    let structured = note.to_structured();
-    build_global_store(
-        &structured.title,
-        &structured.outlinks,
-        backlinks,
-        &structured.tags,
-    )
-    .await;
+async fn create_global_store(notes: Vec<(String, Vec<String>)>) -> Backlinks {
+    let mut backlinks = BTreeMap::new();
+    for note in notes {
+        add_to_global_store(&note.0, &note.1, &mut backlinks).await;
+    }
+    backlinks
 }
 
 /// Updates a BTreeMap for tags and backlinks with each tag or link to a given note title acting as a key.
@@ -72,71 +46,32 @@ async fn process_file(path: PathBuf, backlinks: GlobalBacklinks) {
 /// the map when we render a specific page since each value for that key will be the title of a
 /// page that has a link to the currently viewed entry.
 ///
-pub async fn build_global_store(
-    title: &str,
-    outlinks: &[String],
-    backlinks: GlobalBacklinks,
-    tags: &[String],
+pub async fn add_to_global_store<'a>(
+    title: &'a str,
+    links_and_tags: &[String],
+    backlinks: &mut Backlinks,
 ) {
-    let mut global_backlinks = backlinks.lock().await;
-    for link in outlinks.iter() {
-        match global_backlinks.get_mut(link) {
-            Some(links) => {
-                links.push(title.to_owned());
-            }
-            None => {
-                global_backlinks.insert(link.to_string(), vec![title.to_owned()]);
-            }
-        }
-    }
-
-    for tag in tags.iter() {
-        match global_backlinks.get_mut(tag) {
-            Some(tags) => {
-                tags.push(title.to_owned());
-            }
-            None => {
-                global_backlinks.insert(tag.to_string(), vec![title.to_owned()]);
-            }
-        }
+    for link in links_and_tags.iter() {
+        backlinks
+            .entry(title.to_string())
+            .or_default()
+            .push(link.to_string());
     }
 }
 
-pub async fn build_tags_and_links(wiki_location: &str, links: GlobalBacklinks) {
-    links.lock().await.clear();
-    parse_entries(PathBuf::from(wiki_location), links.clone()).await;
+pub async fn build_links(wiki_location: &str) -> Backlinks {
+    let entries = parse_entries(PathBuf::from(wiki_location)).await;
+    create_global_store(entries).await
 }
 
 pub async fn update_global_store(current_title: &str, note: &Note, links: GlobalBacklinks) {
     let mut links = links.lock().await;
-    let templatted = note.to_template();
-    for link in templatted.outlinks {
-        match links.get_mut(&link) {
-            Some(exists) => {
-                if exists.contains(&String::from(current_title)) {
-                    continue;
-                } else {
-                    exists.push(current_title.into())
-                }
-            }
-            None => {
-                links.insert(link, vec![current_title.into()]);
-            }
-        }
-    }
-    for tag in templatted.page.tags {
-        match links.get_mut(&tag) {
-            Some(exists) => {
-                if exists.contains(&String::from(current_title)) {
-                    continue;
-                } else {
-                    exists.push(current_title.into())
-                }
-            }
-            None => {
-                links.insert(tag, vec![current_title.into()]);
-            }
-        }
+    let structured = note.to_structured();
+    for link in structured.links_and_tags.iter() {
+        links
+            .entry(current_title.to_string())
+            .or_default()
+            .push(link.to_string());
     }
 }
 
@@ -144,25 +79,27 @@ pub async fn delete_from_global_store(title: &str, note: &Note, links: GlobalBac
     let mut links = links.lock().await;
     let templatted = note.to_template();
     for link in templatted.outlinks {
+        let link = link.to_string();
         if let Some(exists) = links.get(&link) {
-            if exists.contains(&String::from(title)) {
+            if exists.contains(&title.to_string()) {
                 let filtered = exists
                     .iter()
                     .filter(|&note| note != title)
-                    .map(|n| n.to_owned())
-                    .collect::<Vec<String>>();
+                    .map(|n| n.into())
+                    .collect();
                 links.insert(link, filtered);
             }
         }
     }
     for tag in templatted.page.tags {
+        let tag = tag.to_string();
         if let Some(exists) = links.get(&tag) {
             if exists.contains(&String::from(title)) {
                 let filtered = exists
                     .iter()
                     .filter(|&note| note != title)
                     .map(|n| n.to_owned())
-                    .collect::<Vec<String>>();
+                    .collect();
                 links.insert(tag, filtered);
             }
         }
@@ -201,7 +138,9 @@ pub async fn rename_in_global_store(
 
 #[cfg(test)]
 mod tests {
+    use std::sync::Arc;
     use std::{env, fs};
+    use tokio::sync::Mutex;
 
     use persistance::fs::utils::get_file_path;
 

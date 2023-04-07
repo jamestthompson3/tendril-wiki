@@ -1,9 +1,9 @@
-pub struct TagsArray {
-    pub values: Vec<String>,
+pub struct TagsArray<'a> {
+    pub values: Vec<&'a str>,
 }
 
-impl TagsArray {
-    pub fn new(tag_str: &str) -> Self {
+impl<'a> TagsArray<'a> {
+    pub fn new(tag_str: &'a str) -> Self {
         if tag_str.find('[').is_some() {
             let split_tags = tag_str
                 .strip_prefix('[')
@@ -13,16 +13,11 @@ impl TagsArray {
                 .split(',')
                 .filter(|s| !s.is_empty() && s != &" ") // maybe use filter_map here?
                 .map(|s| s.trim())
-                .map(|s| s.to_owned())
                 .collect();
             TagsArray { values: split_tags }
         } else {
             TagsArray {
-                values: tag_str
-                    .split(' ')
-                    .filter(|s| !s.is_empty())
-                    .map(|s| s.to_owned())
-                    .collect(),
+                values: tag_str.split(' ').filter(|s| !s.is_empty()).collect(),
             }
         }
     }
@@ -42,17 +37,24 @@ impl TagsArray {
     }
 }
 
-impl From<String> for TagsArray {
-    fn from(tag_string: String) -> Self {
-        TagsArray::new(&tag_string)
-    }
+pub fn tag_string_from_vec(vec: Vec<String>) -> String {
+        let mut tag_string = vec.join(",");
+        tag_string.push(']');
+        tag_string.insert(0, '[');
+        tag_string
 }
 
-impl From<Vec<String>> for TagsArray {
-    fn from(tag_vec: Vec<String>) -> Self {
-        TagsArray { values: tag_vec }
-    }
-}
+// impl<'a> From<String> for TagsArray<'a> {
+//     fn from(tag_string: String) -> Self {
+//         TagsArray::new(&tag_string)
+//     }
+// }
+
+// impl From<Vec<String>> for TagsArray<'_> {
+//     fn from(tag_vec: Vec<String>) -> Self {
+//         TagsArray { values: tag_vec }
+//     }
+// }
 
 #[cfg(test)]
 mod tests {

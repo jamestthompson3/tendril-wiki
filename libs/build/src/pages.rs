@@ -20,7 +20,7 @@ use std::{
     sync::Arc,
 };
 
-use crate::build_global_store;
+use crate::add_to_global_store;
 
 /// ## TODO:
 /// figure out how to encapsulate parse_entries and process_file better
@@ -78,16 +78,12 @@ impl Default for Builder {
     }
 }
 
-async fn process_file(path: PathBuf, backlinks: GlobalBacklinks, pages: ParsedPages) {
+async fn process_file(path: PathBuf, backlinks: &mut GlobalBacklinks, pages: ParsedPages) {
     let note = path_to_data_structure(&path).await.unwrap();
+    let structured = note.to_structured().as_owned();
+    let mut backlinks = backlinks.lock().await;
+    add_to_global_store(&structured.0, &structured.1, &mut backlinks).await;
     let templatted = note.to_template();
-    build_global_store(
-        &templatted.page.title,
-        &templatted.outlinks,
-        backlinks,
-        &templatted.page.tags,
-    )
-    .await;
     update_templatted_pages(templatted.page, pages).await;
 }
 
@@ -99,14 +95,14 @@ async fn parse_entries(
 ) {
     let entries = read_dir(entrypoint).unwrap();
     let pipeline = stream::iter(entries).for_each(|entry| async {
-        let links = Arc::clone(&backlinks);
+        let mut links = Arc::clone(&backlinks);
         let pages = Arc::clone(&rendered_pages);
         let entry = entry.unwrap();
         let file_name = entry.file_name();
         let file_name = file_name.to_str().unwrap();
         if entry.file_type().unwrap().is_file() && file_name.ends_with(".txt") {
             tokio::spawn(async move {
-                process_file(entry.path(), links, pages).await;
+                process_file(entry.path(), &mut links, pages).await;
             })
             .await
             .unwrap();

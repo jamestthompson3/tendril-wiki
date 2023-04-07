@@ -3,7 +3,7 @@ use std::fmt::Write as _;
 
 use serde::{Deserialize, Serialize};
 
-use crate::processors::tags::TagsArray;
+use crate::processors::tags::{tag_string_from_vec, TagsArray};
 use crate::PatchData;
 
 use super::{get_outlinks, to_html, Html, ParsedTemplate, TemplattedPage};
@@ -20,22 +20,23 @@ pub struct Note {
     pub content: String,
 }
 
-#[derive(Debug, Default, Deserialize, Serialize)]
-pub struct StructuredNote {
-    pub title: String,
-    pub outlinks: Vec<String>,
-    pub tags: Vec<String>,
+#[derive(Debug, Default, Clone)]
+pub struct StructuredNote<'a> {
+    pub title: &'a str,
+    pub links_and_tags: Vec<&'a str>,
+}
+
+impl StructuredNote<'_> {
+    pub fn as_owned(&self) -> (String, Vec<String>) {
+        (
+            self.title.to_string(),
+            self.links_and_tags.iter().map(|l| l.to_string()).collect(),
+        )
+    }
 }
 
 impl Note {
-    fn parse_title(&self) -> String {
-        let default_title = "Untitled".to_string();
-        self.header
-            .get("title")
-            .unwrap_or(&default_title)
-            .to_owned()
-    }
-    fn parse_tags(&self) -> Vec<String> {
+    fn parse_tags(&self) -> Vec<&str> {
         match self.header.get("tags") {
             None => Vec::with_capacity(0),
             Some(raw_tags) => TagsArray::new(raw_tags).values,
@@ -55,7 +56,7 @@ impl Note {
         } else {
             to_html(&self.content)
         };
-        let title = self.parse_title();
+        let title = self.header.get("title").unwrap();
         let tags = self.parse_tags();
         let mut rendered_metadata = self.header.to_owned();
         // We're already showing this, so no need to dump it in the table...
@@ -68,28 +69,29 @@ impl Note {
                 shortened_desc.push_str("...");
                 shortened_desc
             } else {
-                title.clone()
+                title.to_string()
             }
         } else {
             self.content.clone()
         };
         let page = TemplattedPage {
-            title,
-            tags,
+            title: title.to_string(),
+            tags: tags.into_iter().map(|t| t.to_string()).collect(),
             body: html.body,
             metadata: rendered_metadata,
             desc,
         };
         ParsedTemplate {
-            outlinks: html.outlinks,
+            outlinks: html.outlinks.into_iter().map(|t| t.to_string()).collect(),
             page,
         }
     }
     pub fn to_structured(&self) -> StructuredNote {
+        let mut links = get_outlinks(&self.content);
+        links.extend(self.parse_tags());
         StructuredNote {
-            title: self.parse_title(),
-            outlinks: get_outlinks(&self.content),
-            tags: self.parse_tags(),
+            title: self.header.get("title").unwrap(),
+            links_and_tags: links,
         }
     }
 }
@@ -119,8 +121,7 @@ impl From<PatchData> for Note {
     fn from(data: PatchData) -> Self {
         let mut metadata: HashMap<String, String> = data.metadata;
         metadata.insert("title".into(), data.title);
-        let tags = TagsArray::from(data.tags);
-        metadata.insert("tags".into(), tags.write());
+        metadata.insert("tags".into(), tag_string_from_vec(data.tags));
         Note {
             header: metadata,
             content: data.body,
@@ -136,7 +137,11 @@ impl Into<PatchData> for Note {
         let old_title = title.clone();
         PatchData {
             body: self.content,
-            tags: TagsArray::from(tags).values,
+            tags: TagsArray::new(&tags)
+                .values
+                .iter()
+                .map(|&t| t.to_owned())
+                .collect::<Vec<String>>(),
             title,
             old_title,
             metadata: self.header,
@@ -148,8 +153,7 @@ impl From<&PatchData> for Note {
     fn from(data: &PatchData) -> Self {
         let mut metadata: HashMap<String, String> = data.metadata.clone();
         metadata.insert("title".into(), data.title.clone());
-        let tags = TagsArray::from(data.tags.clone());
-        metadata.insert("tags".into(), tags.write());
+        metadata.insert("tags".into(), tag_string_from_vec((*data.tags).to_vec()));
         Note {
             header: metadata,
             content: data.body.clone(),

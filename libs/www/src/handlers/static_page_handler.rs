@@ -78,10 +78,13 @@ impl StaticPageRouter {
                 let titles = get_note_titles().unwrap();
                 let mut name_and_count: Vec<(&String, usize)> = Vec::with_capacity(titles.len());
                 for title in titles.iter() {
-                    if let Some(link_list) = links.get(title) {
-                        name_and_count.push((title, link_list.len()));
-                    } else {
-                        name_and_count.push((title, 0));
+                    match links.get::<str>(title.as_str()) {
+                        Some(link_list) => {
+                            name_and_count.push((title, link_list.len()));
+                        }
+                        None => {
+                            name_and_count.push((title, 0));
+                        }
                     }
                 }
                 let idx_ctx = PageList::new(name_and_count);

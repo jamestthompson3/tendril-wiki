@@ -38,11 +38,13 @@ impl IndexPage {
         match persistance::fs::read(self.today.clone()).await {
             Ok(note) => {
                 let templatted = note.to_template();
-                let link_vals = self.links.lock().await;
-                let mut links = match link_vals.get(&templatted.page.title) {
-                    Some(links) => links.to_owned(),
-                    None => Vec::with_capacity(0),
-                };
+                let mut links = self
+                    .links
+                    .lock()
+                    .await
+                    .get(&self.today)
+                    .unwrap_or(&Vec::with_capacity(0))
+                    .to_owned();
                 links.dedup();
                 links.sort_unstable();
                 let tag_string = templatted
@@ -60,7 +62,7 @@ impl IndexPage {
                         "<%= metadata %>",
                         &render_page_metadata(templatted.page.metadata),
                     )
-                    .replace("<%= links %>", &render_page_backlinks(&links));
+                    .replace("<%= links %>", &render_page_backlinks(links));
                 content
             }
 

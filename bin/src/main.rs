@@ -1,4 +1,4 @@
-use build::{build_tags_and_links, install, migrate, pages::Builder, update, RefHub};
+use build::{build_links, install, migrate, pages::Builder, update};
 use persistance::fs::{
     config::read_config,
     create_journal_entry,
@@ -8,7 +8,7 @@ use search_engine::build_search_index;
 use std::{path::PathBuf, process::exit, sync::Arc, time::Instant};
 use task_queue::process_tasks;
 use task_runners::{git_update, sync, JobQueue};
-use tokio::fs;
+use tokio::{fs, sync::Mutex};
 use www::server;
 
 #[macro_use]
@@ -58,7 +58,6 @@ async fn main() {
         builder.compile_all().await;
         println!("Built static site in: {}ms", now.elapsed().as_millis());
     } else {
-        let ref_hub = RefHub::new();
         let job_queue = Arc::new(JobQueue::default());
 
         if config.sync.use_git {
@@ -70,9 +69,11 @@ async fn main() {
             )
             .await;
         }
+        let now = Instant::now();
         build_search_index(location.clone().into()).await;
-        let links = ref_hub.links();
-        build_tags_and_links(&location, links.clone()).await;
+        let links = build_links(&location).await;
+        println!("<indexing took: {:?}>", now.elapsed());
+        let links = Arc::new(Mutex::new(links));
         let queue = job_queue.clone();
         tokio::spawn(process_tasks(queue, location.clone(), links.clone()));
         server(config.general, (links, job_queue.clone())).await

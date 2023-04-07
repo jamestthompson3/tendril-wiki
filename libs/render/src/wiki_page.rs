@@ -4,16 +4,16 @@ use wikitext::parsers::TemplattedPage;
 
 use crate::{
     get_template_file, render_includes, render_page_backlinks, render_page_metadata,
-    render_sidebar, Render,
+    render_sidebar, PageRenderLinks, Render,
 };
 
 pub struct WikiPage<'a> {
     page: &'a TemplattedPage,
-    links: Option<&'a Vec<String>>,
+    links: PageRenderLinks<'a>,
 }
 
 impl<'a> WikiPage<'a> {
-    pub fn new(page: &'a TemplattedPage, links: Option<&'a Vec<String>>) -> Self {
+    pub fn new(page: &'a TemplattedPage, links: PageRenderLinks<'a>) -> Self {
         Self { page, links }
     }
 
@@ -50,7 +50,7 @@ impl<'a> Render for WikiPage<'a> {
             .replace("<%= sidebar %>", &render_sidebar().await)
             .replace("<%= content %>", &content)
             .replace("<%= tags %>", &tag_string)
-            .replace("<%= links %>", &render_page_backlinks(&backlinks))
+            .replace("<%= links %>", &render_page_backlinks(backlinks))
             .replace("<%= body %>", &self.render_body())
             .replace(
                 "<%= metadata %>",

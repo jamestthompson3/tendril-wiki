@@ -1,8 +1,6 @@
 use std::{collections::HashMap, sync::Arc, time::Duration};
 
-use build::{
-    build_tags_and_links, delete_from_global_store, rename_in_global_store, update_global_store,
-};
+use build::{build_links, delete_from_global_store, rename_in_global_store, update_global_store};
 use futures::{stream, StreamExt};
 use persistance::fs::{
     move_archive, path_to_data_structure,
@@ -43,7 +41,9 @@ pub async fn process_tasks(queue: Arc<JobQueue>, location: String, links: Global
             .for_each_concurrent(NUM_JOBS as usize, |job| async {
                 match job.message {
                     Message::Rebuild => {
-                        build_tags_and_links(&location, links.clone()).await;
+                        let mut links = links.lock().await;
+                        links.clear();
+                        links.extend(build_links(&location).await);
                     }
                     Message::Patch { patch } => {
                         let note = patch.clone().into();

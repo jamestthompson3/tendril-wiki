@@ -4,7 +4,7 @@ use std::fmt::Write as _;
 use persistance::fs::{create_journal_entry, read, write, ReadPageError, WriteWikiError};
 use render::{injected_html::InjectedHTML, new_page::NewPage, wiki_page::WikiPage, Render};
 use urlencoding::decode;
-use wikitext::{parsers::Note, GlobalBacklinks, PatchData};
+use wikitext::{parsers::Note, PatchData};
 
 use crate::{cache::purge_mru_cache, messages::Message, Queue, QueueHandle};
 
@@ -14,7 +14,7 @@ impl WikiRunner {
     pub async fn render_file(
         &self,
         path: String,
-        reflinks: GlobalBacklinks,
+        reflinks: Option<&Vec<String>>,
         query_params: HashMap<String, String>,
     ) -> String {
         let path = decode(&path).unwrap();
@@ -23,10 +23,8 @@ impl WikiRunner {
             .unwrap()
     }
 
-    async fn note_to_html(&self, note: Note, reflinks: GlobalBacklinks) -> String {
+    async fn note_to_html(&self, note: Note, links: Option<&Vec<String>>) -> String {
         let templatted = note.to_template();
-        let link_vals = reflinks.lock().await;
-        let links = link_vals.get(&templatted.page.title);
         match note.header.get("content-type") {
             Some(content_type) => {
                 if content_type == "html" {
@@ -42,7 +40,7 @@ impl WikiRunner {
         &self,
         mut main_path: String,
         sub_path: String,
-        links: GlobalBacklinks,
+        links: Option<&Vec<String>>,
     ) -> Result<String, ReadPageError> {
         // I don't know why warp doesn't decode the sub path here...
         let sub_path_decoded = decode(&sub_path).unwrap();
@@ -67,7 +65,7 @@ impl WikiRunner {
     pub async fn render_from_path(
         &self,
         path: String,
-        links: GlobalBacklinks,
+        links: Option<&Vec<String>>,
         query_params: HashMap<String, String>,
     ) -> Result<String, ReadPageError> {
         match read(path.clone()).await {
