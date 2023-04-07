@@ -1,9 +1,8 @@
 use compression::prelude::*;
-use std::{fs::read_dir, path::Path};
-
-use async_trait::async_trait;
-use futures::{stream, StreamExt};
-use tokio::fs;
+use std::{
+    fs::{read, read_dir},
+    path::Path,
+};
 
 use crate::{tokenizer::tokenize, Doc};
 
@@ -14,16 +13,15 @@ pub(crate) struct Archive {
     pub(crate) documents: Vec<Doc>,
 }
 
-#[async_trait]
 impl Proccessor for Archive {
-    async fn load(&mut self, location: &Path) {
+    fn load(&mut self, location: &Path) {
         let entries = read_dir(location).unwrap();
-        self.documents = stream::iter(entries)
-            .filter_map(|entry| async move {
+        self.documents = entries
+            .filter_map(|entry| {
                 if let Ok(..) = entry {
                     let entry = entry.unwrap();
                     if let Some(fname) = entry.file_name().to_str() {
-                        let content = fs::read(entry.path()).await.unwrap();
+                        let content = read(entry.path()).unwrap();
                         let decompressed = content
                             .iter()
                             .cloned()
@@ -50,7 +48,6 @@ impl Proccessor for Archive {
                     None
                 }
             })
-            .collect::<Vec<Doc>>()
-            .await;
+            .collect::<Vec<Doc>>();
     }
 }

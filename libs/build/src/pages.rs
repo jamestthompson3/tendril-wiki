@@ -79,7 +79,7 @@ impl Default for Builder {
 }
 
 async fn process_file(path: PathBuf, backlinks: &mut GlobalBacklinks, pages: ParsedPages) {
-    let note = path_to_data_structure(&path).await.unwrap();
+    let note = path_to_data_structure(&path).unwrap();
     let structured = note.to_structured().as_owned();
     let mut backlinks = backlinks.lock().await;
     add_to_global_store(&structured.0, &structured.1, &mut backlinks).await;

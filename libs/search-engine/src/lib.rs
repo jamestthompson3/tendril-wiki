@@ -32,16 +32,16 @@ pub struct Indicies {
     doc_idx: DocIdx,
 }
 
-pub async fn build_search_index(location: PathBuf) {
+pub fn build_search_index(location: PathBuf) {
     let archive_location = get_archive_location();
     let mut n = Notebook::default();
     let mut a = Archive::default();
     println!("<indexing notes>");
-    n.load(&location).await;
-    a.load(&archive_location).await;
+    n.load(&location);
+    a.load(&archive_location);
     let (search_idx, doc_idx) = index_sources(vec![n.documents, a.documents]);
-    write_search_index(&search_idx).await;
-    write_doc_index(doc_idx).await;
+    write_search_index(&search_idx);
+    write_doc_index(doc_idx);
 }
 
 fn index_sources(doc_vec: Vec<Vec<Doc>>) -> (SearchIdx, DocIdx) {
@@ -91,20 +91,16 @@ pub async fn semantic_search(term: &str) -> Vec<(String, String)> {
         .collect::<Vec<(String, String)>>()
 }
 
-pub(crate) async fn write_doc_index<T: Serialize>(doc_idx: T) {
+pub(crate) fn write_doc_index<T: Serialize>(doc_idx: T) {
     let stored_location = get_data_dir_location();
     let loc = stored_location.join("docs.json");
-    write(loc, serde_json::to_string(&doc_idx).unwrap())
-        .await
-        .unwrap();
+    write(loc, serde_json::to_string(&doc_idx).unwrap()).unwrap();
 }
 
-pub(crate) async fn write_search_index(search_idx: &SearchIdx) {
+pub(crate) fn write_search_index(search_idx: &SearchIdx) {
     let stored_location = get_data_dir_location();
     let loc = stored_location.join("search-index.json");
-    write(loc, serde_json::to_string(search_idx).unwrap())
-        .await
-        .unwrap();
+    write(loc, serde_json::to_string(search_idx).unwrap()).unwrap();
 }
 
 pub(crate) async fn read_doc_index() -> DocIdx {
@@ -128,8 +124,8 @@ pub async fn patch_search_from_update(note: &Note) {
     let doc_idx = read_doc_index().await;
     let doc = tokenize_note_meta(note);
     if let Some((search_idx, doc_idx)) = patch_search_index(doc, search_idx, doc_idx).await {
-        write_search_index(&search_idx).await;
-        write_doc_index(&doc_idx).await;
+        write_search_index(&search_idx);
+        write_doc_index(&doc_idx);
     }
 }
 
@@ -147,8 +143,8 @@ pub async fn patch_search_from_archive(patch: ArchivePatch) {
         content: patch.1,
     };
     if let Some((search_idx, doc_idx)) = patch_search_index(doc, search_idx, doc_idx).await {
-        write_search_index(&search_idx).await;
-        write_doc_index(&doc_idx).await;
+        write_search_index(&search_idx);
+        write_doc_index(&doc_idx);
     }
 }
 
@@ -156,8 +152,8 @@ pub async fn delete_entry_from_update(entry: &str) {
     let search_idx = read_search_index().await;
     let doc_idx = read_doc_index().await;
     let (search_idx, doc_idx) = delete_entry_from_index(search_idx, doc_idx, entry).await;
-    write_doc_index(doc_idx).await;
-    write_search_index(&search_idx).await;
+    write_doc_index(doc_idx);
+    write_search_index(&search_idx);
 }
 
 pub async fn delete_archived_file(entry: &str) {

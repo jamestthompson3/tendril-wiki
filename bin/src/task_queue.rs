@@ -61,7 +61,7 @@ pub async fn process_tasks(queue: Arc<JobQueue>, location: String, links: Global
                         let path = get_file_path(&title).unwrap_or_else(|_| {
                             panic!("Failed to find file for deletion: {}", title)
                         });
-                        let note = path_to_data_structure(&path).await.unwrap();
+                        let note = path_to_data_structure(&path).unwrap();
                         delete_from_global_store(&title, &note, links.clone()).await;
                         delete_entry_from_update(&title).await;
                         delete_archived_file(&title).await;

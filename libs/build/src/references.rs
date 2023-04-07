@@ -15,7 +15,7 @@ pub async fn parse_entries(entrypoint: PathBuf) -> Vec<(String, Vec<String>)> {
         if entry.file_type().await.unwrap().is_file()
             && entry.file_name().to_str().unwrap().ends_with(".txt")
         {
-            let note = path_to_data_structure(&entry.path()).await.unwrap();
+            let note = path_to_data_structure(&entry.path()).unwrap();
             let structured = note.to_structured();
             result.push(structured.as_owned());
         } else if entry.file_type().await.unwrap().is_dir()

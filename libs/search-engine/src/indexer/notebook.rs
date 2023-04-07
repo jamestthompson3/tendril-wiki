@@ -1,7 +1,5 @@
 use std::{fs::read_dir, path::Path};
 
-use async_trait::async_trait;
-use futures::{stream, StreamExt};
 use persistance::fs::path_to_data_structure;
 use wikitext::parsers::Note;
 
@@ -14,18 +12,17 @@ pub(crate) struct Notebook {
     pub(crate) documents: Vec<Doc>,
 }
 
-#[async_trait]
 impl Proccessor for Notebook {
-    async fn load(&'_ mut self, location: &Path) {
+    fn load(&mut self, location: &Path) {
         // For some reason using tokio::read_dir never returns in the while loop
         let entries = read_dir(location).unwrap();
-        self.documents = stream::iter(entries)
-            .filter_map(|entry| async move {
+        self.documents = entries
+            .filter_map(|entry| {
                 if let Ok(..) = entry {
                     let entry = entry.unwrap();
                     if let Some(fname) = entry.file_name().to_str() {
                         if fname.ends_with(".txt") {
-                            let mut content = path_to_data_structure(&entry.path()).await.unwrap();
+                            let mut content = path_to_data_structure(&entry.path()).unwrap();
                             if content.header.get("title").is_none() {
                                 let fixed_name = fname.strip_suffix(".txt").unwrap();
                                 content.header.insert("title".into(), fixed_name.to_owned());
@@ -43,8 +40,7 @@ impl Proccessor for Notebook {
                     None
                 }
             })
-            .collect::<Vec<Doc>>()
-            .await;
+            .collect::<Vec<Doc>>();
     }
 }
 
