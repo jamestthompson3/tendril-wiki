@@ -31,12 +31,7 @@ pub(crate) fn tokenize(slice: &str) -> HashMap<String, usize> {
         })
         .filter(|w| STOP_WORD_MAP.get(w.as_str()).is_none() && !w.is_empty())
         .fold(HashMap::new(), |mut map, token| {
-            if map.get(&token).is_none() {
-                map.insert(token, 1);
-            } else {
-                let val = map.get_mut(&token).unwrap();
-                *val += 1;
-            }
+            map.entry(token).and_modify(|v| *v += 1).or_insert(1);
             map
         })
 }
