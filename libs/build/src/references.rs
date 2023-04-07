@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap, io, path::PathBuf};
+use std::{collections::BTreeMap, io, path::PathBuf, sync::Arc};
 
 use async_recursion::async_recursion;
 use futures::{stream, StreamExt};
@@ -59,8 +59,8 @@ pub async fn add_to_global_store<'a>(
     }
 }
 
-pub async fn build_links(wiki_location: &str) -> Backlinks {
-    let entries = parse_entries(PathBuf::from(wiki_location)).await;
+pub async fn build_links(wiki_location: Arc<String>) -> Backlinks {
+    let entries = parse_entries(PathBuf::from(wiki_location.as_str())).await;
     create_global_store(entries).await
 }
 

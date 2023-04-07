@@ -28,7 +28,7 @@ lazy_static! {
     static ref TITLE_RGX: Regex = Regex::new(r"\?|\\|/|\||:|;|>|<|,|\.|\n|\$|&").unwrap();
 }
 
-pub async fn process_tasks(queue: Arc<JobQueue>, location: String, links: GlobalBacklinks) {
+pub async fn process_tasks(queue: Arc<JobQueue>, location: Arc<String>, links: GlobalBacklinks) {
     loop {
         let jobs = match queue.pull(NUM_JOBS).await {
             Ok(jobs) => jobs,
@@ -43,7 +43,7 @@ pub async fn process_tasks(queue: Arc<JobQueue>, location: String, links: Global
                     Message::Rebuild => {
                         let mut links = links.lock().await;
                         links.clear();
-                        links.extend(build_links(&location).await);
+                        links.extend(build_links(location.clone()).await);
                     }
                     Message::Patch { patch } => {
                         let note = patch.clone().into();

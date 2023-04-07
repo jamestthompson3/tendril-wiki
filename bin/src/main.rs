@@ -8,7 +8,7 @@ use search_engine::build_search_index;
 use std::{path::PathBuf, process::exit, sync::Arc, time::Instant};
 use task_queue::process_tasks;
 use task_runners::{git_update, sync, JobQueue};
-use tokio::{fs, sync::Mutex};
+use tokio::{fs, sync::Mutex, task::spawn_blocking};
 use www::server;
 
 #[macro_use]
@@ -59,10 +59,6 @@ async fn main() {
         println!("Built static site in: {}ms", now.elapsed().as_millis());
     } else {
         let job_queue = Arc::new(JobQueue::default());
-        let now = Instant::now();
-        let links = build_links(&location).await;
-        build_search_index(&location);
-        println!("<indexing took: {:?}>", now.elapsed());
         if config.sync.use_git {
             sync(
                 &location,
@@ -72,9 +68,18 @@ async fn main() {
             )
             .await;
         }
+        let now = Instant::now();
+        // TODO: Don't clone so much...
+        let spec_loc = location.clone();
+        let loc = Arc::new(location);
+        let (links, _) = tokio::join!(
+            build_links(loc.clone()),
+            spawn_blocking(move || build_search_index(spec_loc.as_str()))
+        );
+        println!("<indexing took: {:?}>", now.elapsed());
         let links = Arc::new(Mutex::new(links));
         let queue = job_queue.clone();
-        tokio::spawn(process_tasks(queue, location.clone(), links.clone()));
+        tokio::spawn(process_tasks(queue, loc.clone(), links.clone()));
         server(config.general, (links, job_queue.clone())).await
     }
 }
