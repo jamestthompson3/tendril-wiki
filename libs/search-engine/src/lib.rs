@@ -2,12 +2,12 @@ use indexer::notebook::{tokenize_note_meta, Notebook};
 use persistance::fs::utils::{get_archive_location, get_data_dir_location};
 use searcher::{highlight_matches, search};
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, path::PathBuf, usize};
+use std::{collections::HashMap, fs::write, path::PathBuf, usize};
 use tokenizer::tokenize;
 use wikitext::parsers::Note;
 
 /// Heavy inspiration / code taken from: https://github.com/thesephist/monocle
-use tokio::fs::{read_to_string, remove_file, write};
+use tokio::fs::{read_to_string, remove_file};
 
 use crate::indexer::{archive::Archive, Proccessor};
 
@@ -46,19 +46,17 @@ pub fn build_search_index(location: PathBuf) {
 
 fn index_sources(doc_vec: Vec<Vec<Doc>>) -> (SearchIdx, DocIdx) {
     let hash_map_size = doc_vec.iter().fold(0, |acc, d| d.len() + acc);
-    let mut search_index = HashMap::with_capacity(hash_map_size);
-    let mut doc_index = HashMap::with_capacity(hash_map_size);
+    let mut search_index: SearchIdx = HashMap::with_capacity(hash_map_size);
+    let mut doc_index: DocIdx = HashMap::with_capacity(hash_map_size);
     doc_vec.iter().for_each(|doc_arr| {
         doc_arr.iter().for_each(|doc| {
             doc_index.insert(doc.id.clone(), doc.to_owned());
             let tokens = &doc.tokens;
             for key in tokens.keys() {
-                if search_index.get(key).is_none() {
-                    search_index.insert(key.to_owned(), vec![doc.id.to_owned()]);
-                } else {
-                    let ids = search_index.get_mut(key).unwrap();
-                    ids.push(doc.id.to_owned());
-                }
+                search_index
+                    .entry(key.into())
+                    .or_default()
+                    .push(doc.id.to_owned());
             }
         })
     });
