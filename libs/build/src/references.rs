@@ -184,7 +184,7 @@ mod tests {
         link_tree.insert(title.into(), vec!["wiki page".into()]);
         let links: GlobalBacklinks = Arc::new(Mutex::new(link_tree));
         let path = get_file_path(title).unwrap();
-        let note = path_to_data_structure(&path).await.unwrap();
+        let note = path_to_data_structure(&path).unwrap();
         update_global_store(title, &note, links.clone()).await;
         let updated_links = links.lock().await;
         let entry = updated_links.get(title).unwrap();
@@ -216,7 +216,7 @@ mod tests {
         link_tree.insert(title.into(), vec!["wiki page".into()]);
         let links: GlobalBacklinks = Arc::new(Mutex::new(link_tree));
         let path = get_file_path(title).unwrap();
-        let note = path_to_data_structure(&path).await.unwrap();
+        let note = path_to_data_structure(&path).unwrap();
         delete_from_global_store(title, &note, links.clone()).await;
         let updated_links = links.lock().await;
         let entry = updated_links.get(title);
