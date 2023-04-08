@@ -53,9 +53,9 @@ pub async fn add_to_global_store<'a>(
 ) {
     for link in links_and_tags.iter() {
         backlinks
-            .entry(title.to_string())
+            .entry(link.to_string())
             .or_default()
-            .push(link.to_string());
+            .push(title.to_string());
     }
 }
 
