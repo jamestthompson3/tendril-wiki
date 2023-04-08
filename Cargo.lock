@@ -1575,7 +1575,7 @@ dependencies = [
 
 [[package]]
 name = "tendril"
-version = "1.0.7"
+version = "1.0.8"
 dependencies = [
  "build",
  "futures",
@@ -2181,7 +2181,7 @@ dependencies = [
 
 [[package]]
 name = "www"
-version = "1.0.7"
+version = "1.0.8"
 dependencies = [
  "base64",
  "bytes",
