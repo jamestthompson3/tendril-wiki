@@ -213,12 +213,10 @@ pub async fn create_journal_entry(entry: String) -> Result<PatchData, std::io::E
         Ok(Note::from(entry_file).into())
     } else {
         let docstring = format!(
-            r#"
----
-title: {}
+            r#"title: {}
 tags: [daily notes]
 created: {:?}
----
+
 [{}] {}
 "#,
             daily_file,
