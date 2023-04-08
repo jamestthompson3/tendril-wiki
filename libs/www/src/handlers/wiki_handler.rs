@@ -42,7 +42,9 @@ impl WikiPageRouter {
                  reflinks: GlobalBacklinks,
                  query_params: HashMap<String, String>| async move {
                     let links = reflinks.lock().await;
-                    let links = links.get(&*path);
+                    let path = decode(&path).unwrap();
+                    let path = path.to_string();
+                    let links = links.get(&path);
                     let runner = WikiRunner {};
                     let response = runner.render_file(path, links, query_params).await;
                     warp::reply::html(response)
@@ -58,9 +60,7 @@ impl WikiPageRouter {
             .and(warp::path!(String / String))
             .and(with_links(links.to_owned()))
             .then(
-                |main_path: String,
-                 sub_path: String,
-                 reflinks: GlobalBacklinks| async move {
+                |main_path: String, sub_path: String, reflinks: GlobalBacklinks| async move {
                     let runner = WikiRunner {};
                     let main_path = decode(&main_path).unwrap().to_string();
                     let sub_path = decode(&sub_path).unwrap().to_string();
