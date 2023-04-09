@@ -36,7 +36,6 @@ async function deleteOldCaches() {
 
 self.addEventListener("fetch", (event) => {
   if (
-    event.request.mode === "navigate" ||
     event.request.destination === "style" ||
     event.request.destination === "script" ||
     event.request.destination === "image"
