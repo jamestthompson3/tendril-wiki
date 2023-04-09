@@ -63,7 +63,8 @@ body {
   scroll-snap-type: y proximity;
   background-color: var(--bg);
   background-repeat: no-repeat;
-  background-size: cover;
+  background-size: contain;
+  background-position: center;
   color: var(--text-color);
 }
 a {
