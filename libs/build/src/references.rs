@@ -69,9 +69,9 @@ pub async fn update_global_store(current_title: &str, note: &Note, links: Global
     let structured = note.to_structured();
     for link in structured.links_and_tags.iter() {
         links
-            .entry(current_title.to_string())
+            .entry(link.to_string())
             .or_default()
-            .push(link.to_string());
+            .push(current_title.to_string());
     }
 }
 
