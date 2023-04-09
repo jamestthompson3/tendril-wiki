@@ -29,6 +29,13 @@ impl Block {
 }
 
 pub fn to_html(text: &str) -> Html {
+    if text.is_empty() {
+        let body = Block::new();
+        return Html {
+            body: body.close(),
+            outlinks: vec![],
+        };
+    }
     // let now = Instant::now();
     let mut outlinks = Vec::new();
     let mut page_blocks: Vec<Vec<BlockElement>> = Vec::new();
