@@ -169,10 +169,7 @@ impl APIRouter {
                                 )
                                 .header(
                                     header::SET_COOKIE,
-                                    format!(
-                                        "login=true; Secure; Max-Age={}; Path=/",
-                                        MONTH
-                                    ),
+                                    format!("login=true; Secure; Max-Age={}; Path=/", MONTH),
                                 )
                                 .body("ok")),
                             Err(e) => {

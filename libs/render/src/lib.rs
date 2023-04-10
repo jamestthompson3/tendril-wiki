@@ -8,7 +8,6 @@ use directories::ProjectDirs;
 
 use async_trait::async_trait;
 use futures::{stream, StreamExt};
-use persistance::fs::read_note_cache;
 use tokio::fs;
 use wikitext::parsers::{format_links, TemplattedPage};
 

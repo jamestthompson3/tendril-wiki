@@ -2,11 +2,10 @@
 use ::persistance::fs::utils::get_data_dir_location;
 
 use persistance::fs::{config::General, utils::normalize_wiki_location};
-use wikitext::GlobalBacklinks;
 use std::{path::PathBuf, sync::Arc};
 use task_runners::JobQueue;
 use warp::Filter;
-
+use wikitext::GlobalBacklinks;
 
 pub mod handlers;
 pub mod services;

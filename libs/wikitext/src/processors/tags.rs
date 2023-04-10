@@ -38,10 +38,10 @@ impl<'a> TagsArray<'a> {
 }
 
 pub fn tag_string_from_vec(vec: Vec<String>) -> String {
-        let mut tag_string = vec.join(",");
-        tag_string.push(']');
-        tag_string.insert(0, '[');
-        tag_string
+    let mut tag_string = vec.join(",");
+    tag_string.push(']');
+    tag_string.insert(0, '[');
+    tag_string
 }
 
 // impl<'a> From<String> for TagsArray<'a> {

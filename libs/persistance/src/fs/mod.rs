@@ -2,7 +2,6 @@ pub mod config;
 pub mod utils;
 
 use std::fmt::Write as _;
-use std::time::Instant;
 use std::{
     env, io,
     path::{Path, PathBuf},
@@ -184,7 +183,9 @@ pub async fn delete(requested_file: &str) -> Result<(), io::Error> {
 
 pub async fn read(requested_file: String) -> Result<Note, ReadPageError> {
     let file_path = get_file_path(&requested_file)?;
-    spawn_blocking(move || {path_to_data_structure(&file_path)}).await.unwrap()
+    spawn_blocking(move || path_to_data_structure(&file_path))
+        .await
+        .unwrap()
 }
 
 pub async fn read_note_cache() -> String {
@@ -263,7 +264,6 @@ pub fn path_to_data_structure(path: &Path) -> Result<Note, ReadPageError> {
 }
 
 pub fn get_note_titles() -> Result<Vec<String>, io::Error> {
-    let now = Instant::now();
     let entries = std::fs::read_dir(WIKI_LOCATION.clone())?;
     let titles = entries
         .filter_map(|entry| {
