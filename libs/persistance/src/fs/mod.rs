@@ -278,7 +278,6 @@ pub fn get_note_titles() -> Result<Vec<String>, io::Error> {
             }
         })
         .collect();
-    println!("[Titles] collected titles in: {:?}", now.elapsed());
     Ok(titles)
 }
 
