@@ -128,7 +128,7 @@ export function isIOS() {
  * We handle unicode just fine, but that doesn't really mean everyone does.
  * If users want to move their notes outside of Tendril, we should be considerate and convert to ascii.
  */
-export function normalizePunction(node) {
+export function normalizePunctuation(node) {
   node.addEventListener("keypress", function (e) {
     if (e.key.length != 1) return;
 

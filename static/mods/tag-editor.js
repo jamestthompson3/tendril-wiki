@@ -1,5 +1,5 @@
 import { setAsFocused } from "./block-actions.js";
-import { isIOS } from "./utils.js";
+import { isIOS, normalizePunctuation } from "./utils.js";
 
 export class TagEditor {
   constructor(element) {
@@ -40,7 +40,7 @@ export class TagEditor {
     container.classList.add("tags");
     container.addEventListener("click", this.setupTagEditor);
     if (isIOS()) {
-      normalizePunction(container);
+      normalizePunctuation(container);
     }
     this.element.replaceWith(container);
     this.element = container;

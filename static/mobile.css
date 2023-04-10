@@ -39,16 +39,23 @@ aside {
   padding: 1rem;
 }
 
+.title {
+  font-size: 2rem;
+}
+
 .navigation {
   width: unset;
 }
 
 .navigation nav {
   width: 100%;
-  display: none;
+  position: absolute;
+  display: block;
+  top: 80vh;
+  z-index: 1;
 }
 
-#mobile-nav:checked ~ nav {
+nav {
   display: block;
 }
 
@@ -56,30 +63,24 @@ aside {
   display: inherit;
 }
 
-#mobile-nav ~ label {
-  padding: 0.5rem;
-  display: block;
-}
-
-#mobile-nav ~ label:before {
-  font-size: 2rem;
-  content: "Δ";
-}
-
-#mobile-nav:checked ~ label:before {
-  content: "∇";
-  font-size: 2rem;
-}
-
 .navigation ul {
   flex-wrap: wrap;
   justify-content: space-evenly;
-  flex-direction: column;
 }
 
 .navigation ul > li {
-  padding: 0.5rem;
   text-align: center;
+  background-color: var(--bg);
+  border-radius: var(--rad);
+  padding: 1rem;
+}
+.navigation ul > li > a {
+}
+.navigation form {
+  justify-content: center;
+}
+#delete-note form button {
+  padding: 0;
 }
 
 .search {

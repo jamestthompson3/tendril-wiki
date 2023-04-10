@@ -1,18 +1,16 @@
 <nav>
   <ul>
-    <li><a href="/new" accesskey="n">✏️ new</a></li>
-    <li id="linkto">
-      <a accesskey="l" href="/new?linkto=<%= title %>"
-        >🔗 link to <%= title %></a
-      >
+    <li aria-label="new"><a href="/new" accesskey="n">&#9999;</a></li>
+    <li aria-label="link to current pages" id="linkto">
+      <a accesskey="l" href="/new?linkto=<%= title %>">&#128279;</a>
     </li>
-    <li><a accesskey="p" href="/styles"> 🖌️ edit look and feel</a></li>
-    <li><a accesskey="u" href="/upload">📄 upload a file</a></li>
-    <li><a accesskey="t" href="/tasks">📋 task list</a></li>
-    <li><a accesskey="b" href="/new_bookmark">🔖 add a bookmark</a></li>
-    <li><a href="/all_pages">📚 view all pages</a></li>
-    <li><a id="home" href="/">🏠 home</a></li>
-    <li id="delete-note">
+    <li aria-label="task list"><a accesskey="t" href="/tasks">&#128203;</a></li>
+    <li aria-label="add a bookmark">
+      <a accesskey="b" href="/new_bookmark">&#128278;</a>
+    </li>
+    <!-- <li><a href="/all_pages">📚 view all pages</a></li> -->
+    <li aria-label="home"><a id="home" href="/">&#127968;</a></li>
+    <li aria-label="delete current note" id="delete-note">
       <form
         action="delete"
         method="post"
@@ -20,7 +18,7 @@
         onsubmit="return confirm('Do you really want to delete <%= title %>?');"
       >
         <input class="hidden" type="text" name="title" value="<%= title %>" />
-        <button type="submit">🗑️ delete <%= title %></button>
+        <button type="submit">&#128465;</button>
       </form>
     </li>
   </ul>

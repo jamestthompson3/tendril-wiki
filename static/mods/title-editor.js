@@ -15,16 +15,16 @@ export class TitleEditor extends HTMLEditor {
       "titles",
       (titles) => (this.#titles = titles.map((t) => t.toLowerCase()))
     );
+    this.content = element.textContent;
     this.bc.postMessage({
       type: "REGISTER",
       data: { id: this.id, content: this.content },
     });
   }
   setupViewer = (element) => {
-    const html = textToHtml(element.value);
     const el = document.createElement("h1");
     el.classList.add("title");
-    el.innerHTML = html;
+    el.textContent = element.value;
     el.addEventListener("click", this.setupEditor);
     for (const datapoint in this.element.dataset) {
       el.dataset[datapoint] = this.element.dataset[datapoint];
@@ -38,9 +38,6 @@ export class TitleEditor extends HTMLEditor {
     textblock.value = this.content;
     textblock.minLength = 1;
     textblock.setAttribute("pattern", "([a-zA-Z0-9-_+—]\\s?)+");
-    for (const datapoint in this.element.dataset) {
-      textblock.dataset[datapoint] = this.element.dataset[datapoint];
-    }
     textblock.classList.add("title");
     this.setupTextblockListeners(textblock);
     this.element.replaceWith(textblock);
