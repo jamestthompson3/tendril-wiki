@@ -1,6 +1,5 @@
 body {
   margin: 0px;
-  padding: 0.25rem;
 }
 
 h2 {
@@ -20,6 +19,7 @@ aside {
 .content-container {
   width: unset;
   padding: 0.25rem;
+  margin-bottom: 12rem;
 }
 
 .flex-container {
@@ -29,6 +29,7 @@ aside {
 
 .content {
   width: 85%;
+  height: 100%;
 }
 
 .content-body {
@@ -51,7 +52,7 @@ aside {
   width: 100%;
   position: absolute;
   display: block;
-  top: 80vh;
+  top: 83vh;
   z-index: 1;
 }
 
@@ -59,19 +60,20 @@ nav {
   display: block;
 }
 
-#home {
-  display: inherit;
+/* TODO: Add this on mobile */
+#recently-edited {
+  display: none;
 }
 
 .navigation ul {
   flex-wrap: wrap;
   justify-content: space-evenly;
+  background-color: var(--bg);
+  border-radius: var(--rad);
 }
 
 .navigation ul > li {
   text-align: center;
-  background-color: var(--bg);
-  border-radius: var(--rad);
   padding: 1rem;
 }
 .navigation form {
@@ -81,6 +83,7 @@ nav {
 .search {
   align-items: center;
   margin: 0.5rem auto;
+  width: 100%;
 }
 
 .footer {
