@@ -1,4 +1,3 @@
-import { updateMRU } from "./dom.js";
 import { htmlToText } from "./parsing.js";
 import { StateMachine } from "./utils.js";
 
@@ -116,7 +115,6 @@ export class ComponentRegister {
     })
       .then((res) => {
         if (res.status < 400) {
-          updateMRU(title);
           this.#machine.send("COMPLETE");
         }
       })

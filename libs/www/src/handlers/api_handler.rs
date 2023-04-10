@@ -1,7 +1,7 @@
 use crate::services::{create_jwt, MONTH};
 use bytes::BufMut;
 use futures::TryStreamExt;
-use persistance::fs::get_note_titles;
+use persistance::fs::{get_note_titles, read_note_cache};
 use std::collections::HashMap;
 use task_runners::runners::api_runner::{APIRunner, FileError};
 use urlencoding::encode;
@@ -32,6 +32,7 @@ impl APIRouter {
             .or(self.img())
             .or(self.files())
             .or(self.titles())
+            .or(self.mru())
             .or(self.json_page())
             .or(self.search_from_qs())
             .or(self.search_indicies())
@@ -64,6 +65,17 @@ impl APIRouter {
             .then(|| async move {
                 let titles = get_note_titles().unwrap();
                 warp::reply::json(&titles)
+            })
+            .boxed()
+    }
+    fn mru(&self) -> BoxedFilter<(impl Reply,)> {
+        warp::get()
+            .and(with_auth())
+            .and(warp::path!("api" / "mru"))
+            .then(|| async move {
+                let recent = read_note_cache().await;
+                let recent = recent.split('\n').collect::<Vec<&str>>();
+                warp::reply::json(&recent)
             })
             .boxed()
     }
@@ -153,6 +165,13 @@ impl APIRouter {
                                     format!(
                                         "token={}; Secure; HttpOnly; Max-Age={}; Path=/",
                                         token, MONTH
+                                    ),
+                                )
+                                .header(
+                                    header::SET_COOKIE,
+                                    format!(
+                                        "login=true; Secure; Max-Age={}; Path=/",
+                                        MONTH
                                     ),
                                 )
                                 .body("ok")),

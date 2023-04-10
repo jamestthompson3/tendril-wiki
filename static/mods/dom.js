@@ -53,3 +53,33 @@ export function moveCaretToStart(el) {
     range.select();
   }
 }
+
+export function triggerModal(content) {
+  const modal = document.getElementById("modal");
+  const bodyContent = document.querySelector(".flex-container");
+  const modalBody = modal.querySelector(".modal-body");
+  modalBody.appendChild(content);
+  modal.style.display = "flex";
+  modal.style.zIndex = 2;
+  modal.addEventListener("click", teardownModal);
+  bodyContent.style.filter = "blur(4px)";
+  document.addEventListener("keydown", tearDownOnEscape);
+}
+
+function teardownModal(e) {
+  const modal = document.getElementById("modal");
+  const modalBody = modal.querySelector(".modal-body");
+  const content = document.querySelector(".flex-container");
+  if (e.target === modalBody) return;
+  content.style.filter = "";
+  modalBody.innerHTML = "";
+  modal.style.display = "none";
+  modal.removeEventListener("click", teardownModal);
+}
+
+function tearDownOnEscape(e) {
+  if (e.key === "Escape") {
+    teardownModal(e);
+    document.removeEventListener("keydown", tearDownOnEscape);
+  }
+}

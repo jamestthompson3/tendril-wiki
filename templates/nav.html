@@ -1,16 +1,19 @@
 <nav>
   <ul>
-    <li aria-label="new"><a href="/new" accesskey="n">&#9999;</a></li>
-    <li aria-label="link to current pages" id="linkto">
+    <li title="new"><a href="/new" accesskey="n">&#9999;</a></li>
+    <li title="recently edited" id="recently-edited">
+      <a href="#">&#128293;</a>
+    </li>
+    <li title="link to current pages" id="linkto">
       <a accesskey="l" href="/new?linkto=<%= title %>">&#128279;</a>
     </li>
-    <li aria-label="task list"><a accesskey="t" href="/tasks">&#128203;</a></li>
-    <li aria-label="add a bookmark">
+    <li title="task list"><a accesskey="t" href="/tasks">&#128203;</a></li>
+    <li title="add a bookmark">
       <a accesskey="b" href="/new_bookmark">&#128278;</a>
     </li>
     <!-- <li><a href="/all_pages">📚 view all pages</a></li> -->
-    <li aria-label="home"><a id="home" href="/">&#127968;</a></li>
-    <li aria-label="delete current note" id="delete-note">
+    <li title="home"><a href="/">&#127968;</a></li>
+    <li title="delete current note" id="delete-note">
       <form
         action="delete"
         method="post"

@@ -1,12 +1,5 @@
 <aside>
-  <div class="sidebar-section">
-    <h2>Shortcuts</h2>
-    <%= nav %>
-    <h2>Recent</h2>
-    <ul id="mru">
-      <%= mru %>
-    </ul>
-  </div>
+  <div class="sidebar-section"><%= nav %></div>
   <!-- <h2>Quick Actions</h2> -->
   <!-- <ul> -->
   <!--   <li> -->
@@ -17,4 +10,5 @@
   <!--   </li> -->
   <!-- </ul> -->
   <%= include "footer" %>
+  <script src="static/handle-recent.js" type="module" defer="true"></script>
 </aside>

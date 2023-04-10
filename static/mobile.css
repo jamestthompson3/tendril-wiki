@@ -74,13 +74,8 @@ nav {
   border-radius: var(--rad);
   padding: 1rem;
 }
-.navigation ul > li > a {
-}
 .navigation form {
   justify-content: center;
-}
-#delete-note form button {
-  padding: 0;
 }
 
 .search {

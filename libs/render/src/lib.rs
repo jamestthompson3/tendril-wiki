@@ -143,19 +143,8 @@ pub fn render_page_metadata(metadata: HashMap<String, String>) -> String {
     metadata_html
 }
 
-pub async fn render_mru() -> String {
-    let recent = read_note_cache().await;
-    let mut html = String::new();
-    for line in recent.lines() {
-        write!(html, "<li><a href=\"{}\">{}</a></li>", line, line).unwrap();
-    }
-    html
-}
-
 pub async fn render_sidebar() -> String {
-    let mut sidebar = get_template_file("sidebar").await.unwrap();
-    sidebar = sidebar.replace("<%= mru %>", &render_mru().await);
-    sidebar
+    get_template_file("sidebar").await.unwrap()
 }
 
 #[cfg(debug_assertions)]

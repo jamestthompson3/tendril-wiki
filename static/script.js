@@ -18,8 +18,17 @@
     }
   }
 
+  function removeLogoutIfNotLoggedIn() {
+    if (!document.cookie.login) {
+      const footer = document.querySelector(".footer");
+      const logout = footer.querySelector('a[href="/logout"]');
+      logout.remove();
+    }
+  }
+
   replaceOGMeta();
   populateSearch();
+  removeLogoutIfNotLoggedIn();
 
   function search() {
     const searchElement = document.getElementById("term");

@@ -1,0 +1,33 @@
+#modal {
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0.65),
+    rgba(255, 255, 255, 0.7)
+  );
+  position: absolute;
+  display: none;
+  align-items: center;
+  justification: center;
+  top: 0;
+  z-index: -1;
+}
+
+.modal-body {
+  width: 30%;
+  margin: auto;
+  background-color: var(--bg);
+  border-radius: var(--rad);
+  padding: 1.5rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  #modal {
+    background: linear-gradient(
+      to right,
+      rgba(0, 0, 0, 0.65),
+      rgba(0, 0, 0, 0.7)
+    );
+  }
+}
