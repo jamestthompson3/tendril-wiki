@@ -1,20 +1,14 @@
-import { textToHtml } from "./parsing.js";
 import { HTMLEditor } from "./base-html-editor.js";
 import { setAsFocused } from "./block-actions.js";
 
 export class TitleEditor extends HTMLEditor {
   #titles;
-  constructor(element, store) {
+  constructor(element) {
     super(element);
     element.addEventListener("click", this.setupEditor);
     this.errorMsg =
       "Titles cannot contain special characters other than _+—. Titles must not be blank.";
     this.id = "title";
-    store.on(
-      "update",
-      "titles",
-      (titles) => (this.#titles = titles.map((t) => t.toLowerCase()))
-    );
     this.content = element.textContent;
     this.bc.postMessage({
       type: "REGISTER",
@@ -45,7 +39,12 @@ export class TitleEditor extends HTMLEditor {
     this.element = textblock;
   };
 
-  change = (e) => {
+  change = async (e) => {
+    if (!this.#titles) {
+      this.#titles = await fetch("/titles")
+        .then((res) => res.json())
+        .then((titles) => titles.map((t) => t.toLowerCase()));
+    }
     this.content = e.target.value;
     if (this.#titles.includes(e.target.value.toLowerCase())) {
       this.errorMsg = "A note by this title already exists!";

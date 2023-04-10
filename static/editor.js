@@ -3,7 +3,6 @@ import { TitleEditor } from "./mods/title-editor.js";
 import { BlockEditor } from "./mods/block-editor.js";
 import { MetaDataEditor } from "./mods/metadata-editor.js";
 import { ComponentRegister } from "./mods/component-register.js";
-import { appContext } from "./mods/app-context.js";
 
 new ComponentRegister();
 
@@ -14,19 +13,13 @@ new ComponentRegister();
   });
 
   const title = document.querySelector(".title");
-  new TitleEditor(title, appContext);
+  new TitleEditor(title);
 
   const tags = document.querySelector(".tags");
   new TagEditor(tags);
 
   const metadata = document.getElementById("metadata");
   new MetaDataEditor(metadata);
-
-  fetch("/titles")
-    .then((res) => res.json())
-    .then((titles) => {
-      appContext.set("titles", titles);
-    });
 })();
 
 /* TESTING */
