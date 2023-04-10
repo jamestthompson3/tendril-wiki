@@ -12,7 +12,8 @@ export class MetaDataEditor {
     this.content = {};
 
     k.forEach((key, idx) => {
-      this.content[key.textContent] = htmlToText(v[idx]);
+      this.content[key.textContent] =
+        key.textContent === "isbn" ? v[idx].textContent : htmlToText(v[idx]);
     });
     element.addEventListener("click", this.handleClick);
 
@@ -58,10 +59,11 @@ export class MetaDataEditor {
       term.textContent = key;
       const description = document.createElement("dd");
       description.innerHTML = textToHtml(trimmed);
+      // TODO: Figure out how to handle things like auto-inserting cover from ISBN
       container.append(term, description);
     });
     container.id = "metadata";
-    container.addEventListener("click", this.setupTagEditor);
+    container.addEventListener("click", this.handleClick);
     this.element.replaceWith(container);
     this.element = container;
   };
