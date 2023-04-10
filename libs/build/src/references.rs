@@ -68,10 +68,18 @@ pub async fn update_global_store(current_title: &str, note: &Note, links: Global
     let mut links = links.lock().await;
     let structured = note.to_structured();
     for link in structured.links_and_tags.iter() {
-        links
-            .entry(link.to_string())
-            .or_default()
-            .push(current_title.to_string());
+        match links.get_mut(*link) {
+            Some(exists) => {
+                if exists.contains(&String::from(current_title)) {
+                    continue;
+                } else {
+                    exists.push(current_title.into())
+                }
+            }
+            None => {
+                links.insert(link.to_string(), vec![current_title.into()]);
+            }
+        }
     }
 }
 
