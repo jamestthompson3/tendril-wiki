@@ -237,6 +237,7 @@ aside {
   box-shadow: var(--shadow);
   position: absolute;
   top: calc(100vh - 80px);
+  transition: opacity 0.8s;
 }
 
 aside ul {

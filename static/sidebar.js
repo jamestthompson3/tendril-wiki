@@ -18,3 +18,19 @@ recentlyEdited.onclick = async () => {
   }
   triggerModal(list);
 };
+
+let autohide = setAutohide();
+sidebar.addEventListener("mouseenter", () => {
+  sidebar.style.opacity = "1";
+  clearTimeout(autohide);
+});
+
+sidebar.addEventListener("mouseleave", () => {
+  autohide = setAutohide(300);
+});
+
+function setAutohide(time = 2000) {
+  return setTimeout(() => {
+    sidebar.style.opacity = "0";
+  }, time);
+}
