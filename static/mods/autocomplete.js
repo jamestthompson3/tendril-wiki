@@ -151,13 +151,11 @@ function setupMenu(e) {
   machine.send("done");
 }
 
-function updateSuggestionMenu() {
+async function updateSuggestionMenu() {
   const context = machine.context().completionContext;
   if (context.length < 2) return;
-  const opts = matcher
-    .test(context)
-    .sort((a, b) => a.score - b.score)
-    .slice(0, 15);
+  const candidates = await matcher.test(context);
+  const opts = candidates.sort((a, b) => a.score - b.score).slice(0, 15);
   const container = document.getElementById("autocomplete-list");
   const elements = opts.map(({ value: opt }, idx) => {
     const item = document.createElement("li");

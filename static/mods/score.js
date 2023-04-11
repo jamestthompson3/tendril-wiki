@@ -12,7 +12,17 @@ export class Scorer {
     this.cache = new Uint32Array(0x10000);
     this.arr = new Uint32Array(0x10000);
   }
-  test(candidate) {
+  async test(candidate) {
+    if (!appContext.get("titles").length) {
+      await fetch("/titles")
+        .then((res) => res.json())
+        .then((titles) => {
+          appContext.set(
+            "titles",
+            titles.map((t) => t.toLowerCase())
+          );
+        });
+    }
     const potentialMatches = appContext.get("titles");
     const top = [];
     if (candidate.length === 0) {
