@@ -7,7 +7,11 @@ import {
   updateInputHeight,
   deleteBlock,
 } from "./block-actions.js";
-import { autocomplete, removeAutoCompleteMenu } from "./autocomplete.js";
+import {
+  autocomplete,
+  autocompleteState,
+  removeAutoCompleteMenu,
+} from "./autocomplete.js";
 
 const stateChart = {
   initial: "not-cleared",
@@ -118,8 +122,10 @@ export class BlockEditor extends HTMLEditor {
     }
   };
 
+  // FIXME: Figure out why I need both handleKeydown and handleInput.
   handleKeydown = (e) => {
-    this.#shouldStopExecution = autocomplete(e);
+    autocomplete(e);
+    this.#shouldStopExecution = autocompleteState() === "completing";
     switch (e.key) {
       case "Tab": {
         if (!this.#shouldStopExecution) {
@@ -193,6 +199,16 @@ export class BlockEditor extends HTMLEditor {
     // insert the new block directly after the current block
     const { parentNode, nextSibling } = this.element;
     parentNode.insertBefore(textblock, nextSibling);
+    // FIXME: This shouldn't be necessary, but due to the fact we scrape
+    // the DOM for saving the content, we need to do this. :/
+    // Save the current block's content
+    this.bc.postMessage({
+      type: "SAVE",
+      data: {
+        id: this.id,
+        content: this.prepareContent(),
+      },
+    });
     setAsFocused(textblock);
   };
   change = (e) => {
@@ -201,9 +217,8 @@ export class BlockEditor extends HTMLEditor {
     // This occurs when we insert an option from autocomplete.
     const words = e.target.value.split(" ");
     const lastWord = words[words.length - 1];
-    if (lastWord.startsWith("[[") && !lastWord.endsWith("]]")) {
-      return;
-    }
+    if (lastWord.startsWith("[[") && !lastWord.endsWith("]]")) return;
+    if (autocompleteState() === "completing") return;
     this.bc.postMessage({
       type: "SAVE",
       data: {

@@ -89,7 +89,6 @@ const stateChart = {
 };
 
 const machine = new StateMachine(stateChart);
-// Returns true when key listeners in parent should not be run.
 export function autocomplete(e) {
   const { completionContext, focused } = machine.context();
   switch (e.key) {
@@ -100,7 +99,7 @@ export function autocomplete(e) {
       machine.send("]", e);
       break;
     case "Tab":
-    case "ArrowDown":
+    case "ArrowDown": {
       if (machine.state === "completing" && !focused) {
         e.preventDefault();
         e.stopImmediatePropagation();
@@ -108,11 +107,6 @@ export function autocomplete(e) {
         const candidate = menu.querySelector(`button[data-idx="0"]`);
         candidate.focus();
         machine.send("focus", true);
-        return true;
-      }
-    case "Enter": {
-      if (machine.state === "completing") {
-        return true;
       }
       break;
     }
@@ -168,8 +162,8 @@ async function updateSuggestionMenu() {
         textarea.value
           .slice(0, textarea.value.length - context.length)
           .concat(opt) + "]]";
-      textarea.dispatchEvent(new Event("change"));
       machine.send("reset");
+      textarea.dispatchEvent(new Event("change"));
     });
     item.appendChild(innerButton);
     return item;
@@ -180,6 +174,10 @@ async function updateSuggestionMenu() {
     // TODO: Perf check. Might get slow?
     container.replaceChildren(...elements);
   }
+}
+
+export function autocompleteState() {
+  return machine.state;
 }
 
 function teardownMenu() {
