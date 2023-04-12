@@ -79,50 +79,31 @@ export class BlockEditor extends HTMLEditor {
     moveCaretToEnd(textblock);
     this.element = textblock;
   };
+
+  // We have both keyup (handleInput) and keydown listeners so that
+  // actions that make sense to happen after input has been processed (keyup)
+  // are separate from actions that should take input, process it, and manipulate
+  // the textarea.
   handleInput = (e) => {
-    switch (e.key) {
-      case "Backspace": {
-        if (e.target.value === "" && e.target.parentNode.children.length > 1) {
-          if (this.#machine.state === "not-cleared") {
-            this.#machine.send("CLEAR");
-            return;
-          }
-          deleteBlock(e.target);
-          this.bc.postMessage({ type: "UNREGISTER", data: this.id });
-          this.bc.postMessage({ type: "SAVE" });
-          break;
-        }
-        break;
-      }
-      case "Enter": {
-        if (!e.shiftKey && !this.#shouldStopExecution) {
+    if (e.key === "Enter") {
+      if (!e.shiftKey && !this.#shouldStopExecution) {
+        if (this.element.value.endsWith("\n")) {
           this.element.value = this.element.value.slice(
             0,
             this.element.value.length - 1
           );
-          const indentation = this.indent;
-          this.addBlock(indentation);
-          if (this.element.type === "TEXTAREA") {
-            this.setupViewer(this.element);
-          }
-          break;
         }
-        break;
+        const indentation = this.indent;
+        this.addBlock(indentation);
+        if (this.element.type === "TEXTAREA") {
+          this.setupViewer(this.element);
+        }
+        return;
       }
-      case "Escape": {
-        this.element.blur();
-        break;
-      }
-      case "Home": {
-        moveCaretToStart(this.element);
-        break;
-      }
-      default:
-        break;
+      return;
     }
   };
 
-  // FIXME: Figure out why I need both handleKeydown and handleInput.
   handleKeydown = (e) => {
     autocomplete(e);
     this.#shouldStopExecution = autocompleteState() === "completing";
@@ -143,11 +124,30 @@ export class BlockEditor extends HTMLEditor {
         }
         break;
       }
-      default: {
-        if (e.key !== "Backspace") {
-          if (this.#machine.state === "cleared") {
-            this.#machine.send("RESET");
+      case "Backspace": {
+        if (e.target.value === "" && e.target.parentNode.children.length > 1) {
+          if (this.#machine.state === "not-cleared") {
+            this.#machine.send("CLEAR");
+            return;
           }
+          deleteBlock(e.target);
+          this.bc.postMessage({ type: "UNREGISTER", data: this.id });
+          this.bc.postMessage({ type: "SAVE" });
+          break;
+        }
+        break;
+      }
+      case "Escape": {
+        this.element.blur();
+        break;
+      }
+      case "Home": {
+        moveCaretToStart(this.element);
+        break;
+      }
+      default: {
+        if (this.#machine.state === "cleared") {
+          this.#machine.send("RESET");
         }
       }
     }

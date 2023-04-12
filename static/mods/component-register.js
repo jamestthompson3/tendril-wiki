@@ -46,6 +46,7 @@ export class ComponentRegister {
       failsafe.innerText = "Your browser doesn't support broadcast channels.";
       failsafe.classList.add("error-msg");
       document.body.firstElementChild.appendChild(failsafe);
+      return;
     }
     this.bc.onmessage = this.handleMessage;
     this.#machine = new StateMachine(stateChart);
