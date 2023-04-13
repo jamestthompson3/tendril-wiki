@@ -1,5 +1,5 @@
 import { htmlToText } from "./parsing.js";
-import { StateMachine } from "./utils.js";
+import { StateMachine, LinkedList } from "./utils.js";
 
 const stateChart = {
   initial: "idle",
@@ -38,7 +38,9 @@ const stateChart = {
 export class ComponentRegister {
   #machine;
   constructor() {
-    this.components = {};
+    this.components = {
+      blocks: new LinkedList(),
+    };
     try {
       this.bc = new BroadcastChannel(`tendril-wiki${location.pathname}`);
     } catch (e) {
@@ -60,17 +62,28 @@ export class ComponentRegister {
         break;
       case "UNREGISTER":
         this.unregister(messageData);
+        break;
       case "REGISTER":
         this.register(messageData);
+        break;
       default:
         break;
     }
   };
   register = (component) => {
-    const { id } = component;
+    const { id, content, parent } = component;
+    if (this.isBlock(id)) {
+      parent
+        ? this.components.blocks.insertAfter({ id, content }, parent)
+        : this.components.blocks.append({ id, content });
+    }
     this.components[id] = component;
   };
   unregister = (id) => {
+    if (this.isBlock(id)) {
+      this.components.blocks.delete(id);
+      return;
+    }
     delete this.components[id];
   };
   getType = (type) =>
@@ -84,20 +97,15 @@ export class ComponentRegister {
   savePage = (messageData) => {
     this.#machine.send("SUBMITTING");
     if (messageData) {
-      this.components[messageData.id].content = messageData.content;
+      if (!this.isBlock(messageData.id)) {
+        this.components[messageData.id].content = messageData.content;
+      } else {
+        this.components.blocks.update(messageData.id, messageData.content);
+      }
     }
     // TODO: Implement patching API?
     const title = this.components.title.content;
-    const body = Array.from(document.querySelectorAll(".text-block"))
-      .map((block) => {
-        let content = htmlToText(block);
-        const indentLevel = parseInt(block.dataset.indent);
-        if (indentLevel > 0) {
-          content = `${"\t".repeat(indentLevel)}${content}`;
-        }
-        return content;
-      })
-      .join("\n");
+    const body = this.components.blocks.toContentString();
     const tags = this.components.tag.content;
     const metadata = this.components.metadata.content;
     const constructedBody = {
@@ -124,4 +132,5 @@ export class ComponentRegister {
         this.#machine.send("ERROR", e);
       });
   };
+  isBlock = (id) => id.includes("block");
 }

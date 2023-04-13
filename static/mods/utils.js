@@ -140,3 +140,101 @@ export function normalizePunctuation(node) {
     }
   });
 }
+
+/**
+ * @typedef {{id: string, [key:string]:any}} NodeData
+ */
+
+class ListNode {
+  /**
+   * @param {NodeData} value
+   * @param {ListNode} next
+   */
+  constructor(value, next) {
+    this.value = value;
+    this.next = next;
+  }
+}
+
+export class LinkedList {
+  constructor() {
+    this.head = null;
+    this.tail = null;
+  }
+  /**
+   * @param {NodeData} data
+   */
+  append(data) {
+    const node = new ListNode(data, null);
+    // List is empty.
+    if (!this.head) {
+      this.head = node;
+      this.tail = node;
+      return this;
+    }
+    this.tail.next = node;
+    this.tail = node;
+    return this;
+  }
+  /**
+   * @param {NodeData} value
+   * @param {string} nodeId
+   */
+  insertAfter(data, nodeId) {
+    let currentNode = this.head;
+    while (currentNode) {
+      if (currentNode.value.id === nodeId) {
+        const temp = currentNode.next;
+        const node = new ListNode(data, temp);
+        currentNode.next = node;
+        if (this.tail === currentNode) {
+          this.tail = node;
+        }
+        break;
+      }
+      currentNode = currentNode.next;
+    }
+    return this;
+  }
+  delete(nodeId) {
+    let currentNode = this.head;
+    while (currentNode) {
+      if (currentNode.value.id === nodeId) {
+        this.head = currentNode.next;
+        break;
+      }
+      if (currentNode.next.value.id === nodeId) {
+        const temp = currentNode.next.next;
+        if (currentNode.next === this.tail) {
+          this.tail = currentNode;
+        }
+        currentNode.next = temp;
+        break;
+      }
+      currentNode = currentNode.next;
+    }
+    return this;
+  }
+  toContentString() {
+    let currentNode = this.head;
+    let finalString = "";
+    while (currentNode) {
+      finalString = `${finalString}${currentNode.value.content}`;
+      if (currentNode.next) {
+        finalString += "\n";
+      }
+      currentNode = currentNode.next;
+    }
+    return finalString;
+  }
+  update(nodeId, content) {
+    let currentNode = this.head;
+    while (currentNode) {
+      if (currentNode.value.id === nodeId) {
+        currentNode.value.content = content;
+        break;
+      }
+      currentNode = currentNode.next;
+    }
+  }
+}

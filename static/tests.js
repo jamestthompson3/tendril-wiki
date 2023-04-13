@@ -1,5 +1,6 @@
 /* Unit Tests */
 import { textToHtml, htmlToText } from "./mods/parsing.js";
+import { LinkedList } from "./mods/utils.js";
 
 // Parsing
 // ==================
@@ -35,14 +36,7 @@ function testParsing() {
   wikitext.forEach((str, idx) => {
     const parsed = textToHtml(str);
     if (parsed !== html[idx]) {
-      const content = document.querySelector(".content");
-      const errMsg = document.createElement("p");
-      errMsg.innerHTML = `<pre>textToHtml</pre><strong style="color: red;">Test Failed.</strong><hr><br>Found:<br>  <pre id="parsed${idx}"></pre><br> Expected:<br>  <pre id="expected${idx}"></pre>`;
-      content.appendChild(errMsg);
-      const parseBlock = document.getElementById(`parsed${idx}`);
-      parseBlock.innerText = parsed;
-      const expectedBlock = document.getElementById(`expected${idx}`);
-      expectedBlock.innerText = html[idx];
+      displayErrorMessage("wikitext", idx, parsed, html[idx]);
     }
   });
 
@@ -51,16 +45,48 @@ function testParsing() {
     parsedContainer.innerHTML = str;
     const parsed = htmlToText(parsedContainer);
     if (parsed !== wikitext[idx]) {
-      const content = document.querySelector(".content");
-      const errMsg = document.createElement("p");
-      errMsg.innerHTML = `<pre>htmlToText</pre><strong style="color: red;">Test Failed.</strong><hr><br>Found:<br>  <pre id="parsed${idx}"></pre><br> Expected:<br>  <pre id="expected${idx}"></pre>`;
-      content.appendChild(errMsg);
-      const parseBlock = document.getElementById(`parsed${idx}`);
-      parseBlock.innerText = parsed;
-      const expectedBlock = document.getElementById(`expected${idx}`);
-      expectedBlock.innerText = wikitext[idx];
+      displayErrorMessage("htmlToText", parsed, wikitext[idx]);
     }
   });
 }
 
 testParsing();
+testList();
+
+function testList() {
+  // Utils
+  // ===============
+  const list = new LinkedList();
+  list
+    .append({ id: "123", content: "hello" })
+    .insertAfter({ content: "goodbye", id: "456" }, "123");
+
+  if (list.head.value.content !== "hello") {
+    displayErrorMessage("LinkedList", list.head.value.content, "hello");
+  }
+  if (list.tail.value.content !== "goodbye") {
+    displayErrorMessage("LinkedList", list.tail.value.content, "goodbye");
+  }
+  list.append({ id: "abc", content: "def" });
+
+  if (list.tail.value.id !== "abc") {
+    displayErrorMessage("LinkedList - append", list.tail.value.id, "abc");
+  }
+  list.delete("456");
+  if (list.tail.value.id !== "abc") {
+    displayErrorMessage("LinkedList - delete", list.tail.value.id, "abc");
+  }
+  const content = list.toContentString();
+  if (content !== "hello\ndef") {
+    displayErrorMessage("LinkedList - toContentString", content, "hello\ndef");
+  }
+}
+
+// Testing Utils
+// ===================
+function displayErrorMessage(test, found, expected) {
+  const content = document.querySelector(".content");
+  const errMsg = document.createElement("p");
+  errMsg.innerHTML = `<pre>${test}</pre><strong style="color: red;">Test Failed.</strong><hr><br>Found:<br>  <pre>${found}</pre><br> Expected:<br>  <pre >${expected}</pre>`;
+  content.appendChild(errMsg);
+}

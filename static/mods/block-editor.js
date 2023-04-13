@@ -28,7 +28,7 @@ const stateChart = {
 export class BlockEditor extends HTMLEditor {
   #machine;
   #shouldStopExecution;
-  constructor(element) {
+  constructor(element, parent) {
     super(element);
     this.id = `block@${nanoid()}`;
     this.indent = parseInt(element.dataset.indent || 0, 10);
@@ -41,7 +41,7 @@ export class BlockEditor extends HTMLEditor {
 
     this.bc.postMessage({
       type: "REGISTER",
-      data: { id: this.id, content: this.prepareContent(this.content) },
+      data: { id: this.id, content: this.prepareContent(this.content), parent },
     });
   }
   setupViewer = (element) => {
@@ -195,20 +195,10 @@ export class BlockEditor extends HTMLEditor {
       textblock.dataset.indent = indentationLevel;
     }
     textblock.setAttribute("spellcheck", true);
-    new BlockEditor(textblock);
+    new BlockEditor(textblock, this.id);
     // insert the new block directly after the current block
     const { parentNode, nextSibling } = this.element;
     parentNode.insertBefore(textblock, nextSibling);
-    // FIXME: This shouldn't be necessary, but due to the fact we scrape
-    // the DOM for saving the content, we need to do this. :/
-    // Save the current block's content
-    this.bc.postMessage({
-      type: "SAVE",
-      data: {
-        id: this.id,
-        content: this.prepareContent(),
-      },
-    });
     setAsFocused(textblock);
   };
   change = (e) => {
