@@ -7,6 +7,7 @@
       content="width=device-width, initial-scale=1, shrink-to-fit=no"
     />
     <%= include "styles" %>
+    <link rel="stylesheet" href="/static/search-results.css" />
     <link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon" />
     <link rel="icon" href="/static/favicon.ico"" type="image/x-icon" />
     <meta name="description" content="Tagged Topics" />
@@ -23,11 +24,13 @@
     <div class="content-container">
       <h1 class="title" style="margin-bottom: 1rem">Search Results</h1>
       <div class="search-result-container">
+        <%= result_header %>
         <ul style="list-style: none">
           <%= pages %>
         </ul>
       </div>
     </div>
     <%= include "footer" %>
+    <script type="module" src="/static/search-results.js"></script>
   </body>
 </html>

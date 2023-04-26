@@ -160,22 +160,6 @@ input[type="text"].title {
   width: 85%;
 }
 
-.result {
-  /* only for safari */
-  overflow: hidden;
-  /* modern browsers provide this, but safari does not :( */
-  overflow: clip;
-  max-height: 15rem;
-  border: 1px solid var(--text-color);
-  border-radius: var(--rad);
-  padding: 1rem;
-  box-shadow: 2px 2px 6px 1px var(--bg-darker);
-  margin: 1rem auto;
-}
-.result h2:first-child {
-  margin: 0px;
-}
-
 /** File Uploader **/
 .uploader {
   --height: 2.25rem;

@@ -21,7 +21,7 @@ lazy_static::lazy_static! {
     };
 }
 
-pub(crate) fn tokenize(slice: &str) -> HashMap<String, usize> {
+pub(crate) fn tokenize(slice: &str) -> Vec<String> {
     let stripped_whitespace = PUNCT_RGX.replace_all(slice, " ");
     stripped_whitespace
         .split(' ')
@@ -29,11 +29,8 @@ pub(crate) fn tokenize(slice: &str) -> HashMap<String, usize> {
             let word = w.to_lowercase();
             word.replace('\n', "")
         })
-        .filter(|w| STOP_WORD_MAP.get(w.as_str()).is_none() && !w.is_empty())
-        .fold(HashMap::new(), |mut map, token| {
-            map.entry(token).and_modify(|v| *v += 1).or_insert(1);
-            map
-        })
+        .filter(|w| STOP_WORD_MAP.get(w.as_str()).is_none() && !w.is_empty() && w.len() <= 80)
+        .collect()
 }
 
 #[cfg(test)]

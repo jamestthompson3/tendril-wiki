@@ -180,10 +180,6 @@ button {
   align-items: flex-end;
   padding: 0rem 1rem;
 }
-.search-result-container {
-  height: 85vh;
-  overflow-y: scroll;
-}
 #term {
   width: 200px;
   border: 1px solid var(--text-color);

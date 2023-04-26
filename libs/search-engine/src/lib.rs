@@ -1,8 +1,17 @@
-use indexer::notebook::{tokenize_note_meta, Notebook};
+use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
+use indexer::notebook::Notebook;
 use persistance::fs::utils::{get_archive_location, get_data_dir_location};
 use searcher::{highlight_matches, search};
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, fs::write, path::PathBuf, usize};
+use std::{
+    collections::HashMap,
+    fs::{create_dir, read, write},
+    io::Write,
+    path::PathBuf,
+    process::exit,
+    usize,
+};
+use thiserror::Error;
 use tokenizer::tokenize;
 use wikitext::parsers::Note;
 
@@ -15,15 +24,22 @@ mod indexer;
 mod searcher;
 mod tokenizer;
 
-pub(crate) type Tokens = HashMap<String, usize>;
+pub type Tokens = HashMap<String, Vec<(String, usize)>>;
 type DocIdx = HashMap<String, Doc>;
 type SearchIdx = HashMap<String, Vec<String>>;
+
+#[derive(Error, Debug)]
+pub enum SearchIndexReadErr {
+    #[error("Could not find file")]
+    NotExistErr,
+    #[error("Could not deserialize file")]
+    DeserErr(bincode::Error),
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub(crate) struct Doc {
     id: String,
     tokens: Tokens,
-    content: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -39,92 +55,66 @@ pub fn build_search_index(location: &str) {
     println!("<indexing notes>");
     n.load(&PathBuf::from(location));
     a.load(&archive_location);
-    let (search_idx, doc_idx) = index_sources(vec![n.documents, a.documents]);
-    write_search_index(&search_idx);
-    write_doc_index(doc_idx);
+    for (key, value) in a.tokens.iter() {
+        if let Some(exists) = n.tokens.get_mut(key) {
+            exists.extend(value.to_owned());
+        } else {
+            n.tokens.insert(key.to_owned(), value.to_owned());
+        }
+    }
+    write_search_index(&n.tokens);
 }
 
-fn index_sources(doc_vec: Vec<Vec<Doc>>) -> (SearchIdx, DocIdx) {
-    let hash_map_size = doc_vec.iter().fold(0, |acc, d| d.len() + acc);
-    let mut search_index: SearchIdx = HashMap::with_capacity(hash_map_size);
-    let mut doc_index: DocIdx = HashMap::with_capacity(hash_map_size);
-    doc_vec.iter().for_each(|doc_arr| {
-        doc_arr.iter().for_each(|doc| {
-            doc_index.insert(doc.id.clone(), doc.to_owned());
-            let tokens = &doc.tokens;
-            for key in tokens.keys() {
-                search_index
-                    .entry(key.into())
-                    .or_default()
-                    .push(doc.id.to_owned());
+pub async fn dump_search_index() -> Result<Tokens, bincode::Error> {
+    todo!("REMOVE");
+    // read_search_index()
+}
+
+pub async fn semantic_search(term: &str) -> Vec<String> {
+    search(term).await
+}
+
+pub(crate) fn write_search_index(search_idx: &Tokens) {
+    // TODO: Handle file/dir existing already.
+    let stored_location = get_data_dir_location();
+    let mut loc = stored_location.join("search-index");
+    create_dir(&loc).unwrap();
+    for (key, value) in search_idx.iter() {
+        let bytes = bincode::serialize(value).unwrap();
+        let file_loc = loc.join(key);
+        match write(file_loc, bytes) {
+            Ok(()) => {}
+            Err(e) => {
+                eprintln!("Could not write key -> {}\n{}", key, e);
+                exit(1);
             }
-        })
-    });
-    (search_index, doc_index)
-}
-
-pub async fn dump_search_index() -> Indicies {
-    let search_idx = read_search_index().await;
-    let doc_idx = read_doc_index().await;
-    Indicies {
-        search_idx,
-        doc_idx,
+        }
     }
 }
 
-pub async fn semantic_search(term: &str) -> Vec<(String, String)> {
+pub(crate) fn read_search_index(filename: &str) -> Result<Vec<(String, usize)>, SearchIndexReadErr> {
     let index_location = get_data_dir_location();
-    let results = search(term, index_location).await;
-    results
-        .into_iter()
-        .map(|d| {
-            let highlighted_content = highlight_matches(d.content, term);
-            let id = if d.id.contains("archive") {
-                d.id.replace(".archive", "")
-            } else {
-                d.id
-            };
-            (id, highlighted_content)
-        })
-        .collect::<Vec<(String, String)>>()
-}
-
-pub(crate) fn write_doc_index<T: Serialize>(doc_idx: T) {
-    let stored_location = get_data_dir_location();
-    let loc = stored_location.join("docs.json");
-    write(loc, serde_json::to_string(&doc_idx).unwrap()).unwrap();
-}
-
-pub(crate) fn write_search_index(search_idx: &SearchIdx) {
-    let stored_location = get_data_dir_location();
-    let loc = stored_location.join("search-index.json");
-    write(loc, serde_json::to_string(search_idx).unwrap()).unwrap();
-}
-
-pub(crate) async fn read_doc_index() -> DocIdx {
-    let stored_location = get_data_dir_location();
-    let loc = stored_location.join("docs.json");
-    let doc_idx = read_to_string(&loc).await.unwrap();
-    let doc_idx: DocIdx = serde_json::from_str(&doc_idx).unwrap();
-    doc_idx
-}
-
-pub(crate) async fn read_search_index() -> SearchIdx {
-    let stored_location = get_data_dir_location();
-    let loc = stored_location.join("search-index.json");
-    let search_idx = read_to_string(&loc).await.unwrap();
-    let search_idx: SearchIdx = serde_json::from_str(&search_idx).unwrap();
-    search_idx
+    let read_loc = index_location.join("search-index").join(filename);
+    match read(read_loc) {
+        Ok(content) => {
+            let deserialized_freqs = bincode::deserialize(&content);
+            match deserialized_freqs  {
+                Ok(tokens) => Ok(tokens),
+                Err(e) => Err(SearchIndexReadErr::DeserErr(e)),
+            }
+        }
+        Err(_) => Err(SearchIndexReadErr::NotExistErr),
+    }
 }
 
 pub async fn patch_search_from_update(note: &Note) {
-    let search_idx = read_search_index().await;
-    let doc_idx = read_doc_index().await;
-    let doc = tokenize_note_meta(note);
-    if let Some((search_idx, doc_idx)) = patch_search_index(doc, search_idx, doc_idx).await {
-        write_search_index(&search_idx);
-        write_doc_index(&doc_idx);
-    }
+    todo!();
+    // let search_idx = read_search_index().await;
+    // let doc_idx = read_doc_index().await;
+    // let doc = tokenize_note_meta(note);
+    // if let Some((search_idx, doc_idx)) = patch_search_index(doc, search_idx, doc_idx).await {
+    //     write_search_index(&search_idx);
+    // }
 }
 
 type Title = String;
@@ -132,26 +122,26 @@ type Content = String;
 type ArchivePatch = (Title, Content);
 
 pub async fn patch_search_from_archive(patch: ArchivePatch) {
-    let search_idx = read_search_index().await;
-    let doc_idx = read_doc_index().await;
-    let tokens = tokenize(&patch.1);
-    let doc = Doc {
-        id: patch.0,
-        tokens,
-        content: patch.1,
-    };
-    if let Some((search_idx, doc_idx)) = patch_search_index(doc, search_idx, doc_idx).await {
-        write_search_index(&search_idx);
-        write_doc_index(&doc_idx);
-    }
+    todo!();
+    // let search_idx = read_search_index().await;
+    // let doc_idx = read_doc_index().await;
+    // let tokens = tokenize(&patch.1);
+    // let doc = Doc {
+    //     id: patch.0,
+    //     tokens,
+    //     content: patch.1,
+    // };
+    // if let Some((search_idx, doc_idx)) = patch_search_index(doc, search_idx, doc_idx).await {
+    //     write_search_index(&search_idx);
+    // }
 }
 
 pub async fn delete_entry_from_update(entry: &str) {
-    let search_idx = read_search_index().await;
-    let doc_idx = read_doc_index().await;
-    let (search_idx, doc_idx) = delete_entry_from_index(search_idx, doc_idx, entry).await;
-    write_doc_index(doc_idx);
-    write_search_index(&search_idx);
+    todo!();
+    // let search_idx = read_search_index().await;
+    // let doc_idx = read_doc_index().await;
+    // let (search_idx, doc_idx) = delete_entry_from_index(search_idx, doc_idx, entry).await;
+    // write_search_index(&search_idx);
 }
 
 pub async fn delete_archived_file(entry: &str) {
@@ -194,63 +184,64 @@ async fn patch_search_index(
     mut search_idx: SearchIdx,
     mut doc_idx: DocIdx,
 ) -> Option<(SearchIdx, DocIdx)> {
-    let mut removed_tokens = Vec::new();
-    let mut added_tokens = Vec::new();
-    // TODO: Don't clone so much
-    if let Some(old_version) = doc_idx.get_mut(&doc.id) {
-        let old_tokens = old_version.tokens.clone();
-        for token in old_tokens.keys() {
-            if !doc.tokens.keys().any(|f| f == token) {
-                removed_tokens.push(token);
-            }
-        }
-        for token in doc.tokens.keys() {
-            if !old_tokens.keys().any(|f| f == token) {
-                added_tokens.push(token)
-            }
-        }
+    todo!();
+    // let mut removed_tokens = Vec::new();
+    // let mut added_tokens = Vec::new();
+    // // TODO: Don't clone so much
+    // if let Some(old_version) = doc_idx.get_mut(&doc.id) {
+    //     let old_tokens = old_version.tokens.clone();
+    //     for token in old_tokens.keys() {
+    //         if !doc.tokens.keys().any(|f| f == token) {
+    //             removed_tokens.push(token);
+    //         }
+    //     }
+    //     for token in doc.tokens.keys() {
+    //         if !old_tokens.keys().any(|f| f == token) {
+    //             added_tokens.push(token)
+    //         }
+    //     }
 
-        for token in removed_tokens {
-            old_version.tokens.remove(token).unwrap();
-            if let Some(search_token) = search_idx.get_mut(token) {
-                *search_token = search_token
-                    .iter()
-                    .filter(|&f| f != &doc.id)
-                    .map(|t| t.to_owned())
-                    .collect::<Vec<String>>();
-                if search_token.is_empty() {
-                    search_idx.remove(token).unwrap();
-                }
-            }
-        }
+    //     for token in removed_tokens {
+    //         old_version.tokens.remove(token).unwrap();
+    //         if let Some(search_token) = search_idx.get_mut(token) {
+    //             *search_token = search_token
+    //                 .iter()
+    //                 .filter(|&f| f != &doc.id)
+    //                 .map(|t| t.to_owned())
+    //                 .collect::<Vec<String>>();
+    //             if search_token.is_empty() {
+    //                 search_idx.remove(token).unwrap();
+    //             }
+    //         }
+    //     }
 
-        for token in added_tokens {
-            let doc_id = doc.id.clone();
-            if let Some(search_token) = old_version.tokens.get_mut(token) {
-                *search_token += 1;
-            } else {
-                old_version.tokens.insert(token.clone(), 1);
-            }
-            if let Some(search_token) = search_idx.get_mut(token) {
-                search_token.push(doc_id);
-            } else {
-                search_idx.insert(token.clone(), vec![doc_id]);
-            }
-        }
-        doc_idx.insert(doc.id.clone(), doc);
-        Some((search_idx, doc_idx))
-    } else {
-        for token in doc.tokens.keys() {
-            let doc_id = doc.id.clone();
-            if let Some(search_token) = search_idx.get_mut(token) {
-                search_token.push(doc_id);
-            } else {
-                search_idx.insert(token.clone(), vec![doc_id]);
-            }
-        }
-        doc_idx.insert(doc.id.clone(), doc);
-        Some((search_idx, doc_idx))
-    }
+    //     for token in added_tokens {
+    //         let doc_id = doc.id.clone();
+    //         if let Some(search_token) = old_version.tokens.get_mut(token) {
+    //             *search_token += 1;
+    //         } else {
+    //             old_version.tokens.insert(token.clone(), 1);
+    //         }
+    //         if let Some(search_token) = search_idx.get_mut(token) {
+    //             search_token.push(doc_id);
+    //         } else {
+    //             search_idx.insert(token.clone(), vec![doc_id]);
+    //         }
+    //     }
+    //     doc_idx.insert(doc.id.clone(), doc);
+    //     Some((search_idx, doc_idx))
+    // } else {
+    //     for token in doc.tokens.keys() {
+    //         let doc_id = doc.id.clone();
+    //         if let Some(search_token) = search_idx.get_mut(token) {
+    //             search_token.push(doc_id);
+    //         } else {
+    //             search_idx.insert(token.clone(), vec![doc_id]);
+    //         }
+    //     }
+    //     doc_idx.insert(doc.id.clone(), doc);
+    //     Some((search_idx, doc_idx))
+    // }
 }
 
 #[cfg(test)]

@@ -1,46 +1,57 @@
 use std::{collections::HashMap, path::PathBuf};
 
-use tokio::fs::read_to_string;
+use persistance::fs::{path_to_string, utils::get_file_path};
 
-use crate::{tokenizer::tokenize, Doc, Tokens};
+use crate::{read_search_index, tokenizer::tokenize, Doc, SearchIndexReadErr};
 
-fn tokenize_query(query: &str) -> Tokens {
+fn tokenize_query(query: &str) -> Vec<String> {
     tokenize(query)
 }
 
-pub(crate) async fn search(query: &str, index_location: PathBuf) -> Vec<Doc> {
+pub(crate) async fn search(query: &str) -> Vec<String> {
     let tokens = tokenize_query(query);
-    let keys = tokens.keys();
-    let search_idx = read_to_string(index_location.join("search-index.json"))
-        .await
-        .unwrap();
-    let search_idx: HashMap<String, Vec<String>> = serde_json::from_str(&search_idx).unwrap();
-    let mut relevant_docs = Vec::<Doc>::new();
-    let doc_idx = read_to_string(index_location.join("docs.json"))
-        .await
-        .unwrap();
-    let mut doc_idx: HashMap<String, Doc> = serde_json::from_str(&doc_idx).unwrap();
-    // tokenized query terms + the number of possible variations
-    let mut tokens_for_scoring = Vec::with_capacity(keys.len() * 17);
-    keys.for_each(|key| {
+
+    let mut results = Vec::<String>::new();
+    let mut read_files: HashMap<String, Vec<String>> = HashMap::new();
+    let mut file_term_count: HashMap<String, usize> = HashMap::new();
+    tokens.iter().for_each(|key| {
         let variations = variations_of_word(key);
         for variation in variations {
-            if let Some(doc_ids) = search_idx.get(&variation) {
-                tokens_for_scoring.push(variation);
-                for doc_id in doc_ids {
-                    if let Some(doc_body) = doc_idx.remove(doc_id) {
-                        relevant_docs.push(doc_body);
+            match read_search_index(&variation) {
+                Ok(entries) => {
+                    for entry in entries {
+                        if read_files.get(&entry.0).is_some() {
+                            file_term_count
+                                .entry(entry.0.to_owned())
+                                .and_modify(|v| *v += 1);
+                            continue;
+                        }
+                        let file_path = get_file_path(&entry.0).unwrap();
+                        let content = path_to_string(&file_path).unwrap();
+                        let lines = content.lines().collect::<Vec<&str>>();
+                        read_files.insert(
+                            entry.0.to_string(),
+                            lines.iter().map(|l| l.to_string()).collect(),
+                        );
+                        file_term_count.entry(entry.0.to_owned()).or_insert(1);
+                        results.push(entry.0.to_owned())
                     }
                 }
+                Err(e) => match e {
+                    SearchIndexReadErr::NotExistErr => {
+                        continue;
+                    }
+                    SearchIndexReadErr::DeserErr(e) => {
+                        eprintln!("Could not deserialize: {}", e);
+                    }
+                },
             }
         }
     });
-    rank_docs(
-        relevant_docs,
-        tokens_for_scoring,
-        doc_idx.keys().len(),
-        query,
-    )
+    // TODO: Rank based on number of ties a word occurs in a doc, discounted for doc length
+    //       Titles should weigh heavier.
+    //       Maybe some sort of proximity ranking?
+    rank_docs(&read_files, results, &file_term_count, query)
 }
 
 /// use term frequency-inverse document frequency to rank the search results.
@@ -53,34 +64,33 @@ pub(crate) async fn search(query: &str, index_location: PathBuf) -> Vec<Doc> {
 /// A document is a `Doc` data structure which can be derived from multiple sources (though at the
 /// moment it is only derived from wiki notes).
 fn rank_docs(
-    mut relevant_docs: Vec<Doc>,
-    tokens: Vec<String>,
-    total_docs: usize,
+    read_files: &HashMap<String, Vec<String>>,
+    mut results: Vec<String>,
+    term_counts: &HashMap<String, usize>,
     query: &str,
-) -> Vec<Doc> {
-    let inverse_document_frequency =
-        (total_docs as f32 / relevant_docs.len() as f32 + 1.0).ln() + 1.0;
+) -> Vec<String> {
+    results.sort_by(|a, b| {
+        let num_appearances_a = term_counts.get(a.as_str()).unwrap();
+        let text_len_a = read_files.get(a.as_str()).unwrap().len();
+        let num_appearances_b = term_counts.get(b.as_str()).unwrap();
+        let text_len_b = read_files.get(b.as_str()).unwrap().len();
+        let mut processed_a = term_frequency(*num_appearances_a, text_len_a);
+        if a.as_str().contains(query) {
+            processed_a *= 2.0;
+        }
+        let mut processed_b = term_frequency(*num_appearances_b, text_len_b);
+        if b.as_str().contains(query) {
+            processed_b *= 2.0;
+        }
 
-    relevant_docs.sort_by(|a, b| {
-        let processed_a = term_frequency(a, &tokens) * inverse_document_frequency
-            + (a.content.match_indices(query).count() as f32 * 1.5);
-        let processed_b = term_frequency(b, &tokens) * inverse_document_frequency
-            + (b.content.match_indices(query).count() as f32 * 1.5);
         processed_b.partial_cmp(&processed_a).unwrap()
     });
-    relevant_docs
+    results
 }
 
 /// This is a sum of the frequency of N number of tokens in a document.
-fn term_frequency(doc: &Doc, tokens: &[String]) -> f32 {
-    tokens.iter().fold(0.0, |score, tok| {
-        if let Some(doc_score) = doc.tokens.get(tok) {
-            // term frequency adjusted for document length
-            *doc_score as f32 / doc.tokens.len() as f32
-        } else {
-            score
-        }
-    })
+fn term_frequency(num_appearances: usize, text_len: usize) -> f32 {
+    num_appearances as f32 / text_len as f32
 }
 
 fn variations_of_word(key: &str) -> Vec<String> {

@@ -1,4 +1,4 @@
-const CACHE_NAME = "%VERSION%";
+const CACHE_NAME = "1.0.1";
 const PAGES = [
   "/static/style.css",
   "/static/mobile.css",

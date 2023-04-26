@@ -44,7 +44,13 @@ impl APIRouter {
             .and(with_auth())
             .and(warp::path!("api" / String).then(|note: String| async {
                 let note = APIRunner::get_note(note).await;
-                warp::reply::json(&note)
+                Response::builder()
+                    .status(200)
+                    .header(
+                        header::CACHE_CONTROL,
+                        "max-age=60,stale-while-revalidate=60",
+                    )
+                    .body(serde_json::to_string(&note).unwrap())
             }))
             .with(warp::cors().allow_any_origin())
             .boxed()
