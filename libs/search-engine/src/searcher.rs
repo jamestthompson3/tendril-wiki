@@ -36,9 +36,7 @@ pub(crate) async fn search(query: &str) -> Vec<String> {
             }
         }
     });
-    // TODO: Rank based on number of ties a word occurs in a doc, discounted for doc length
-    //       Titles should weigh heavier.
-    //       Maybe some sort of proximity ranking?
+    // TODO: Maybe some sort of proximity ranking?
     rank_docs(&document_appearences, results, query)
 }
 
@@ -58,12 +56,23 @@ fn rank_docs(
 ) -> Vec<String> {
     results.sort_by(|a, b| {
         let mut processed_a = a.1 * *doc_frequency.get(&a.0).unwrap() as f32;
-        if a.0.contains(query) {
-            processed_a *= 2.0;
+        let mut title = a.0.to_lowercase();
+        let query_lc = query.to_lowercase();
+        if title.contains(&query_lc) {
+            if title == query_lc {
+                processed_a *= 5.0;
+            } else {
+                processed_a *= 2.5;
+            }
         }
+        title = b.0.to_lowercase();
         let mut processed_b = b.1 * *doc_frequency.get(&b.0).unwrap() as f32;
-        if b.0.contains(query) {
-            processed_b *= 2.0;
+        if title.contains(&query_lc) {
+            if title == query_lc {
+                processed_b *= 5.0;
+            } else {
+                processed_b *= 2.5;
+            }
         }
         processed_b.partial_cmp(&processed_a).unwrap()
     });
