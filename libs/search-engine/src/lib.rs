@@ -24,7 +24,7 @@ mod indexer;
 mod searcher;
 mod tokenizer;
 
-pub type Tokens = HashMap<String, Vec<(String, usize)>>;
+pub type Tokens = HashMap<String, Vec<(String, f32)>>;
 type DocIdx = HashMap<String, Doc>;
 type SearchIdx = HashMap<String, Vec<String>>;
 
@@ -92,7 +92,7 @@ pub(crate) fn write_search_index(search_idx: &Tokens) {
     }
 }
 
-pub(crate) fn read_search_index(filename: &str) -> Result<Vec<(String, usize)>, SearchIndexReadErr> {
+pub(crate) fn read_search_index(filename: &str) -> Result<Vec<(String, f32)>, SearchIndexReadErr> {
     let index_location = get_data_dir_location();
     let read_loc = index_location.join("search-index").join(filename);
     match read(read_loc) {

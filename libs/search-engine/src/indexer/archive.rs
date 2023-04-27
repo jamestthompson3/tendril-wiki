@@ -18,6 +18,7 @@ impl Proccessor for Archive {
     fn load(&mut self, location: &Path) {
         let entries = read_dir(location).unwrap();
         let mut tokens: Tokens = HashMap::new();
+        let mut doc_token_counter: HashMap<String, f32> = HashMap::new();
         entries.for_each(|entry| {
             let entry = entry.unwrap();
             if let Some(fname) = entry.file_name().to_str() {
@@ -37,14 +38,25 @@ impl Proccessor for Archive {
                         fname
                     );
                 });
-                for (idx, line) in text_content.lines().enumerate() {
+                let mut total_tokens = 0;
+                for line in text_content.lines() {
                     let raw_tokens = tokenize(line);
+                    total_tokens += raw_tokens.len();
                     for token in raw_tokens {
-                        tokens
+                        doc_token_counter
                             .entry(token)
-                            .and_modify(|v| v.push((fname.to_string(), idx)))
-                            .or_insert(vec![(fname.to_string(), idx)]);
+                            .and_modify(|v| *v += 1.)
+                            .or_insert(1.);
                     }
+                    for (term, count) in doc_token_counter.iter() {
+                        tokens
+                            .entry(term.to_owned())
+                            .and_modify(|v| {
+                                v.push((fname.to_string(), *count / total_tokens as f32))
+                            })
+                            .or_insert(vec![(fname.to_string(), *count / total_tokens as f32)]);
+                    }
+                    doc_token_counter.clear();
                 }
             }
         });
