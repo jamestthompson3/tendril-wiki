@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{read_search_index, tokenizer::tokenize, SearchIndexReadErr};
+use crate::{read_search_index, tokenizer::tokenize, SearchIndexErr};
 
 fn tokenize_query(query: &str) -> Vec<String> {
     tokenize(query)
@@ -26,11 +26,14 @@ pub(crate) async fn search(query: &str) -> Vec<String> {
                     }
                 }
                 Err(e) => match e {
-                    SearchIndexReadErr::NotExistErr => {
+                    SearchIndexErr::NotExistErr => {
                         continue;
                     }
-                    SearchIndexReadErr::DeserErr(e) => {
+                    SearchIndexErr::DeserErr(e) => {
                         eprintln!("Could not deserialize: {}", e);
+                    }
+                    SearchIndexErr::WriteErr(e) => {
+                        eprintln!("{}", e);
                     }
                 },
             }
@@ -96,21 +99,21 @@ const WORD_ENDINGS: [&str; 17] = [
     "n", "ian",
 ];
 
-const OPEN_TAG_LENGTH: usize = 6;
-const CLOSE_TAG_LENGTH: usize = 7;
+// const OPEN_TAG_LENGTH: usize = 6;
+// const CLOSE_TAG_LENGTH: usize = 7;
 
-pub(crate) fn highlight_matches(mut line: String, term: &str) -> String {
-    let readline = line.clone().to_lowercase();
-    let matches = readline
-        .match_indices(&term.trim().to_lowercase())
-        .collect::<Vec<(usize, &str)>>();
-    if !matches.is_empty() {
-        for (pointer, (idx, t)) in matches.into_iter().enumerate() {
-            let current_pos = idx + (pointer * (OPEN_TAG_LENGTH + CLOSE_TAG_LENGTH));
-            let closing_tag = current_pos + OPEN_TAG_LENGTH + t.len();
-            line.insert_str(current_pos, "<mark>");
-            line.insert_str(closing_tag, "</mark>");
-        }
-    }
-    line
-}
+// pub(crate) fn highlight_matches(mut line: String, term: &str) -> String {
+//     let readline = line.clone().to_lowercase();
+//     let matches = readline
+//         .match_indices(&term.trim().to_lowercase())
+//         .collect::<Vec<(usize, &str)>>();
+//     if !matches.is_empty() {
+//         for (pointer, (idx, t)) in matches.into_iter().enumerate() {
+//             let current_pos = idx + (pointer * (OPEN_TAG_LENGTH + CLOSE_TAG_LENGTH));
+//             let closing_tag = current_pos + OPEN_TAG_LENGTH + t.len();
+//             line.insert_str(current_pos, "<mark>");
+//             line.insert_str(closing_tag, "</mark>");
+//         }
+//     }
+//     line
+// }

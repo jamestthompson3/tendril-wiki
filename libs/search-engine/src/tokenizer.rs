@@ -1,4 +1,4 @@
-use std::{collections::HashMap, usize};
+use std::collections::HashMap;
 
 use regex::Regex;
 
@@ -22,8 +22,8 @@ lazy_static::lazy_static! {
 }
 
 pub(crate) fn tokenize(slice: &str) -> Vec<String> {
-    let stripped_whitespace = PUNCT_RGX.replace_all(slice, " ");
-    stripped_whitespace
+    let punct_to_whitespace = PUNCT_RGX.replace_all(slice, " ");
+    punct_to_whitespace
         .split(' ')
         .map(|w| {
             let word = w.to_lowercase();

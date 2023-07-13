@@ -9,6 +9,15 @@ pub fn get_data_dir_location() -> PathBuf {
     data_dir.to_owned()
 }
 
+pub fn get_search_index_location() -> PathBuf {
+    let data_location = get_data_dir_location();
+    data_location.join("search-index")
+}
+pub fn get_search_file_index_location() -> PathBuf {
+    let data_location = get_data_dir_location();
+    data_location.join("search-index").join("file_index")
+}
+
 pub fn get_config_location() -> (PathBuf, PathBuf) {
     let project_dir = ProjectDirs::from("", "", "tendril").unwrap();
     let config_dir = project_dir.config_dir();

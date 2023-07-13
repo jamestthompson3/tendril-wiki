@@ -49,7 +49,7 @@ pub async fn process_tasks(queue: Arc<JobQueue>, location: Arc<String>, links: G
                         let note = patch.clone().into();
 
                         update_global_store(&patch.title, &note, links.clone()).await;
-                        patch_search_from_update(&note).await;
+                        patch_search_from_update(&note);
 
                         if !patch.old_title.is_empty() && patch.old_title != patch.title {
                             rename_in_global_store(&patch.title, &patch.old_title, links.clone())
@@ -103,7 +103,7 @@ pub async fn process_tasks(queue: Arc<JobQueue>, location: Arc<String>, links: G
                         write(&patch).await.unwrap();
                         let note = patch.clone().into();
                         update_global_store(&patch.title, &note, links.clone()).await;
-                        patch_search_from_update(&note).await;
+                        patch_search_from_update(&note);
                         update_mru_cache(&patch.old_title, &patch.title).await;
                     }
                     Message::ArchiveBody { title, body } => {

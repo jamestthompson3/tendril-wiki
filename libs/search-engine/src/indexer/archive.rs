@@ -5,20 +5,21 @@ use std::{
     path::Path,
 };
 
-use crate::{tokenizer::tokenize, Doc, Tokens};
+use crate::Tokens;
 
-use super::Proccessor;
+use super::{tokenize_document, Proccessor};
 
 #[derive(Default, Debug)]
 pub(crate) struct Archive {
     pub(crate) tokens: Tokens,
+    pub(crate) file_index: HashMap<String, Vec<String>>,
 }
 
 impl Proccessor for Archive {
     fn load(&mut self, location: &Path) {
         let entries = read_dir(location).unwrap();
         let mut tokens: Tokens = HashMap::new();
-        let mut doc_token_counter: HashMap<String, f32> = HashMap::new();
+        let mut term_index: HashMap<String, Vec<String>> = HashMap::new();
         entries.for_each(|entry| {
             let entry = entry.unwrap();
             if let Some(fname) = entry.file_name().to_str() {
@@ -38,27 +39,20 @@ impl Proccessor for Archive {
                         fname
                     );
                 });
-                let mut total_tokens = 0;
-                for line in text_content.lines() {
-                    let raw_tokens = tokenize(line);
-                    total_tokens += raw_tokens.len();
-                    for token in raw_tokens {
-                        doc_token_counter
-                            .entry(token)
-                            .and_modify(|v| *v += 1.)
-                            .or_insert(1.);
-                    }
-                    for (term, count) in doc_token_counter.iter() {
-                        tokens
-                            .entry(term.to_owned())
-                            .and_modify(|v| {
-                                v.push((fname.to_string(), *count / total_tokens as f32))
-                            })
-                            .or_insert(vec![(fname.to_string(), *count / total_tokens as f32)]);
-                    }
-                    doc_token_counter.clear();
+                let doc_token_counter = tokenize_document(text_content);
+                for (term, score) in doc_token_counter.iter() {
+                    tokens
+                        .entry(term.to_owned())
+                        .and_modify(|v| v.push((fname.to_string(), *score)))
+                        .or_insert(vec![(fname.to_string(), *score)]);
+                    term_index
+                        .entry(fname.to_owned())
+                        .and_modify(|v| v.push(term.clone()))
+                        .or_insert(vec![term.clone()]);
                 }
             }
         });
+        self.tokens = tokens;
+        self.file_index = term_index;
     }
 }

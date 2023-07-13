@@ -182,6 +182,21 @@ impl Into<String> for Note {
         formatted_string
     }
 }
+#[allow(clippy::from_over_into)]
+impl Into<String> for &Note {
+    fn into(self) -> String {
+        let mut formatted_string = String::new();
+        for key in self.header.keys() {
+            formatted_string.push_str(key);
+            formatted_string.push_str(": ");
+            formatted_string.push_str(self.header.get(key).unwrap());
+            formatted_string.push('\n');
+        }
+        formatted_string.push('\n');
+        formatted_string.push_str(&self.content);
+        formatted_string
+    }
+}
 
 pub fn parse_meta<'a>(lines: impl Iterator<Item = &'a str>, debug_marker: &str) -> Note {
     let mut parser = HeaderParserMachine::new();

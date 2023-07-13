@@ -3,7 +3,7 @@ use std::{collections::HashMap, io, time::Instant};
 use bytes::Bytes;
 use persistance::fs::{read, utils::get_config_location, write_media};
 use render::{search_results_page::SearchResultsPage, Render};
-use search_engine::{semantic_search, Tokens};
+use search_engine::semantic_search;
 use thiserror::Error;
 use urlencoding::decode;
 use wikitext::parsers::Note;
@@ -51,11 +51,6 @@ impl APIRunner {
             time: now.elapsed(),
         };
         ctx.render().await
-    }
-
-    // TODO: Better error handling
-    pub async fn dump_search_index() -> Tokens {
-        search_engine::dump_search_index().await.unwrap()
     }
 
     pub async fn update_styles(form_body: HashMap<String, String>) -> Result<(), io::Error> {

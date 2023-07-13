@@ -35,7 +35,6 @@ impl APIRouter {
             .or(self.mru())
             .or(self.json_page())
             .or(self.search_from_qs())
-            .or(self.search_indicies())
             .or(self.version())
             .boxed()
     }
@@ -53,15 +52,6 @@ impl APIRouter {
                     .body(serde_json::to_string(&note).unwrap())
             }))
             .with(warp::cors().allow_any_origin())
-            .boxed()
-    }
-    fn search_indicies(&self) -> BoxedFilter<(impl Reply,)> {
-        warp::get()
-            .and(with_auth())
-            .and(warp::path("search-idx").then(|| async {
-                let indicies = APIRunner::dump_search_index().await;
-                warp::reply::json(&indicies)
-            }))
             .boxed()
     }
     fn titles(&self) -> BoxedFilter<(impl Reply,)> {
