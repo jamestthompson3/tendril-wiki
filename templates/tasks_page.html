@@ -6,7 +6,12 @@
       name="viewport"
       content="width=device-width, initial-scale=1, shrink-to-fit=no"
     />
-    <%= include "styles" %>
+<link
+  rel="stylesheet"
+  href="/static/mobile.css"
+  media="screen and (max-width: 1000px)"
+/>
+<link rel="stylesheet" href="/static/style.css" />
     <link rel="stylesheet" href="/static/tasks.css" />
     <link rel="stylesheet" href="/static/static-form.css" />
     <link
@@ -14,6 +19,7 @@
       href="/static/tasks.mobile.css"
       media="screen and (max-width: 1000px)"
     />
+<link rel="stylesheet" href="/config/userstyles.css" />
     <meta property="og:title" content="Todo List" />
     <meta property="og:type" content="website" />
     <link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon" />
@@ -36,8 +42,8 @@
             >
             <form class="editor">
               <label for="task" class="hidden">create task</label>
-              <input type="text" autocomplete="off" name="task" />
-              <button type="submit">New Task</button>
+              <input type="text" id="task" placeholder="type what you want to do and hit [Enter]" autocomplete="off" name="task" />
+              <button class="hidden" type="submit">New Task</button>
             </form>
           </div>
         </div>

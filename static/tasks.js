@@ -68,13 +68,6 @@
     }
   }
 
-  function showPrioPicker(_) {
-    const select = this.parentNode.querySelector("select");
-    select.classList.remove("hidden");
-    this.querySelector(".priority").classList.add("hidden");
-    select.focus();
-  }
-
   function editCell(e) {
     if (e.target.tagName === "A") return;
     const input = this.parentNode.querySelector("input");
@@ -112,7 +105,7 @@
       for (const remainingRow of taskRows) {
         const idx = parseInt(remainingRow.getAttribute("data-idx"));
         if (idx === response) {
-          remainingRow.parentNode.removeChild(remainingRow);
+          remainingRow.remove();
         }
         if (idx > response) {
           remainingRow.setAttribute("data-idx", idx - 1);
@@ -282,7 +275,7 @@
       }
       const rowWrapper = document.querySelector(".task-list");
       const taskList = Array.from(
-        document.querySelectorAll("[role='row']").values()
+        document.querySelectorAll("[role='row']").values(),
       ).sort(sortFn(dir));
       for (const task of taskList) {
         rowWrapper.appendChild(task);
@@ -361,20 +354,15 @@
   }
 
   function setupRowEventHandlers(row) {
-    const deleteCell = row.querySelector("#delete");
+    const deleteCell = row.querySelector('span[role="delete"');
     deleteCell.addEventListener("click", deleteTask);
     const statusCell = row.querySelector("input[type=checkbox]");
     statusCell.addEventListener("change", updateCellStatus);
-    const prioCell = row.querySelector("div span:nth-of-type(1)");
-    prioCell.addEventListener("click", showPrioPicker);
     const contentCell = row.querySelector(".edit-text-button");
     contentCell.addEventListener("click", editCell);
     const metadataCell = row.querySelector(".task-metadata");
     metadataCell.addEventListener("click", editCell);
 
-    const priorityInputCell = prioCell.querySelector("select");
-    priorityInputCell.addEventListener("blur", blurCell);
-    priorityInputCell.addEventListener("change", changePriority);
     const contentInputCell = contentCell.parentNode.querySelector("input");
     contentInputCell.addEventListener("blur", blurCell);
     contentInputCell.addEventListener("change", changeContent);

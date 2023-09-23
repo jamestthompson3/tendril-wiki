@@ -77,10 +77,6 @@ impl FromStr for Task {
 impl Task {
     pub fn to_html(&self, idx: Option<usize>) -> String {
         let mut html = String::new();
-        let priority = self
-            .priority
-            .to_owned()
-            .unwrap_or_else(|| String::with_capacity(0));
         let created = self
             .created
             .to_owned()
@@ -103,30 +99,23 @@ impl Task {
             r#"
 <li role="row" {}>
     <div class="task-body">
-          <input id="status" type="checkbox" {}>
-           <span>
-                <span class="priority">{}</span>
-                {}
-           </span>
+          <input name="status" type="checkbox" {}>
           <span>
             <span class="edit-text-button">{}</span>
             <input type="text" class="edit-text-input hidden" value="{}" />
           </span>
-    </div>
-    <div>
-        <span class="task-metadata edit-text-button">{}</span><input type="text" class="edit-text-input hidden" value="{}" />
-        <div class="task-meta">
-            {}
-            <span class="status">{}</span>
-            <span id="delete" aria-label="delete-task" title="delete task"></span>
-        </div>
+          <span class="task-metadata edit-text-button">{}</span>
+          <input type="text" class="edit-text-input hidden" value="{}" />
+          <div class="task-meta">
+          {}
+          <span class="status">{}</span>
+          <span role="delete" aria-label="delete-task" title="delete task"></span>
+          </div>
     </div>
 </li>
 "#,
             str_idx,
             checked,
-            priority,
-            construct_priority_input(&priority),
             body,
             self.format_body(),
             metadata,
@@ -282,9 +271,6 @@ impl Task {
 
     fn format_body(&self) -> String {
         let mut formatted = sanitize_html(&self.body);
-        if let Some(prio) = &self.priority {
-            formatted = formatted.replace(&format!("({})", prio), "");
-        }
         let is_complete = &self.completed.0;
         if *is_complete {
             formatted = formatted.strip_prefix("x ").unwrap().into();
@@ -354,19 +340,3 @@ impl Task {
     }
 }
 
-const ALPHA_STRING: &str = "abcdefghijklmnopqrstuvwxyz";
-fn construct_priority_input(priority: &str) -> String {
-    let prio_opts = ALPHA_STRING
-        .chars()
-        .map(|c| format!("<option value=\"{}\">{}</option>", c, c.to_uppercase()))
-        .collect::<Vec<String>>()
-        .join("");
-    format!(
-        r#"
-<select name="priority" class="hidden" id="priority-select">
-    <option value="{}">{}</option>
-    {}
-</select>"#,
-        priority, priority, prio_opts
-    )
-}

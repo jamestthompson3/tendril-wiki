@@ -1,20 +1,6 @@
 .project {
   color: var(--accent);
 }
-.context {
-  color: var(--primary-variant);
-}
-.priority {
-  font-weight: bold;
-  font-size: 1.25rem;
-  cursor: pointer;
-  width: 13px;
-  height: 30px;
-  display: inline-block;
-  margin: 0.25rem;
-  color: var(--accent);
-  border-bottom: 1px solid var(--accent);
-}
 .priority.hidden {
   display: none;
 }
@@ -25,6 +11,12 @@
 
 .task-list {
   list-style: none;
+  overflow-y: auto;
+  width: 80%;
+  margin: auto;
+  text-align: center;
+  background-color: var(--bg);
+  min-height: 300px;
 }
 .task-meta,
 .task-body {
@@ -32,7 +24,7 @@
   flex-wrap: wrap;
 }
 .task-list li {
-  margin: 1rem 0rem;
+  margin: 1rem auto;
 }
 .task-body {
   align-items: center;
@@ -53,9 +45,12 @@ input {
   margin: 0px 10px 0px 10px;
   cursor: pointer;
   appearance: none;
+  border: 1px solid var(--text-color);
 }
 .task-body input:checked {
   background-color: inherit;
+  /* reset border */
+  border: none;
   border-right: 2px solid var(--primary-variant);
   border-bottom: 2px solid var(--primary-variant);
   transform: rotate(45deg);
@@ -96,16 +91,11 @@ input {
 .edit-text-button.hidden {
   display: none;
 }
-#priority-select {
-  background-color: var(--bg-darker);
-  color: var(--text-color);
-  border: none;
-}
 .edit-text-input:hover {
   border: none;
 }
 
-#delete::before {
+span[role="delete"]::before {
   content: "🗑️";
   cursor: pointer;
 }
@@ -142,13 +132,15 @@ input {
   justify-content: space-between;
   padding: 1rem 0rem;
   height: 120px;
+  align-items: center;
+  flex-direction: row;
 }
 
 .task-header form input {
   margin: 0rem;
   outline: 1px solid var(--accent);
+  height: 30px;
 }
-
 .editor input[type="text"] {
   margin: 0rem;
 }
