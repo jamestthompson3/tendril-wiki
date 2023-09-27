@@ -41,29 +41,25 @@ mod tests {
     fn tokenizes_strings() {
         let test_string =
             "A tested, tokenized string. This could represent a note, a bookmark, or an idea.";
-        let mut mapped = HashMap::new();
-        mapped.insert("tested".to_owned(), 1);
-        mapped.insert("tokenized".to_owned(), 1);
-        mapped.insert("string".to_owned(), 1);
-        mapped.insert("represent".to_owned(), 1);
-        mapped.insert("note".to_owned(), 1);
-        mapped.insert("bookmark".to_owned(), 1);
-        mapped.insert("could".to_owned(), 1);
-        mapped.insert("idea".to_owned(), 1);
+        let tokens = [
+            "tested",
+            "tokenized",
+            "string",
+            "could",
+            "represent",
+            "note",
+            "bookmark",
+            "idea",
+        ];
         let tokenized = tokenize(test_string);
-        assert_eq!(tokenized, mapped);
+        assert_eq!(tokenized, tokens);
     }
 
     #[test]
     fn tokenizes_strings_with_links() {
         let test_string = "[[link|https://teukka.tech/luanvim.html]]";
-        let mut mapped = HashMap::new();
-        mapped.insert("teukka".to_owned(), 1);
-        mapped.insert("tech".to_owned(), 1);
-        mapped.insert("luanvim".to_owned(), 1);
-        mapped.insert("html".to_owned(), 1);
-        mapped.insert("link".to_owned(), 1);
+        let tokens = ["link", "teukka", "tech", "luanvim", "html"];
         let tokenized = tokenize(test_string);
-        assert_eq!(tokenized, mapped);
+        assert_eq!(tokenized, tokens);
     }
 }
