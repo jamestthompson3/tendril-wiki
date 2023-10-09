@@ -124,6 +124,13 @@ export class ComponentRegister {
     })
       .then((res) => {
         if (res.status < 400) {
+          if (document.title === "New Entry") {
+            history.pushState(
+              {},
+              "",
+              encodeURIComponent(constructedBody.title),
+            );
+          }
           this.#machine.send("COMPLETE");
         }
       })

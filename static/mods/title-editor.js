@@ -10,6 +10,7 @@ export class TitleEditor extends HTMLEditor {
       "Titles cannot contain special characters other than _+—. Titles must not be blank.";
     this.id = "title";
     this.content = element.textContent;
+    this.validator = /^[A-Za-z0-9-\s_\+]+/;
     this.bc.postMessage({
       type: "REGISTER",
       data: { id: this.id, content: this.content },
@@ -27,12 +28,9 @@ export class TitleEditor extends HTMLEditor {
     this.element = el;
   };
   setupEditor = () => {
-    const textblock = document.createElement("input");
-    textblock.type = "text";
+    const template = document.getElementById("title-editor");
+    const textblock = template.content.cloneNode(true).querySelector(".title");
     textblock.value = this.content;
-    textblock.minLength = 1;
-    textblock.setAttribute("pattern", "([a-zA-Z0-9-_+—]\\s?)+");
-    textblock.classList.add("title");
     this.setupTextblockListeners(textblock);
     this.element.replaceWith(textblock);
     setAsFocused(textblock);
@@ -45,24 +43,22 @@ export class TitleEditor extends HTMLEditor {
         .then((res) => res.json())
         .then((titles) => titles.map((t) => t.toLowerCase()));
     }
-    this.content = e.target.value;
     if (this.#titles.includes(e.target.value.toLowerCase())) {
       this.errorMsg = "A note by this title already exists!";
       this.machine.send("ERROR");
+    }
+    if (!this.validator.test(e.target.value)) {
+      this.errorMsg =
+        "Titles cannot contain special characters other than _+—. Titles must not be blank.";
+      this.machine.send("ERROR");
       return;
     }
-    if (e.target.checkValidity()) {
-      if (this.machine.state === "error") {
-        this.errorMsg =
-          "Titles cannot contain special characters other than _+—. Titles must not be blank.";
-        this.machine.send("RESET");
-      }
-      this.bc.postMessage({
-        type: "SAVE",
-        data: { id: this.id, content: this.content },
-      });
-    } else {
-      this.machine.send("ERROR");
-    }
+
+    this.machine.send("RESET");
+    this.content = e.target.value;
+    this.bc.postMessage({
+      type: "SAVE",
+      data: { id: this.id, content: this.content },
+    });
   };
 }
