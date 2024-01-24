@@ -1,7 +1,7 @@
 import { textToHtml } from "./parsing.js";
 import { moveCaretToEnd, moveCaretToStart } from "./dom.js";
 import { HTMLEditor } from "./base-html-editor.js";
-import { nanoid, StateMachine } from "./utils.js";
+import { nanoid } from "./utils.js";
 import {
   setAsFocused,
   updateInputHeight,
@@ -13,26 +13,12 @@ import {
   removeAutoCompleteMenu,
 } from "./autocomplete.js";
 
-const stateChart = {
-  initial: "not-cleared",
-  states: {
-    "not-cleared": {
-      on: { CLEAR: "cleared" },
-    },
-    cleared: {
-      on: { RESET: "not-cleared" },
-    },
-  },
-};
-
 export class BlockEditor extends HTMLEditor {
-  #machine;
   #shouldStopExecution;
   constructor(element, parent) {
     super(element);
     this.id = `block@${nanoid()}`;
     this.indent = parseInt(element.dataset.indent || 0, 10);
-    this.#machine = new StateMachine(stateChart);
     if (element.nodeName === "TEXTAREA") {
       this.setupTextblockListeners(element);
     } else {
@@ -80,30 +66,6 @@ export class BlockEditor extends HTMLEditor {
     this.element = textblock;
   };
 
-  // We have both keyup (handleInput) and keydown listeners so that
-  // actions that make sense to happen after input has been processed (keyup)
-  // are separate from actions that should take input, process it, and manipulate
-  // the textarea.
-  handleInput = (e) => {
-    if (e.key === "Enter") {
-      if (!e.shiftKey && !this.#shouldStopExecution) {
-        if (this.element.value.endsWith("\n")) {
-          this.element.value = this.element.value.slice(
-            0,
-            this.element.value.length - 1
-          );
-        }
-        const indentation = this.indent;
-        this.addBlock(indentation);
-        if (this.element.type === "TEXTAREA") {
-          this.setupViewer(this.element);
-        }
-        return;
-      }
-      return;
-    }
-  };
-
   handleKeydown = (e) => {
     autocomplete(e);
     this.#shouldStopExecution = autocompleteState() === "completing";
@@ -126,10 +88,6 @@ export class BlockEditor extends HTMLEditor {
       }
       case "Backspace": {
         if (e.target.value === "" && e.target.parentNode.children.length > 1) {
-          if (this.#machine.state === "not-cleared") {
-            this.#machine.send("CLEAR");
-            return;
-          }
           deleteBlock(e.target);
           this.bc.postMessage({ type: "UNREGISTER", data: this.id });
           this.bc.postMessage({ type: "SAVE" });
@@ -145,10 +103,20 @@ export class BlockEditor extends HTMLEditor {
         moveCaretToStart(this.element);
         break;
       }
-      default: {
-        if (this.#machine.state === "cleared") {
-          this.#machine.send("RESET");
+      case "Enter": {
+        if (!e.shiftKey && !this.#shouldStopExecution) {
+          e.preventDefault();
+          const indentation = this.indent;
+          this.addBlock(indentation);
+          if (this.element.type === "TEXTAREA") {
+            this.setupViewer(this.element);
+          }
+          break;
         }
+        break;
+      }
+      default: {
+        break;
       }
     }
     updateInputHeight(e.target);
@@ -166,7 +134,7 @@ export class BlockEditor extends HTMLEditor {
         formData.append(
           "file",
           item.getAsFile(),
-          `image-${new Date().valueOf()}.${extension}`
+          `image-${new Date().valueOf()}.${extension}`,
         );
         const blob = formData.get("file");
         fetch("/files", {
