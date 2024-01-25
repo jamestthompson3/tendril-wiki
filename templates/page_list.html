@@ -22,12 +22,17 @@
         width: 85%;
         margin: 0rem auto;
       }
+      @media (max-width: 1000px) {
+        .table-container {
+          max-height: 90%;
+          margin-bottom: 2rem;
+        }
+      }
     </style>
   </head>
   <body>
     <%= include "search" %>
     <div class="flex-container">
-      <%= sidebar %>
       <script src="/static/clear-nav-links.js"></script>
       <div class="table-container">
         <table>
@@ -43,5 +48,7 @@
         </table>
       </div>
     </div>
+    <div class="navigation"><%= nav %></div>
+  <script src="static/dialogs.js"></script>
   </body>
 </html>

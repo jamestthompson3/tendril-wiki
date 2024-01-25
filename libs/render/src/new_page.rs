@@ -1,4 +1,4 @@
-use crate::{get_template_file, render_includes, render_sidebar, Render};
+use crate::{get_template_file, render_includes, Render};
 use async_trait::async_trait;
 
 pub struct NewPage<'a> {
@@ -59,7 +59,6 @@ impl<'a> Render for NewPage<'a> {
             .replace("<%= metadata %>", "")
             .replace("<%= links %>", "");
         ctx = ctx
-            .replace("<%= sidebar %>", &render_sidebar().await)
             .replace("<%= content %>", &content)
             .replace("<%= page_title %>", self.get_page_title())
             .replace("<%= action_params %>", self.action_params.unwrap_or(""))

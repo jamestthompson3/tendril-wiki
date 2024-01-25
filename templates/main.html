@@ -1,14 +1,10 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en-US" prefix="og:http://ogp.me/ns#">
   <head>
     <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
     <%= include "meta" %>
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover"
-    />
+    <!-- prettier-ignore -->
     <%= include "styles" %>
-
     <script>
       let CURRENT_TITLE = "<%= title %>";
     </script>
@@ -18,11 +14,10 @@
     <%= include "search" %>
     <div class="flex-container">
       <!-- prettier-ignore -->
-      <%= sidebar %>
-      <!-- prettier-ignore -->
       <%= content %>
     </div>
-    <div id="modal"><div class="modal-body"></div></div>
+    <div class="navigation"><%= nav %></div>
+    <script src="static/editor.js" type="module"></script>
+    <script src="static/dialogs.js"></script>
   </body>
-  <script src="static/editor.js" type="module"></script>
 </html>

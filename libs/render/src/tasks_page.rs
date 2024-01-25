@@ -1,4 +1,4 @@
-use crate::{get_template_file, render_includes, render_sidebar, Render};
+use crate::{get_template_file, render_includes, Render};
 use async_trait::async_trait;
 
 pub struct TasksPage {
@@ -19,9 +19,7 @@ impl Render for TasksPage {
     async fn render(&self) -> String {
         let mut ctx = get_template_file("tasks_page").await.unwrap();
         let nav = get_template_file("nav").await.unwrap();
-        ctx = ctx
-            .replace("<%= tasks %>", &self.render_tasks())
-            .replace("<%= sidebar %>", &render_sidebar().await);
+        ctx = ctx.replace("<%= tasks %>", &self.render_tasks());
         render_includes(ctx, None).await.replace("<%= nav %>", &nav)
     }
 }

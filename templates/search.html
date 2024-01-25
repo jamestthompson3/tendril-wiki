@@ -1,5 +1,35 @@
-<header class="navigation">
-  <%= nav %>
+<header>
+  <dialog id="additional-actions">
+    <div>
+      <button type="button">X</button>
+      <form
+        style="margin: 0.5rem 0"
+        title="delete current note"
+        action="delete"
+        id="delete-form"
+        method="post"
+        target="_parent"
+        onsubmit="return confirm('Do you really want to delete <%= title %>?');"
+      >
+        <input class="hidden" type="text" name="title" value="<%= title %>" />
+        <button id="delete-note" type="submit">
+          &#128465; delete <%= title %>
+        </button>
+      </form>
+      <a
+        id="linkto"
+        style="margin: 0.5rem 0"
+        accesskey="l"
+        href="/new?linkto=<%= title %>"
+        >&#128279; link to here</a
+      >
+      <a style="margin: 0.5rem 0" href="/styles"
+        >&#127912; edit look and feel</a
+      >
+      <a style="margin: 0.5rem 0" href="/all_pages">&#128218; view all pages</a>
+    </div>
+  </dialog>
+  <button title="additional note actions">...</button>
   <form method="get" action="search" target="_parent">
     <div class="search">
       <label for="term" style="display: none">Search</label>
@@ -14,4 +44,9 @@
       <button type="submit" class="hidden submit">Search</button>
     </div>
   </form>
+  <dialog id="recently-edited">
+    <div>
+      <button type="button">X</button>
+    </div>
+  </dialog>
 </header>

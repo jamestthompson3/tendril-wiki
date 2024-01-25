@@ -15,11 +15,11 @@
 }
 body {
   background: linear-gradient(
-      to right,
-      rgba(255, 255, 255, 0.65),
-      rgba(255, 255, 255, 0.7)
-    ),
-    url("/static/tendril-bg.png");
+    to right,
+    rgba(255, 255, 255, 0.65),
+    rgba(255, 255, 255, 0.7)
+  );
+  /* url("/static/tendril-bg.png"); */
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -37,11 +37,11 @@ body {
   }
   body {
     background: linear-gradient(
-        to right,
-        rgba(0, 0, 0, 0.65),
-        rgba(0, 0, 0, 0.7)
-      ),
-      url("/static/tendril-bg.png");
+      to right,
+      rgba(0, 0, 0, 0.65),
+      rgba(0, 0, 0, 0.7)
+    );
+    /* url("/static/tendril-bg.png"); */
   }
 }
 * {
@@ -49,7 +49,7 @@ body {
   max-width: 100vw;
 }
 html {
-  height: 100vh;
+  height: 100%;
   overflow-x: hidden;
   overflow-y: hidden;
   font-family: Bahnschrift, "DIN Alternate", "Franklin Gothic Medium",
@@ -59,8 +59,11 @@ body {
   padding: env(safe-area-inset-top) env(safe-area-inset-right)
     env(safe-area-inset-bottom) env(safe-area-inset-left);
   -webkit-overflow-scrolling: touch;
-  height: 100vh;
-  scroll-snap-type: y proximity;
+  height: 100%;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  touch-action: pan-y;
+  /* scroll-snap-type: y proximity; */
   background-color: var(--bg);
   background-repeat: no-repeat;
   background-size: contain;
@@ -90,28 +93,72 @@ button {
   color: var(--button-text);
 }
 
+header {
+  position: fixed;
+  top: 0;
+  background-color: var(--bg-darker);
+  display: flex;
+  align-items: center;
+  z-index: 1;
+  width: 100%;
+  justify-content: flex-end;
+  padding: 0.5rem 0;
+}
+
+dialog {
+  margin: auto;
+  height: 400px;
+  width: 400px;
+  max-width: 90%;
+  max-height: 60%;
+  background-color: var(--bg-darker);
+  border-radius: var(--rad);
+  border: 1px solid var(--primary);
+}
+
+dialog div {
+  display: flex;
+  flex-direction: column;
+}
+
+dialog button[type="button"] {
+  color: var(--text-color);
+  background-color: transparent;
+  align-self: flex-end;
+  border: 1px solid var(--text-color);
+  border-radius: var(--rad);
+}
+::backdrop {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+#additional-actions + button {
+  background-color: transparent;
+  color: var(--text-color);
+  border: 1px solid var(--text-color);
+  border-radius: var(--rad);
+  height: 35px;
+  width: 55px;
+  cursor: pointer;
+  margin-right: 1rem;
+}
+#additional-actions + button:hover {
+  background-color: var(--bg);
+}
+
 .hidden {
   display: none;
 }
 
 .content-body {
-  padding: 2rem;
+  padding: 0.5rem;
 }
 .content-container {
-  flex: 1 1 auto;
-  overflow: hidden;
+  padding: 0.5rem;
+  /* position: relative; */
 }
-.content {
-  height: 95%;
-  width: 80%;
-  margin: 0rem auto;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-}
-
 .title {
-  color: var(--accent);
+  color: var(--text-color);
   text-align: center;
   padding: 1rem;
   margin: 0rem;
@@ -135,42 +182,35 @@ button {
 /** Navigation **/
 .navigation {
   width: 100%;
-  margin: 1rem 0rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
+  z-index: 1;
 }
 
 .navigation nav {
-  display: none;
-}
-
-#mobile-nav ~ label {
-  display: none;
-}
-
-#mobile-nav {
-  display: none;
-}
-
-.navigation form {
-  display: flex;
-  align-items: flex-end;
-  justify-content: flex-end;
-  flex: 1 0 auto;
+  display: block;
+  margin: auto;
+  box-shadow: var(--shadow);
 }
 
 .navigation ul {
   display: flex;
+  flex-wrap: wrap;
   padding: 0rem;
   margin: 0rem;
-  justify-content: space-between;
+  justify-content: space-evenly;
   list-style: none;
+  border-radius: var(--rad);
+  background-color: var(--bg);
+  box-shadow: var(--shadow);
 }
 
 .navigation ul > li {
   margin: 0rem 0.25rem;
+  text-align: center;
+  padding: 1rem;
 }
 
 /** Search **/
@@ -178,7 +218,6 @@ button {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  padding: 0rem 1rem;
 }
 #term {
   width: 200px;
@@ -221,80 +260,22 @@ button.submit {
   align-self: stretch;
 }
 
-aside {
-  flex: 1 auto;
-  width: 100%;
-  height: 80px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  background-color: var(--bg-darker);
-  border-radius: var(--rad) var(--rad) 0px 0px;
-  overflow-y: auto;
-  box-shadow: var(--shadow);
-  position: absolute;
-  top: calc(100vh - 80px);
-  transition: opacity 0.8s;
-}
-
-aside ul {
-  list-style: none;
-  font-size: 1rem;
-  margin: 0rem;
-  padding: 0.5rem;
-  display: flex;
-  justify-content: space-evenly;
-}
-aside nav {
-  flex: 1 auto;
-}
-aside ul li {
-  margin: 0;
-}
-aside ul a {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  word-wrap: normal;
-  display: inline-block;
-  max-width: 100%;
-  font-size: 1.5rem;
-}
-
-.sidebar-section {
-  display: flex;
-}
-
-#delete-note form button {
+#delete-note {
   border: none;
-  color: var(--primary-variant);
+  color: red;
   font-weight: bold;
-  cursor: pointer;
   background-color: transparent;
   font-size: 1rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  word-wrap: normal;
-  display: inline-block;
-  max-width: 100%;
-  font-size: 1.5rem;
+  cursor: pointer;
   padding: 0;
-}
-
-aside form {
-  margin-left: -0.3rem;
-}
-
-aside h2 {
-  text-align: center;
 }
 
 .flex-container {
   display: flex;
+  flex-direction: column;
   align-content: center;
   justify-content: space-between;
-  height: calc(100vh - 60px);
+  margin-top: 2rem;
   padding: 0.5rem 0rem;
 }
 

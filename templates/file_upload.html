@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en-US" prefix="og:http://ogp.me/ns#">
   <head>
     <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
@@ -36,7 +36,6 @@
   <body>
     <%= include "search" %>
     <div class="flex-container">
-      <%= sidebar %>
       <script src="/static/clear-nav-links.js"></script>
       <div class="content-container">
         <h1 class="title">Upload File or Image</h1>
@@ -80,7 +79,7 @@
     </div>
     <script>
       const filenameDisplay = document.querySelector(
-        "[data-text='Choose a file to upload']"
+        "[data-text='Choose a file to upload']",
       );
       const fileInput = document.querySelector("input");
       fileInput.addEventListener("change", (e) => {

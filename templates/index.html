@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en-US" prefix="og:http://ogp.me/ns#">
   <head>
     <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover maximum-scale=1"
     />
     <%= include "styles" %>
     <link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon" />
@@ -41,11 +41,8 @@
   <body>
     <%= include "search" %>
     <div class="flex-container">
-      <!-- prettier-ignore -->
-      <%= sidebar %>
-      <!-- prettier-ignore -->
       <%= content %>
-      <!-- prettier-ignore -->
+      <div class="navigation"><%= nav %></div>
     </div>
     <script>
       function registerSW() {
@@ -62,7 +59,7 @@
       registerSW();
     </script>
     <script src="static/editor.js" type="module"></script>
+    <script src="static/dialogs.js"></script>
     <%= updateCheck %>
-    <div id="modal"><div class="modal-body"></div></div>
   </body>
 </html>

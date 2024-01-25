@@ -22,11 +22,12 @@
     <%= include "search" %>
     <div class="flex-container">
       <!-- prettier-ignore -->
-      <%= sidebar %>
-      <!-- prettier-ignore -->
       <%= content %>
     </div>
+    <div class="navigation">
+      <%= nav %>
+    </div>
     <script src="static/editor.js" type="module"></script>
-    <div id="modal"><div class="modal-body"></div></div>
+  <script src="static/dialogs.js"></script>
   </body>
 </html>

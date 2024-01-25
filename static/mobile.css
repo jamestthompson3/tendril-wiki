@@ -12,24 +12,18 @@ h4 {
   padding: 1rem;
 }
 
-aside {
-  display: none;
-}
-
 .content-container {
   width: unset;
   padding: 0.25rem;
-  margin-bottom: 12rem;
+  margin-bottom: 3rem;
 }
 
 .flex-container {
-  overflow-y: scroll;
   overflow-x: hidden;
-}
-
-.content {
-  width: 85%;
-  height: 100%;
+  flex-direction: column;
+  margin-top: 3rem;
+  height: 90%;
+  padding: 0;
 }
 
 .content-body {
@@ -45,41 +39,9 @@ aside {
 }
 
 .navigation {
-  width: unset;
+  position: fixed;
+  bottom: 0;
 }
-
-.navigation nav {
-  width: 100%;
-  position: absolute;
-  display: block;
-  top: 83vh;
-  z-index: 1;
-}
-
-nav {
-  display: block;
-}
-
-/* TODO: Add this on mobile */
-#recently-edited {
-  display: none;
-}
-
-.navigation ul {
-  flex-wrap: wrap;
-  justify-content: space-evenly;
-  background-color: var(--bg);
-  border-radius: var(--rad);
-}
-
-.navigation ul > li {
-  text-align: center;
-  padding: 1rem;
-}
-.navigation form {
-  justify-content: center;
-}
-
 .search {
   align-items: center;
   margin: 0.5rem auto;
@@ -97,4 +59,9 @@ nav {
 
 #submit-file {
   width: 55%;
+}
+
+#term:active,
+#term:focus {
+  max-width: 40%;
 }

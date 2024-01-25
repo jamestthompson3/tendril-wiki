@@ -1,6 +1,5 @@
 use crate::{
-    get_template_file, render_includes, render_page_backlinks, render_page_metadata,
-    render_sidebar, Render,
+    get_template_file, render_includes, render_page_backlinks, render_page_metadata, Render,
 };
 use async_trait::async_trait;
 use persistance::fs::{config::read_config, ReadPageError};
@@ -91,12 +90,11 @@ impl Render for IndexPage {
         ctx = ctx
             .replace("<%= updateCheck %>", &self.check_updates())
             .replace("<%= user %>", &self.user)
-            .replace("<%= sidebar %>", &render_sidebar().await)
             .replace("<%= host %>", &self.host)
+            .replace("<%= nav %>", &nav)
             .replace("<%= content %>", &self.render_today().await);
         render_includes(ctx, None)
             .await
-            .replace("<%= nav %>", &nav)
             .replace("<%= title %>", &self.today)
     }
 }

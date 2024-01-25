@@ -1,4 +1,4 @@
-use crate::{get_template_file, render_includes, render_sidebar, Render};
+use crate::{get_template_file, render_includes, Render};
 use async_trait::async_trait;
 
 pub struct StylesPage {
@@ -16,9 +16,7 @@ impl Render for StylesPage {
     async fn render(&self) -> String {
         let mut ctx = get_template_file("user_style").await.unwrap();
         let nav = get_template_file("nav").await.unwrap();
-        ctx = ctx
-            .replace("<%= body %>", &self.body)
-            .replace("<%= sidebar %>", &render_sidebar().await);
+        ctx = ctx.replace("<%= body %>", &self.body);
         render_includes(ctx, None).await.replace("<%= nav %>", &nav)
     }
 }

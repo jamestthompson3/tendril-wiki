@@ -142,9 +142,6 @@ pub fn render_page_metadata(metadata: HashMap<String, String>) -> String {
     metadata_html
 }
 
-pub async fn render_sidebar() -> String {
-    get_template_file("sidebar").await.unwrap()
-}
 
 #[cfg(debug_assertions)]
 fn get_template_location(requested_file: &str) -> String {

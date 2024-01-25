@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 
-use crate::{get_template_file, render_includes, render_sidebar, Render};
+use crate::{get_template_file, render_includes, Render};
 
 type PageEntries<'a> = Vec<(&'a String, usize)>;
 
@@ -33,7 +33,6 @@ impl<'a> Render for PageList<'a> {
         let mut ctx = get_template_file("page_list").await.unwrap();
         let nav = get_template_file("nav").await.unwrap();
         ctx = ctx
-            .replace("<%= sidebar %>", &render_sidebar().await)
             .replace("<%= content %>", &page_string);
         render_includes(ctx, None).await.replace("<%= nav %>", &nav)
     }

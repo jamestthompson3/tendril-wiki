@@ -4,7 +4,7 @@ use wikitext::{parsers::TemplattedPage, processors::sanitize_html};
 
 use crate::{
     get_template_file, render_includes, render_page_backlinks, render_page_metadata,
-    render_sidebar, PageRenderLinks, Render,
+    PageRenderLinks, Render,
 };
 
 pub struct InjectedHTML<'a> {
@@ -38,7 +38,6 @@ impl<'a> Render for InjectedHTML<'a> {
         let content = get_template_file("content").await.unwrap();
         let nav = get_template_file("nav").await.unwrap();
         ctx = ctx
-            .replace("<%= sidebar %>", &render_sidebar().await)
             .replace("<%= content %>", &content)
             .replace("<%= body %>", &sanitize_html(&page.body))
             .replace("<%= tags %>", &tag_string)
