@@ -122,7 +122,7 @@ fn process_migration_file(entry_path: PathBuf, target: PathBuf, data_dir: &Path)
     let file_name = file_name.to_str().unwrap();
     if file_name == "todo.txt" {
         let new_loc = data_dir.join(file_name);
-        fs::rename(&entry_path, &new_loc).unwrap();
+        fs::rename(&entry_path, new_loc).unwrap();
         return;
     }
     if file_name.ends_with("md") {

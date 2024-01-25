@@ -1,5 +1,6 @@
 use async_recursion::async_recursion;
 use futures::{stream, StreamExt};
+use std::fmt::Write;
 
 use render::static_site_page::StaticSitePage;
 use wikitext::{
@@ -78,7 +79,7 @@ impl Default for Builder {
     }
 }
 
-async fn process_file(path: PathBuf, backlinks: &mut GlobalBacklinks, pages: ParsedPages) {
+async fn process_file(path: PathBuf, backlinks: &GlobalBacklinks, pages: ParsedPages) {
     let note = path_to_data_structure(&path).unwrap();
     let structured = note.to_structured().as_owned();
     let mut backlinks = backlinks.lock().await;
@@ -95,14 +96,14 @@ async fn parse_entries(
 ) {
     let entries = read_dir(entrypoint).unwrap();
     let pipeline = stream::iter(entries).for_each(|entry| async {
-        let mut links = Arc::clone(&backlinks);
+        let links = Arc::clone(&backlinks);
         let pages = Arc::clone(&rendered_pages);
         let entry = entry.unwrap();
         let file_name = entry.file_name();
         let file_name = file_name.to_str().unwrap();
         if entry.file_type().unwrap().is_file() && file_name.ends_with(".txt") {
             tokio::spawn(async move {
-                process_file(entry.path(), &mut links, pages).await;
+                process_file(entry.path(), &links, pages).await;
             })
             .await
             .unwrap();
@@ -117,10 +118,14 @@ async fn parse_entries(
 
 async fn write_index_page(pages: &ParsedPages) {
     let page_vals = pages.lock().await;
-    let pages: String = page_vals
-        .iter()
-        .map(|page| format!(r#"<li><a href="{}">{}</a></li>"#, page.title, page.title))
-        .collect();
+    let pages: String = page_vals.iter().fold(String::new(), |mut output, page| {
+        let _ = write!(
+            output,
+            r#"<li><a href="{}">{}</a></li>"#,
+            page.title, page.title
+        );
+        output
+    });
     let body = format!(
         r#"<h1>Pages</h1><ul style="margin: 1rem 0rem;">{}</ul>"#,
         pages

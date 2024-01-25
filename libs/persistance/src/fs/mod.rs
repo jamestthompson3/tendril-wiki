@@ -246,7 +246,7 @@ pub async fn move_archive(old_title: String, new_title: String) {
 // TODO: this is really dependent on file system ops, won't be good if we change the storage
 // backend.
 pub fn path_to_string<P: AsRef<Path> + ?Sized>(path: &P) -> Result<String, std::io::Error> {
-    std::fs::read_to_string(&path)
+    std::fs::read_to_string(path)
 }
 
 pub fn path_to_data_structure(path: &Path) -> Result<Note, ReadPageError> {
