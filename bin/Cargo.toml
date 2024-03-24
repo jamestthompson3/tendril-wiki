@@ -19,5 +19,5 @@ task_runners = { path = "../libs/task-runners" }
 tokio = { version = "1.17.0", features = ["fs", "macros", "rt-multi-thread"], default-features = false }
 www = { path = "../libs/www" }
 
-[workspace]
-resolver = "2"
+
+
